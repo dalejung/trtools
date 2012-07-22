@@ -1,4 +1,5 @@
 import os
+import types
 
 import pandas as pd
 
@@ -6,13 +7,15 @@ class FileCache(object):
     """
         Basically a replacement for the HDF5Store. It stores as flat files.
     """
-    def __init__(self, cache_dir):
+    def __init__(self, cache_dir, filename_func=None):
         self.cache_dir = cache_dir
-        self._create_dir()
+        if filename_func:
+            self.get_filename = types.MethodType(filename_func, self)
+        FileCache.create_dir(cache_dir)
 
-    def _create_dir(self):
-        dir = self.cache_dir
-        if not os.path.exists(dir):
+    @staticmethod
+    def create_dir(dir):
+        if not os.path.isdir(dir):
             os.makedirs(dir)
 
     def get_filename(self, name):
@@ -56,3 +59,11 @@ class FileCache(object):
         dir = self.cache_dir
         keys = os.listdir(dir)
         return keys
+
+def leveled_filename(fc, name):
+    subdir = os.path.join(fc.cache_dir, name[0])
+    FileCache.create_dir(subdir)
+    return os.path.join(subdir, name)
+
+def LeveledFileCache(cache_dir):
+    return FileCache(cache_dir, filename_func=leveled_filename)
