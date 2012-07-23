@@ -2,7 +2,7 @@ from unittest import TestCase
 
 import pandas as pd
 import pandas.util.testing as tm
-import trtools.pandas.pandasdb as pandasdb
+import trtools.pandas.pandassql as pandassql
 
 class TestPandasDB(TestCase):
 
@@ -15,7 +15,7 @@ class TestPandasDB(TestCase):
     def setUp(self):
         df = pd.DataFrame({'dale':range(10), 'bob':range(10, 20)})
         df['names'] = ['dale', 'dane', 'donna', 'mike', 'miller'] * 2
-        db = pandasdb.PandasSQL(df)
+        db = pandassql.PandasSQL(df)
         assert db.df is df
         self.db = db
 
