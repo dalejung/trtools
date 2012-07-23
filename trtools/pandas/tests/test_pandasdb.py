@@ -92,6 +92,13 @@ class TestPandasDB(TestCase):
         df.sql.query('dale').filter_by(df.dale == 3).all()
 
 
+    def test_query_join(self):
+        df = pd.DataFrame({'a':range(10), 'b':range(10,20)})
+        df2 = pd.DataFrame({'a':range(10), 'c':range(20,30), 'd':range(30,40)})
+        res = df.sql.query().join(df2.xs(['a', 'c'], axis=1), 'a').all()
+        exp = pd.DataFrame({'a':range(10), 'b':range(10,20), 'c': range(20,30)})
+        assert tm.assert_almost_equal(res, exp)
+
 if __name__ == '__main__':                                                                                          
     import nose                                                                      
     nose.runmodule(argv=[__file__,'-vvs','-x','--pdb', '--pdb-failure'],exit=False)   

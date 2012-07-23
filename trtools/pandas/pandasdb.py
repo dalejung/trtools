@@ -19,15 +19,21 @@ class PandasSQL(object):
         cols = query.cols
         filters = query.filters
         order_by = query.order_by
-        return self.execute(cols, filters, order_by)
+        joins = query.joins
+        return self.execute(cols, filters, order_by, joins)
 
-    def execute(self, cols=None, filters=None, order_by=None):
+    def execute(self, cols=None, filters=[], order_by=[], joins=[]):
         ret = self.df
         if cols is not None and len(cols) > 0:
             ret = ret.xs(cols, axis=1)
         if len(filters) > 0:
             combined_filter = combine_filters(filters)
             ret = ret[combined_filter]
+
+        if len(joins) > 0:
+            for target, on in joins:
+                ret = pd.merge(ret, target, on=on)
+
         return ret
 
     def __getattr__(self, attr):
@@ -82,18 +88,17 @@ class Query(object):
 
         db.query().filter_by(bool_array).all()
     """
-    def __init__(self, db, cols, filters=None):
+    def __init__(self, db, cols, filters=None, joins=None):
         self.db = db
         self.cols = cols
-        if filters is None:
-            filters = []
-        self.filters = filters
+        self.filters = filters or []
+        self.joins = joins or []
         self.order_by = None 
 
     def filter_by(self, filter):
         filters = self.filters[:]
         filters.append(filter)
-        return Query(self.db, self.cols, filters)
+        return Query(self.db, self.cols, filters, self.joins)
 
     def all(self):
         return self.db.execute_query_all(self)
@@ -107,6 +112,11 @@ class Query(object):
         # from resulting df
         if hasattr(pd.DataFrame, key):
             return getattr(self.all(), key)
+
+    def join(self, target, on=None):
+        joins = self.joins[:]
+        joins.append((target, on))
+        return Query(self.db, self.cols, self.filters, joins)
 
 # monkey patch
 pd.DataFrame.sql = property(lambda x: PandasSQL(x))
