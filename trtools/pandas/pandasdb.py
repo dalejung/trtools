@@ -10,7 +10,9 @@ class PandasSQL(object):
         self.df = df
 
     def query(self, *args):
-        cols = args or None
+        # tuple is treated as one key
+        # need list
+        cols = list(args) or None
         return Query(self, cols)
 
     def execute_query_all(self, query):
@@ -97,9 +99,14 @@ class Query(object):
         return self.db.execute_query_all(self)
 
     def __getitem__(self, item):
-        if isinstance(item, slice):
-            res = self.all()[slice]
-            return res
+        res = self.all()[item]
+        return res
+
+    def __getattr__(self, key):
+        # if attr exists on DataFrame, execute query and return attr
+        # from resulting df
+        if hasattr(pd.DataFrame, key):
+            return getattr(self.all(), key)
 
 # monkey patch
 pd.DataFrame.sql = property(lambda x: PandasSQL(x))

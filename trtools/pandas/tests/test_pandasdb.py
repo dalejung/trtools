@@ -27,12 +27,12 @@ class TestPandasDB(TestCase):
 
         q = db.query('dale')
         assert q.db is db
-        assert q.cols == ('dale',)
+        assert q.cols == ['dale']
 
     def test_full_all(self):
         db = self.db
         res = db.query().all()
-        assert tm.assert_frame_equal(db.df, res)
+        assert tm.assert_almost_equal(db.df, res)
 
 
     def test_sql_filter(self):
@@ -73,7 +73,23 @@ class TestPandasDB(TestCase):
         db = self.db
         res = db.query()[:5]
         exp = db.query().all()[:5]
-        assert tm.assert_frame_equal(res, exp)
+        assert tm.assert_almost_equal(res, exp)
+
+        # test single
+        res = db.query().ix[5]
+        exp = db.query().all().ix[5]
+        assert tm.assert_almost_equal(res, exp)
+
+    def test_query_getattr(self):
+        db = self.db
+        res = db.query().sum()
+        exp = db.query().all().sum()
+        assert tm.assert_almost_equal(res, exp)
+        assert res['dale'] == sum(db.df.dale)
+
+    def test_query_cols(self):
+        df = self.db.df
+        df.sql.query('dale').filter_by(df.dale == 3).all()
 
 
 if __name__ == '__main__':                                                                                          
