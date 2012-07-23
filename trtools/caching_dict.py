@@ -48,3 +48,6 @@ class CachingDict(object):
     def clear(self):
         self._dict.clear()
         self.save()
+
+    def __contains__(self, key):
+        return key in self._dict
