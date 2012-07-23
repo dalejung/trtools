@@ -84,6 +84,9 @@ class PandasColumn(object):
         func = lambda x: x.startswith(other)
         return self.column_filter(func, pd.Series.apply)
 
+    def __call__(self, other, op=operator.eq):
+        return self.column_filter(other, op)
+
 
 class Query(object):
     """
@@ -102,6 +105,8 @@ class Query(object):
         filters = self.filters[:]
         filters.append(filter)
         return Query(self.db, self.cols, filters, self.joins)
+
+    filter = filter_by
 
     def all(self):
         return self.db.execute_query_all(self)
