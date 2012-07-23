@@ -1,5 +1,5 @@
-from pandas import Panel, DataFrame, MultiIndex, Series
-from pandas.core.groupby import DataFrameGroupBy, PanelGroupBy, GroupBy
+from pandas import Panel, MultiIndex, Series
+from pandas.core.groupby import DataFrameGroupBy, PanelGroupBy
 
 from trtools.monkey import patch, patch_prop
 

@@ -3,7 +3,7 @@ import datetime
 
 from pandas import DataFrame, Series, TimeSeries
 
-from trtools.monkey import patch, patch_prop
+from trtools.monkey import patch_prop
 
 def date_attr(date):
     return date.year, date.month, date.day
