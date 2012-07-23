@@ -115,6 +115,7 @@ class Query(object):
         # from resulting df
         if hasattr(pd.DataFrame, key):
             return getattr(self.all(), key)
+        raise AttributeError(key)
 
     def join(self, target, on=None):
         joins = self.joins[:]
