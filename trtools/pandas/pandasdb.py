@@ -23,7 +23,7 @@ class PandasSQL(object):
         ret = self.df
         if cols is not None and len(cols) > 0:
             ret = ret.xs(cols, axis=1)
-        if filters is not None:
+        if len(filters) > 0:
             combined_filter = combine_filters(filters)
             ret = ret[combined_filter]
         return ret
@@ -95,6 +95,11 @@ class Query(object):
 
     def all(self):
         return self.db.execute_query_all(self)
+
+    def __getitem__(self, item):
+        if isinstance(item, slice):
+            res = self.all()[slice]
+            return res
 
 # monkey patch
 pd.DataFrame.sql = property(lambda x: PandasSQL(x))

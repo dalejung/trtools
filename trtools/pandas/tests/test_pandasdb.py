@@ -29,6 +29,12 @@ class TestPandasDB(TestCase):
         assert q.db is db
         assert q.cols == ('dale',)
 
+    def test_full_all(self):
+        db = self.db
+        res = db.query().all()
+        assert tm.assert_frame_equal(db.df, res)
+
+
     def test_sql_filter(self):
         db = self.db
         q = db.query()
@@ -59,6 +65,16 @@ class TestPandasDB(TestCase):
 
         ret = db.names.startswith('dal')
         assert tm.assert_almost_equal(ret.index, pd.Series([0,5]))
+
+    def test_slice(self):
+        """
+            Using a slice will execute the query and return the dataset
+        """
+        db = self.db
+        res = db.query()[:5]
+        exp = db.query().all()[:5]
+        assert tm.assert_frame_equal(res, exp)
+
 
 if __name__ == '__main__':                                                                                          
     import nose                                                                      
