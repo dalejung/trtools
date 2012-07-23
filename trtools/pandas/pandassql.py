@@ -40,6 +40,9 @@ class PandasSQL(object):
         if attr in self.df.columns:
             return PandasColumn(self, attr)
 
+    def __getstate__(self): return self.__dict__
+    def __setstate__(self, d): self.__dict__.update(d)
+
 class PandasColumn(object):
     """
         Designed for quick column queries
