@@ -1,7 +1,5 @@
 import cPickle as pickle
-import os.path
 from contextlib import closing
-
 
 class CachingDict(object):
     """

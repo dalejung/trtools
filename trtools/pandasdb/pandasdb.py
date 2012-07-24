@@ -6,7 +6,7 @@
 """
 import pandas as pd
 
-import trtools.io as tio
+import trtools.tools.io as tio
 
 class PandasDB(object):
     pass

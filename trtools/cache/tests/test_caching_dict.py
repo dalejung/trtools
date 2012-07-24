@@ -2,8 +2,7 @@ from unittest import TestCase
 import os.path
 from StringIO import StringIO
 
-
-import trtools.io.caching_dict as cdict
+import trtools.cache.caching_dict as cdict
 
 def curpath():
     pth, _ = os.path.split(os.path.abspath(__file__))
