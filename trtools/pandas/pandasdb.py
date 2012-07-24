@@ -57,8 +57,16 @@ class PandasTable(object):
     def __setstate__(self, d): self.__dict__.update(d)
 
     @property
+    def df(self):
+        return self.df
+
+    @property
     def sql(self):
         return self._df.sql
+
+    @property
+    def cols(self):
+        return self._df.cols
 
     def query(self):
         return self._df.sql.query()
