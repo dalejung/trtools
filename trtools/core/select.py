@@ -1,26 +1,15 @@
 """
-    Mainly has simple monkey patches for easier data access. 
+    Collections of tools to quickly select rows/items
 """
+import numpy as np
+
 from pandas import Panel, DataFrame, MultiIndex, Series
-from pandas.core.groupby import DataFrameGroupBy, PanelGroupBy, GroupBy
 
 from trtools.monkey import patch, patch_prop
 
 @patch(DataFrame)
 def cols(self, *args):
     return self.xs(list(args), axis=1)
-
-@patch(Series, 'dropper')
-def dropper(self, value=None, *args, **kwargs):
-    if value is None:
-        return self.dropna(*args, **kwargs)
-    return self.ix[self != value].dropna()
-
-@patch(DataFrame, 'dropper')
-def dropna_df(self, value=None, *args, **kwargs):
-    if value is None:
-        return self.dropna(*args, **kwargs)
-    return self.ix[self != value].dropna()
 
 @patch([DataFrame, Series])
 def selectone(self, func):
@@ -88,3 +77,13 @@ def rx(self):
 
     return self._rx
 
+@patch([DataFrame, Series])
+def pluck(df, index, buffer=2):
+    if not isinstance(index, int):
+        try:
+            index = df.index.get_loc(index)
+        except:
+            raise Exception("%s not in index" % index)
+    lower = max(0, index-buffer)
+    higher = min(len(df), index+buffer+1)
+    return df.ix[lower:higher]

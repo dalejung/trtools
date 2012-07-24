@@ -4,6 +4,7 @@ import datetime
 from pandas import DataFrame, Series, TimeSeries
 
 from trtools.monkey import patch_prop
+import trtools.pdtools.core as core
 
 def date_attr(date):
     return date.year, date.month, date.day
@@ -38,7 +39,7 @@ class TimeIndexer(object):
         self.date = TimeSelector(obj, select_date)
 
     def pluck(self, year, month, day, offset=3):
-        return self.obj.pluck(datetime.datetime(year, month, day), offset)
+        return core.pluck(self.obj, datetime.datetime(year, month, day), offset)
 
 @patch_prop([DataFrame, Series, TimeSeries], 'ts')
 def ts(self):
