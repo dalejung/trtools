@@ -58,7 +58,7 @@ class PandasTable(object):
 
     @property
     def df(self):
-        return self.df
+        return self._df
 
     @property
     def sql(self):
@@ -73,3 +73,7 @@ class PandasTable(object):
 
     def filter(self, *args, **kwargs):
         return self.query().filter(*args, **kwargs)
+
+    def __repr__(self):
+        return repr(self._df)
+
