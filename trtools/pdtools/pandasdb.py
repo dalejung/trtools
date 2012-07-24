@@ -6,7 +6,7 @@
 """
 import pandas as pd
 
-import trtools.pandas.pandassql as pdsql
+import trtools.pdtools.pandassql as pdsql
 import trtools.io as tio
 
 class PandasDB(object):

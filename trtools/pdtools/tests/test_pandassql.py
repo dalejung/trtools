@@ -3,7 +3,7 @@ from unittest import TestCase
 import pandas as pd
 import numpy as np
 import pandas.util.testing as tm
-import trtools.pandas.pandassql as pandassql
+import trtools.pdtools.pandassql as pandassql
 
 class TestPandasDB(TestCase):
 

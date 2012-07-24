@@ -3,7 +3,7 @@ import cPickle as pickle
 
 import pandas as pd
 
-import trtools.pandas.pandasdb as pddb
+import trtools.pdtools.pandasdb as pddb
 import trtools.util.testing as tm
 
 class TestPandasTable(TestCase):
