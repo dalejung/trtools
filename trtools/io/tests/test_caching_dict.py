@@ -3,7 +3,7 @@ import os.path
 from StringIO import StringIO
 
 
-import trtools.caching_dict as cdict
+import trtools.io.caching_dict as cdict
 
 def curpath():
     pth, _ = os.path.split(os.path.abspath(__file__))
@@ -27,9 +27,6 @@ class FakeFile(StringIO):
 class TestDict(cdict.CachingDict):
     fakefile = FakeFile()
 
-    def __init__(self):
-        super(TestDict, self).__init__('test')
-
     def get_fp(self, mode='rb'):
         TestDict.fakefile.seek(0)
         return TestDict.fakefile
@@ -51,28 +48,28 @@ class TestCachingDict(TestCase):
         pass
 
     def test_save(self):
-        cd = TestDict()
+        cd = TestDict('test')
         cd['whee'] = 'hello'
         cd['boo'] = 'boo'
 
-        cd2 = TestDict()
+        cd2 = TestDict('test')
         assert cd2['whee'] == 'hello'
         assert cd2['boo'] == 'boo'
 
     def test_update(self):
-        cd = TestDict()
+        cd = TestDict('test')
         cd.clear()
         assert len(cd.keys()) == 0
         cd.update(bob='whee', tom='kat')
         assert cd['bob'] == 'whee'
         assert cd['tom'] == 'kat'
 
-        cd2 = TestDict()
+        cd2 = TestDict('test')
         assert cd2['bob'] == 'whee'
         assert cd2['tom'] == 'kat'
 
     def test_clear(self):
-        cd = TestDict()
+        cd = TestDict('test')
         cd.update(bob='whee', tom='kat')
         assert cd['bob'] == 'whee'
         assert cd['tom'] == 'kat'
@@ -85,7 +82,7 @@ class TestCachingDict(TestCase):
             Make sure that not in tests the keys()
             not sure how to do this atm
         """
-        cd = TestDict()
+        cd = TestDict('test')
         cd.clear()
         assert len(cd.keys()) == 0
         assert 'bob' not in cd

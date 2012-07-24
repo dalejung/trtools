@@ -6,7 +6,6 @@
 """
 import pandas as pd
 
-import trtools.pdtools.pandassql as pdsql
 import trtools.io as tio
 
 class PandasDB(object):
@@ -25,7 +24,7 @@ class PandasTable(object):
         except:
             pass
 
-    def init_df(self, data):
+    def _init_df(self, data):
         """
             Load df from buffer and set
         """
@@ -35,6 +34,12 @@ class PandasTable(object):
             print 'loading from cache'
             df = tio.load(data)
         self._df = df
+
+    def init_df(self, data):
+        """
+            Load df from buffer and set
+        """
+        self._init_df(data) 
         self.save()
 
     def load(self, f=None):
