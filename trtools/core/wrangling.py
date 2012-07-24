@@ -3,6 +3,7 @@ from pandas import Panel, DataFrame, MultiIndex, Series
 from trtools.monkey import patch
 
 import trtools.core.timeseries as timeseries
+from trtools.core.column_panel import PanelDict
 
 @patch(Series, 'dropper')
 def dropper(self, value=None, *args, **kwargs):
