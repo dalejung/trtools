@@ -67,6 +67,14 @@ class TestPandasDB(TestCase):
         exp = db.df[(db.df.dale < 7) & (db.df.bob > 12)]
         tm.assert_frame_equal(res, exp)
 
+    def test_sql_filter_args_OR(self):
+        db = self.db
+        q = db.query()
+
+        res = q.filter_or(db.df.dale < 7, db.df.bob > 12).all()
+        exp = db.df[(db.df.dale < 7) | (db.df.bob > 12)]
+        tm.assert_frame_equal(res, exp)
+
     def test_sql_filter_kwargs(self):
         db = self.db
         q = db.query()
@@ -78,6 +86,19 @@ class TestPandasDB(TestCase):
         # multiple
         res = q.filter_by(names='dale', bob=10).all()
         exp = db.df[(db.df.names == 'dale') & (db.df.bob == 10)]
+        tm.assert_frame_equal(res, exp)
+
+    def test_sql_filter_kwargs_OR(self):
+        db = self.db
+        q = db.query()
+
+        res = q.filter_or(names=['dale','dane']).all()
+        exp = db.df[(db.df.names == 'dale') | (db.df.names == 'dane')]
+        tm.assert_frame_equal(res, exp)
+
+        # multiple
+        res = q.filter_or(names='dale', bob=[10, 13]).all()
+        exp = db.df[(db.df.names == 'dale') | (db.df.bob == 10) | (db.df.bob == 13)]
         tm.assert_frame_equal(res, exp)
 
     def test_col_startswith(self):

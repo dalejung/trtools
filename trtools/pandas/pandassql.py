@@ -2,29 +2,30 @@ import operator
 
 import pandas as pd
 
-def combine_filters(filters, op=operator.and_):
-    processed_filters = [to_bool(filter) for filter in filters]
+def combine_filters(filters, df=None, op=operator.and_):
+    """
+        combine will convert all filters to bool arrays then use
+        reduce. 
+
+        Since FilterGroup's reduce calls combine_filters, this will 
+        progress recursively.
+    """
+    processed_filters = [to_bool(filter, df) for filter in filters]
     return reduce(lambda a,b: op(a,b), processed_filters)
 
-def to_bool(obj):
+def to_bool(obj, df):
     if isinstance(obj, pd.Series):
         return obj
     if isinstance(obj, FilterGroup):
-        return obj.reduce()
+        return obj.reduce(df)
 
-def _process_filters(df, filters):
+def convert_keyword_filters(df, filters):
     """
-        Convert all filters to bool arrays
     """
     flist = []
     for filter in filters:
-        if isinstance(filter, FilterGroup):
-            filter.apply_df(df)
-
-        # kwargs
         if isinstance(filter, tuple):
             col, value, op = filter
-            # single
             filter = op(df[col], value)
         flist.append(filter)
     return flist
@@ -35,12 +36,10 @@ class FilterGroup(object):
         filters = filters or []
         self.filters = filters
 
-    def apply_df(self, df=None):
-        self.filters = _process_filters(df, self.filters)
-
-    def reduce(self):
+    def reduce(self, df=None):
         op = self.type == 'AND' and operator.and_ or operator.or_
-        return combine_filters(self.filters, op)
+        filters = convert_keyword_filters(df, self.filters)
+        return combine_filters(filters, op=op)
 
     def add_filter(self, filter):
         self.filters.append(filter)
@@ -57,7 +56,7 @@ class PandasSQL(object):
 
     def execute_query_all(self, query):
         cols = query.cols
-        filters = _process_filters(self.df, query.filters)
+        filters = query.filters
         order_by = query.order_by
         joins = query.joins
         return self.execute(cols, filters, order_by, joins)
@@ -65,7 +64,7 @@ class PandasSQL(object):
     def execute(self, cols=None, filters=[], order_by=[], joins=[]):
         ret = self.df
         if len(filters) > 0:
-            combined_filter = combine_filters(filters)
+            combined_filter = combine_filters(filters, self.df)
             ret = self.df[combined_filter]
 
         if cols is not None and len(cols) > 0:
@@ -142,9 +141,7 @@ class Query(object):
         self.joins = joins or []
         self.order_by = None 
 
-    def filter_by(self, *args, **kwargs):
-        filters = self.filters[:]
-
+    def filter_list(self, args, kwargs):
         flist = []
         flist.extend(args)
 
@@ -154,18 +151,26 @@ class Query(object):
             for v in value:
                 flist.append((k, v, operator.eq))
 
+        return flist
+
+    def filter_by(self, *args, **kwargs):
+        filters = self.filters[:]
+
+        flist = self.filter_list(args, kwargs)
+
         fg = FilterGroup(flist, type='AND')
         filters.append(fg)
         return Query(self.db, self.cols, filters, self.joins)
 
     filter = filter_by
 
-    # TODO write test
-    def filter_or(self, *args):
+    def filter_or(self, *args, **kwargs):
         filters = self.filters[:]
-        fg = FilterGroup(args, type="OR")
-        filters.append(fg)
 
+        flist = self.filter_list(args, kwargs)
+
+        fg = FilterGroup(flist, type="OR")
+        filters.append(fg)
         return Query(self.db, self.cols, filters, self.joins)
 
     def all(self):
