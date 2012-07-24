@@ -1,7 +1,9 @@
 from __future__ import division
 
-from pandas import cut, Series
+from pandas import cut, Series, DataFrame
 import numpy as np
+
+from trtools.monkey import patch
 
 inf = 9999999999
 
@@ -94,3 +96,14 @@ def inf_bins_to_cuts(x, bins, right=True, retbins=True,
         return fac
 
     return fac, bins
+
+@patch(Series)
+def tile_series(self, bins, series=None):
+    return tile(self, bins)
+
+@patch(DataFrame, 'tile')
+def tile_df(self, bins, col):
+    series = self[col]
+    ind = cut(series, bins)
+    return self.groupby(ind)
+
