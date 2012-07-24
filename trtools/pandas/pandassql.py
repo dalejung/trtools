@@ -2,8 +2,48 @@ import operator
 
 import pandas as pd
 
-def combine_filters(filters):
-    return reduce(lambda a,b: a & b, filters)
+def combine_filters(filters, op=operator.and_):
+    processed_filters = [to_bool(filter) for filter in filters]
+    return reduce(lambda a,b: op(a,b), processed_filters)
+
+def to_bool(obj):
+    if isinstance(obj, pd.Series):
+        return obj
+    if isinstance(obj, FilterGroup):
+        return obj.reduce()
+
+def _process_filters(df, filters):
+    """
+        Convert all filters to bool arrays
+    """
+    flist = []
+    for filter in filters:
+        if isinstance(filter, FilterGroup):
+            filter.apply_df(df)
+
+        # kwargs
+        if isinstance(filter, tuple):
+            col, value, op = filter
+            # single
+            filter = op(df[col], value)
+        flist.append(filter)
+    return flist
+
+class FilterGroup(object):
+    def __init__(self, filters=None, type="AND"):
+        self.type = type
+        filters = filters or []
+        self.filters = filters
+
+    def apply_df(self, df=None):
+        self.filters = _process_filters(df, self.filters)
+
+    def reduce(self):
+        op = self.type == 'AND' and operator.and_ or operator.or_
+        return combine_filters(self.filters, op)
+
+    def add_filter(self, filter):
+        self.filters.append(filter)
 
 class PandasSQL(object):
     def __init__(self, df):
@@ -17,18 +57,19 @@ class PandasSQL(object):
 
     def execute_query_all(self, query):
         cols = query.cols
-        filters = query.filters
+        filters = _process_filters(self.df, query.filters)
         order_by = query.order_by
         joins = query.joins
         return self.execute(cols, filters, order_by, joins)
 
     def execute(self, cols=None, filters=[], order_by=[], joins=[]):
         ret = self.df
-        if cols is not None and len(cols) > 0:
-            ret = ret.xs(cols, axis=1)
         if len(filters) > 0:
             combined_filter = combine_filters(filters)
-            ret = ret[combined_filter]
+            ret = self.df[combined_filter]
+
+        if cols is not None and len(cols) > 0:
+            ret = ret.xs(cols, axis=1)
 
         if len(joins) > 0:
             for target, on in joins:
@@ -101,12 +142,31 @@ class Query(object):
         self.joins = joins or []
         self.order_by = None 
 
-    def filter_by(self, filter):
+    def filter_by(self, *args, **kwargs):
         filters = self.filters[:]
-        filters.append(filter)
+
+        flist = []
+        flist.extend(args)
+
+        for k, value in kwargs.items():
+            if not isinstance(value, list):
+                value = [value]
+            for v in value:
+                flist.append((k, v, operator.eq))
+
+        fg = FilterGroup(flist, type='AND')
+        filters.append(fg)
         return Query(self.db, self.cols, filters, self.joins)
 
     filter = filter_by
+
+    # TODO write test
+    def filter_or(self, *args):
+        filters = self.filters[:]
+        fg = FilterGroup(args, type="OR")
+        filters.append(fg)
+
+        return Query(self.db, self.cols, filters, self.joins)
 
     def all(self):
         return self.db.execute_query_all(self)
