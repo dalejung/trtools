@@ -1,5 +1,6 @@
 import os
 import types
+import glob
 
 import pandas as pd
 
@@ -39,8 +40,8 @@ class FileCache(object):
         self.put(key, value)
 
     def __contains__(self, key):
-        filename = os.path.join(self.cache_dir, key)
-        return os.path.exists(filename)
+        filepath = self.get_filename(key)
+        return os.path.exists(filepath)
 
     def __len__(self):
         return len(self.keys())
@@ -65,5 +66,12 @@ def leveled_filename(fc, name):
     FileCache.create_dir(subdir)
     return os.path.join(subdir, name)
 
-def LeveledFileCache(cache_dir):
-    return FileCache(cache_dir, filename_func=leveled_filename)
+class LeveledFileCache(FileCache):
+    def __init__(self, cache_dir):
+        super(LeveledFileCache, self).__init__(cache_dir, 
+                                               filename_func=leveled_filename)
+
+    def keys(self):
+        pat = self.cache_dir + '/*/*'
+        files = glob.glob(pat)
+        return [os.path.basename(f) for f in files]
