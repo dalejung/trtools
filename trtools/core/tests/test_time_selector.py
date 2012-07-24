@@ -3,7 +3,7 @@ import cPickle as pickle
 
 import pandas as pd
 
-import trtools.pdtools.time_selector as tm
+import trtools.core.time_selector as ts
 
 class TestTimeSelector(TestCase):
 
