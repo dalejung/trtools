@@ -33,7 +33,6 @@ def farm(tasks, num_consumers=None):
 
     return results
 
-
 def start_process(task_queue, consumers):
 
     for w in consumers:
