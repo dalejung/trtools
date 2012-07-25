@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
 
-from pandas import DataFrame, datetools, DatetimeIndex, Series
+from pandas import DataFrame, datetools, DatetimeIndex, Series, TimeSeries
 from pandas.tseries.resample import _get_range_edges
 from pandas.tseries.frequencies import to_offset, _is_annual, _is_weekly
 import pandas.lib as lib
@@ -312,6 +312,7 @@ def series_plot(self, label=None, *args, **kwargs):
     fig.plot(label, self, *args, **kwargs)
 
 Series.fplot = series_plot
+TimeSeries.fplot = series_plot
 
 def df_plot(self, *args, **kwargs):
     if len(self.columns) > 20:
