@@ -26,6 +26,10 @@ class CachingDict(object):
     def __getitem__(self, key):
         return self._dict.__getitem__(key)
 
+    def __delitem__(self, key):
+        self._dict.__delitem__(key)
+        self.save()
+
     def load(self):
         try:
             obj = pickle.load(self.get_fp())
@@ -49,3 +53,6 @@ class CachingDict(object):
 
     def __contains__(self, key):
         return key in self._dict
+
+    def __len__(self):
+        return len(self.keys())
