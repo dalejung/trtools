@@ -24,6 +24,9 @@ class PandasTable(object):
         except:
             pass
 
+    def reset(self, df):
+        self.init_df(df)
+
     def _init_df(self, data):
         """
             Load df from buffer and set
@@ -48,7 +51,7 @@ class PandasTable(object):
 
     def save(self, f=None):
         f = f or self._get_fp('wb')
-        tio.save(self, f)
+        tio.save(self._df, f)
 
     def _get_fp(self, mode='rb'):
         return open(self.filepath, mode)
