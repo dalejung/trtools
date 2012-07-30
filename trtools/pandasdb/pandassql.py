@@ -76,12 +76,16 @@ class PandasSQL(object):
 
         return ret
 
-    def __getattr__(self, attr):
-        if attr in self.df.columns:
-            return PandasColumn(self, attr)
+    def __getattr__(self, name):
+        if name in self.df.columns:
+            return PandasColumn(self, name)
+        raise AttributeError(name)
 
     def __getstate__(self): return self.__dict__
     def __setstate__(self, d): self.__dict__.update(d)
+
+    def filter(self, *args, **kwargs):
+        return self.query().filter(*args, **kwargs)
 
 class PandasColumn(object):
     """
