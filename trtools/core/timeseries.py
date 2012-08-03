@@ -6,9 +6,14 @@ import calendar
 from pandas import DateOffset, datetools, DataFrame, Series, Panel
 from pandas.tseries.index import DatetimeIndex
 from pandas.tseries.resample import _get_range_edges
-from pandas.core.groupby import BinGrouper
+from pandas.core.groupby import DataFrameGroupBy, PanelGroupBy, BinGrouper
+from pandas.tseries.resample import TimeGrouper
 import pandas.lib as lib
 import numpy as np
+
+from trtools.monkey import patch, patch_prop
+
+## TODO See if I still need this. All this stuff was pre resample
 
 def first_day(year, month, bday=True):
     """ 
@@ -67,14 +72,7 @@ def down_sample(obj, daterange_func):
     grouped._range = range
     return grouped
 
-def fillforward(df):
-    """
-        Take a lower than day freq, and map it to business days.
-        This is to make mapping to a daily chart easy and helps handle
-        business days that vacations.
-    """
-    return df.asfreq(datetools.BDay(), method='pad')
-
+# END TODO
 
 def cols(self, *args):
     return self.xs(list(args), axis=1)
@@ -201,12 +199,19 @@ def end_asof(index, label):
 
     return label
 
-
+# TODO Forget where I was using this. I think pandas does this now.
 class TimeIndex(object):
+    """
+    Kind of like a DatetimeIndex, except it only cares about the time component of a Datetime object. 
+    """
     def __init__(self, times):
         self.times = times
 
     def asof(self, date):
+        """
+            Follows price is right rules. Will return the closest time that is equal or below. 
+            If time is after the last date, it will just return the date.
+        """
         testtime = date.time()
         last = None
         for time in self.times:
@@ -216,12 +221,13 @@ class TimeIndex(object):
                 # found spot
                 break
             last = time
+        # TODO should I anchor this to the last time? 
         if last is None:
             return date
         new_date = datetime.combine(date.date(), last)
         return new_date
 
-def anchor(freq, start=None, end=None):
+def get_time_index(freq, start=None, end=None):
     if start is None:
         start = "1/1/2012 9:30AM"
     if end is None:
@@ -230,8 +236,8 @@ def anchor(freq, start=None, end=None):
     times = [date.time() for date in ideal]
     return TimeIndex(times)
 
-def anchor_index(index, freq):
-    ideal = anchor(freq)
+def get_anchor_index(index, freq):
+    ideal = get_time_index(freq)
 
     start = index[0]
     start = ideal.asof(start)
@@ -250,9 +256,68 @@ def anchor_downsample(obj, freq, axis=None):
         if isinstance(obj, Panel):
             axis = 1
     index = obj._get_axis(axis)
-    ind = anchor_index(index, freq)
+    ind = get_anchor_index(index, freq)
     bins = lib.generate_bins_dt64(index.asi8, ind.asi8, closed='right')
     labels = ind[1:]
     grouper = BinGrouper(bins, labels)
     return obj.groupby(grouper)
+# END TODO
 
+cython_ohlc = {
+        'open':'first', 
+        'high': 'max', 
+        'low': 'min', 
+        'close': 'last',
+        'vol': 'sum'
+        }
+
+def ohlc_grouped_cython(grouped):
+    """
+        Cython one is much faster. Should be same as old 
+        ohlc version
+    """
+    hldf = grouped.agg(cython_ohlc)
+    return hldf
+
+# monkey patches
+
+@patch(DataFrameGroupBy, 'ohlc')
+def ohlc(self):
+    return ohlc_grouped_cython(self)
+
+@patch([Panel, DataFrame, Series])
+def downsample(self, freq, closed='right', label='right', axis=0):
+    tg = TimeGrouper(freq, closed=closed, label=label)
+    grouper = tg.get_grouper(self)
+    return self.groupby(grouper, axis=axis)
+
+# Quick groupbys. _rs stands for resample, though they really use TimeGrouper.
+# Eventuall take out the old groupbys once everything is verified to be equal
+@patch([Panel, DataFrame, Series], 'daily')
+def daily(self):
+    return daily_group(self)
+
+@patch([Panel, DataFrame, Series])
+def daily_rs(self):
+    return self.downsample('D', closed='left', label='left')
+
+@patch([Panel, DataFrame, Series], 'weekly')
+def weekly(self):
+    return weekly_group(self)
+
+@patch([Panel, DataFrame, Series], 'weekly_rs')
+def weekly_rs(self):
+    return self.downsample('W-MON', closed='left', label='left')
+
+@patch([DataFrame, Series], 'monthly')
+def monthly(self):
+    return monthly_group(self)
+
+@patch([DataFrame, Series], 'fillforward')
+def fillforward(df):
+    """
+        Take a lower than day freq, and map it to business days.
+        This is to make mapping to a daily chart easy and helps handle
+        business days that vacations.
+    """
+    return df.asfreq(datetools.BDay(), method='pad')
