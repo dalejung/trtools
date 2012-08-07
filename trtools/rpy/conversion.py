@@ -24,14 +24,14 @@ def my_ri2py(o):
 
     if isinstance(o, SexpVector):
         if 'xts' in rcls:
-            res = convert_xts(o)
+            res = convert_xts_to_df(o)
 
     if res is None:
         res = robjects.default_ri2py(o)
 
     return res
 
-def convert_xts(o):
+def convert_xts_to_df(o):
     """
         Will convert xts objects to DataFrame
     """
@@ -49,7 +49,7 @@ def pd_py2ri(o):
     """
 
     res = None
-    if isinstance(o, pd.DataFrame):
+    if isinstance(o, pd.DataFrame) and isinstance(o.index, pd.DatetimeIndex):
         res = convert_df_to_xts(o)
 
     if res is None:
