@@ -14,7 +14,7 @@ class Mismatcher(object):
         s_new = self.mdf[col + '_new']
         s_old = self.mdf[col + '_old']
         mismatches = self.mdf[s_new != s_old]
-        return mismatches.cols('csinum', s_old.name, s_new.name)
+        return mismatches.cols(self.primary_key, s_old.name, s_new.name)
     
     def __repr__(self):
         return repr(self.diffs())
