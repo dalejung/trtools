@@ -18,25 +18,6 @@ globalenv_ri = rinterface.globalenv
 # Probably need better logic to detect if xts was imported
 robjects.r('require(xts)')
 
-def pd_ri2py(o):
-    res = None
-    try:
-        rcls = o.do_slot("class")
-    except LookupError, le:
-        rcls = [None]
-
-    if isinstance(o, SexpVector):
-        if 'xts' in rcls:
-            print 'xts'
-            res = convert_xts_to_df(o)
-        if 'POSIXct' in rcls:
-            res = convert_posixct_to_index(o)
-
-    if res is None:
-        res = robjects.default_ri2py(o)
-
-    return res
-
 def convert_xts_to_df(o):
     """
         Will convert xts objects to DataFrame
@@ -58,25 +39,6 @@ def convert_posixct_to_index(o):
     index = index.tz_convert(tz)
     return index
 
-robjects.conversion.ri2py = pd_ri2py
-
-def pd_py2ri(o):
-    """ 
-    """
-    res = None
-    if isinstance(o, pd.DataFrame): 
-        if isinstance(o.index, pd.DatetimeIndex):
-            res = convert_df_to_xts(o)
-        else:
-            res = rcom.convert_to_r_dataframe(o)
-
-    if isinstance(o, pd.DatetimeIndex): 
-        res = convert_datetime_index(o)
-        
-    if res is None:
-        res = robjects.default_py2ri(o)
-
-    return res
 
 def convert_dataframe_columns(df, strings_as_factors=False):
     """
@@ -194,4 +156,3 @@ class POSIXct(robjects.vectors.FloatVector):
         else:
             raise ValueError("Currently only supporting DataFrames")
 
-robjects.conversion.py2ri = pd_py2ri
