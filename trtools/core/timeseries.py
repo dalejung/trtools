@@ -287,7 +287,7 @@ def ohlc(self):
 
 @patch([Panel, DataFrame, Series])
 def downsample(self, freq, closed='right', label='right', axis=0):
-    tg = TimeGrouper(freq, closed=closed, label=label)
+    tg = TimeGrouper(freq, closed=closed, label=label, axis=axis)
     grouper = tg.get_grouper(self)
     return self.groupby(grouper, axis=axis)
 
@@ -309,7 +309,7 @@ def weekly(self):
 def weekly_rs(self):
     return self.downsample('W-MON', closed='left', label='left')
 
-@patch([DataFrame, Series], 'monthly')
+@patch([Panel, DataFrame, Series], 'monthly')
 def monthly(self):
     return monthly_group(self)
 
