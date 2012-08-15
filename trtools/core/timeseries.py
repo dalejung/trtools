@@ -287,6 +287,9 @@ def ohlc(self):
 
 @patch([Panel, DataFrame, Series])
 def downsample(self, freq, closed='right', label='right', axis=0):
+    """
+        Essentially use resample logic but reutrning the groupby object
+    """
     tg = TimeGrouper(freq, closed=closed, label=label, axis=axis)
     grouper = tg.get_grouper(self)
     return self.groupby(grouper, axis=axis)
