@@ -25,6 +25,10 @@ def printr(obj):
     print rrepr(obj)
 
 class RObjectWrapper(object):
+    """
+        Essentially a class with slightly better repr and easy access to
+        attr, names, and slots
+    """
     def __init__(self, robj):
         self.robj = robj
 
@@ -32,12 +36,25 @@ class RObjectWrapper(object):
         return rrepr(self.robj)
 
     def __getattr__(self, name):
+        """
+            AFAIK, this should be fine as long as there are no name
+            clashes. Haven't run into any.
+        """
+        obj = None
         if name in self.robj.names:
-            return self.robj.rx2(name)
+            obj = self.robj.rx2(name)
         if name in self.robj.list_attrs():
-            return self.robj.do_slot(name)
+            obj = self.robj.do_slot(name)
         if hasattr(self.robj, name):
-            return getattr(self.robj, name)
+            obj = getattr(self.robj, name)
+
+        # wrap attribute. 
+        if obj is not None: 
+            if isinstance(obj, SexpVector):
+                return RObjectWrapper(obj)
+            else:
+                return obj
+    
         raise AttributeError()
 
 def simple_string_vector_repr(self):
