@@ -12,6 +12,10 @@ import pandas.lib as lib
 from matplotlib.finance import candlestick,\
              plot_day_summary 
 
+import trtools.core.column_grep
+reload(trtools.core.column_grep)
+from trtools.core.column_grep import *
+
 import IPython
 
 IPython.core.pylabtools.figsize(15, 10)
@@ -168,11 +172,11 @@ class Figure(object):
         self.figure.autofmt_xdate()
         self.grapher.candlestick(*args, **kwargs)
 
-    def plot_markers(self, name, series, source=None, xindex=None, **kwargs):
+    def plot_markers(self, name, series, yvalues=None, xindex=None, **kwargs):
         if self.ax is None:
             print('NO AX set')
             return
-        self.grapher.plot_markers(name, series, source, xindex, **kwargs)
+        self.grapher.plot_markers(name, series, yvalues, xindex, **kwargs)
 
     def clear(self, axnum=None):
         if axnum is None:
@@ -227,6 +231,12 @@ class Grapher(object):
         plt.legend(loc=0)
 
     def setup_datetime(self, index):
+        """
+            Setup the int based matplotlib x-index to translate
+            to datetime
+
+            Separated out here to share between plot and candlestick
+        """
         is_datetime = self.is_datetime()
         if self.formatter is None and self.skip_na and is_datetime:
             self.formatter = DateFormatter(index)
@@ -234,17 +244,20 @@ class Grapher(object):
 
     def candlestick(self, df, width=0.3):
         """
+            Takes a df and plots a candlestick. 
+            Will auto search for proper columns
         """
         xax = np.arange(len(df.index))
-        quotes = izip(xax, df.open, df.close, df.high, df.low)
+        ohlc_df = normalize_ohlc(df)
+        quotes = izip(xax, ohlc_df.open, ohlc_df.close, ohlc_df.high, ohlc_df.low)
         ax = self.ax
-        self.df = df
-        self.setup_datetime(df.index)
+        self.df = ohlc_df
+        self.setup_datetime(ohlc_df.index)
         candlestick(ax, quotes, width=width, colorup='g')
 
-    def plot_markers(self, name, series, source=None, xindex=None, **kwargs):
-        if source is not None:
-            series = process_signal(series, source)
+    def plot_markers(self, name, series, yvalues=None, xindex=None, **kwargs):
+        if yvalues is not None:
+            series = process_signal(series, yvalues)
         props = {}
         props['linestyle'] = 'None'
         props['marker'] = 'o'
@@ -256,9 +269,9 @@ class Grapher(object):
 
         self.plot(name, series, **props)
 
-def plot_markers(series, source=None, xindex=None, **kwargs):
-    if source is not None:
-        series = process_signal(series, source)
+def plot_markers(series, yvalues=None, xindex=None, **kwargs):
+    if yvalues is not None:
+        series = process_signal(series, yvalues)
     props = {}
     props['linestyle'] = 'None'
     props['marker'] = 'o'
@@ -273,10 +286,13 @@ def plot_markers(series, source=None, xindex=None, **kwargs):
     plt.plot(index, series, **props)
 
 def process_signal(series, source):
+    """
+        Take any non 0/na value and changes it to corresponding value of source
+    """
     temp = series.copy()
-    temp[temp.nonzero()[0]] = 1
+    temp[temp == 0] = None
     temp *= source
-    return temp[temp.nonzero()[0]]
+    return temp
 
 def remove_series(label, axes=None):
     """ Based on label name, remove a line """
