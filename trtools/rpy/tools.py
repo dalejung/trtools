@@ -17,7 +17,7 @@ def rrepr(obj):
     out = "" 
     for k,vals in info.iteritems():
         out += k + "\n"
-        out += "\n".join(["\t"+val for val in vals])
+        out += "\n".join(["\t"+str(val) for val in vals if val])
         out += "\n"
     return out 
 

@@ -18,6 +18,23 @@ globalenv_ri = rinterface.globalenv
 # Probably need better logic to detect if xts was imported
 robjects.r('require(xts)')
 
+def _convert_Matrix(mat):
+    columns = mat.colnames
+    rows = mat.rownames
+
+    columns = None if rcom._is_null(columns) else list(columns)
+    index = None if rcom._is_null(rows) else list(rows)
+
+    # sometimes we don't get shape and data comes in by column
+    # and not rows... I have no idea why
+    data = np.array(mat)
+    if len(data.shape) == 1: 
+        data.shape = mat.dim[1],mat.dim[0]
+        data = data.T
+
+    return pd.DataFrame(data, index=rcom._check_int(index),
+                        columns=columns)
+
 def convert_xts_to_df(o):
     """
         Will convert xts objects to DataFrame
@@ -25,7 +42,7 @@ def convert_xts_to_df(o):
     dates = o.do_slot('index')
     dates = np.array(dates, dtype=np.dtype("M8[s]"))
     res = robjects.default_ri2py(o)
-    df = rcom.convert_robj(res)
+    df = _convert_Matrix(res)
     df.index = dates
     return df
 
