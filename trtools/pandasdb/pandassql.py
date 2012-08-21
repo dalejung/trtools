@@ -123,6 +123,15 @@ class PandasColumn(object):
     def __le__(self, other):
         return self.column_filter(other, operator.le)
 
+    def isin(self, other):
+        filter = self.db.df[self.column].isin(other)
+        return self.db.execute(filters=[filter])
+
+    def notin(self, other):
+        filter = self.db.df[self.column].isin(other) # same as isin
+        filter = ~filter
+        return self.db.execute(filters=[filter])
+
     def __imod__(self, other):
         #TODO replace with a like or re matching func
         return self.startswith(other)
