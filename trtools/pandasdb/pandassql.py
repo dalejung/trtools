@@ -87,6 +87,9 @@ class PandasSQL(object):
     def filter(self, *args, **kwargs):
         return self.query().filter(*args, **kwargs)
 
+    def filter_or(self, *args, **kwargs):
+        return self.query().filter_or(*args, **kwargs)
+
 class PandasColumn(object):
     """
         Designed for quick column queries
