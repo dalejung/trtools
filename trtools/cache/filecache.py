@@ -1,6 +1,7 @@
 import os
 import types
 import glob
+from functools import partial
 
 import pandas as pd
 
@@ -20,6 +21,7 @@ class FileCache(object):
             os.makedirs(dir)
 
     def get_filename(self, name):
+        name = str(name)
         filename = os.path.join(self.cache_dir, name)
         return filename
 
@@ -61,15 +63,18 @@ class FileCache(object):
         keys = os.listdir(dir)
         return keys
 
-def leveled_filename(fc, name):
-    subdir = os.path.join(fc.cache_dir, name[0])
+def leveled_filename(fc, name, length=1):
+    name = str(name)
+    subdir = os.path.join(fc.cache_dir, name[:length])
     FileCache.create_dir(subdir)
     return os.path.join(subdir, name)
 
 class LeveledFileCache(FileCache):
-    def __init__(self, cache_dir):
+    def __init__(self, cache_dir, length=1):
+        self.length = length
+        func = partial(leveled_filename, length=length)
         super(LeveledFileCache, self).__init__(cache_dir, 
-                                               filename_func=leveled_filename)
+                                               filename_func=func)
 
     def keys(self):
         pat = self.cache_dir + '/*/*'
