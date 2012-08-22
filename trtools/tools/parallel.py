@@ -2,7 +2,7 @@ import multiprocessing as mp
 
 default_consumers = mp.cpu_count() * 2 
 
-def farm(tasks, num_consumers=None):
+def farm(tasks, num_consumers=None, verbose=False):
     if num_consumers is None:
         num_consumers = default_consumers
     task_queue = mp.JoinableQueue()
@@ -10,7 +10,7 @@ def farm(tasks, num_consumers=None):
 
     # Start consumers
     print 'Creating %d consumers' % num_consumers
-    consumers = [ DataProcess(task_queue, result_queue)
+    consumers = [ DataProcess(task_queue, result_queue, verbose)
                   for i in xrange(num_consumers) ]
 
     num_jobs = len(tasks)
@@ -58,7 +58,7 @@ class Task(object):
         return "Task("+str(self.job)+")"
 
 class DataProcess(mp.Process):
-    def __init__(self, task_queue, result_queue):
+    def __init__(self, task_queue, result_queue, verbose=False):
         super(DataProcess, self).__init__()
         self.task_queue = task_queue
         self.result_queue = result_queue
@@ -80,7 +80,8 @@ class DataProcess(mp.Process):
             # Poison pill means we should exit
             self.task_queue.task_done()
             return False
-        print str(self)+'Processing '+str(task)+' Jobs Complete: '+str(self.jobs_complete)
+        if self.verbose:
+            print str(self)+'Processing '+str(task)+' Jobs Complete: '+str(self.jobs_complete)
         data = task()
         self.task_queue.task_done()
         if data is not None:
