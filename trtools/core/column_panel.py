@@ -1,5 +1,6 @@
 import sys
 
+import numpy as np
 from pandas import Series, Panel, DataFrame
 from pandas.util import py3compat
 
@@ -12,7 +13,44 @@ class ColumnPanelItems(object):
         self.obj = obj
 
     def __getattr__(self, key):
-        return self.obj.frames[key]
+        for k in self.obj.frames:
+            if k == key:
+                return self.obj.frames[k]
+        raise AttributeError("{0} is not an item in ColumnPanel".format(key))
+
+class TRDataFrame(object):
+    def __init__(self, df):
+        self.df = df
+
+    def __getattr__(self, key):
+        try:
+            return self.df[key]
+        except:
+            pass
+
+        try:
+            return getattr(self.df, key)
+        except:
+            raise AttributeError("StockPanel or Panel does not have this attr")
+
+    def __getitem__(self, key):
+        """
+            This is different because we are supporting objects as keys. 
+            Some keys might match both a basestring and int. The `in` keyword
+            will match by hash so can only match one type.
+        """
+        columns = self.df.columns
+        where = np.where(columns == key)[0]
+        ind = where[0]
+        key = columns[ind]
+        df = self.df[key] 
+        return df
+
+    def __repr__(self):
+        return repr(self.df)
+
+    def __array__(self):
+        return self.df.__array__()
 
 class ColumnPanel(object):
     def __init__(self, obj=None, name=None):
@@ -76,7 +114,9 @@ class ColumnPanel(object):
         for name, df in self.frames.iteritems():
             results[name] = df[key]
 
-        return DataFrame(results, name=key)
+        df = DataFrame(results, name=key)
+        return df
+        return TRDataFrame(df)
 
     def to_panel(self):
         copies = {}

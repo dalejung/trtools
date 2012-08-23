@@ -87,3 +87,35 @@ def pluck(df, index, buffer=2):
     lower = max(0, index-buffer)
     higher = min(len(df), index+buffer+1)
     return df.ix[lower:higher]
+
+
+
+# These patches are for supporting keys that are more meta objects than straight ints or strings
+@patch([DataFrame], '__getitem__')
+def df__getitem__(self, key):
+    """
+        This is different because we are supporting objects as keys. 
+        Some keys might match both a basestring and int. The `in` keyword
+        will match by hash so can only match one type.
+    """
+    try:
+        columns = self.columns
+        where = np.where(columns == key)[0]
+        ind = where[0]
+        key = columns[ind]
+        col = self._old___getitem__(key) 
+        return col
+    except:
+        pass
+
+    return self._old___getitem__(key) 
+
+
+@patch([DataFrame], '__getattr__')
+def __getattr__(self, name):
+    try: 
+        return self[name]
+    except:
+        pass
+
+    return self._old___getattr__(name) 
