@@ -161,8 +161,11 @@ def max_groupby(grouped, col=None):
     df = kv_agg(grouped, np.argmax, col)
     return df
 
-th  = lambda x: time(9, 30) < x.time() <= time(16)
-trading_hours = np.vectorize(th)
+def trading_hours(df):
+    # assuming timestamp marks end of bar
+    inds = df.index.indexer_between_time(time(9,30), 
+                                         time(16), include_start=False)
+    return df.take(inds)
 
 times = np.vectorize(lambda x: x.time())
 hours = np.vectorize(lambda x: x.time().hour)
