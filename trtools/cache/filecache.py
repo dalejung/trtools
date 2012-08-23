@@ -5,6 +5,13 @@ from functools import partial
 
 import pandas as pd
 
+def _filename(obj):
+    try:
+        return obj.__filename__()
+    except:
+        pass
+    return str(obj)
+
 class FileCache(object):
     """
         Basically a replacement for the HDF5Store. It stores as flat files.
@@ -21,7 +28,7 @@ class FileCache(object):
             os.makedirs(dir)
 
     def get_filename(self, name):
-        name = str(name)
+        name = _filename(name)
         filename = os.path.join(self.cache_dir, name)
         return filename
 
@@ -64,7 +71,7 @@ class FileCache(object):
         return keys
 
 def leveled_filename(fc, name, length=1):
-    name = str(name)
+    name = _filename(name)
     subdir = os.path.join(fc.cache_dir, name[:length])
     FileCache.create_dir(subdir)
     return os.path.join(subdir, name)
