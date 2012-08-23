@@ -64,6 +64,7 @@ class DataProcess(mp.Process):
         self.result_queue = result_queue
         self.current_task = None
         self.jobs_complete = 0
+        self.verbose = verbose
 
     def run(self):
         while self._process_queue():
