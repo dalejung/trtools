@@ -137,12 +137,6 @@ def install_ipython_completers():  # pragma: no cover
     that it knows about accessing column names as attributes."""
     from IPython.utils.generics import complete_object
 
-    @complete_object.when_type(PanelAxisGrabber)
-    def complete_axi_grabber(grabber, prev_completions):
-        obj = grabber.obj
-        return prev_completions + [c for c in obj._get_axis(grabber.axis) \
-                    if isinstance(c, basestring) and py3compat.isidentifier(c)]                                          
-
     @complete_object.when_type(ColumnPanel)
     def complete_column_panel(obj, prev_completions):
         return prev_completions + [c for c in obj.columns \
