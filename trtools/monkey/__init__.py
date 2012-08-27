@@ -1,3 +1,5 @@
+import warnings
+
 def patch(classes, name=None):
     if not isinstance(classes, list):
         classes = [classes]
@@ -7,7 +9,7 @@ def patch(classes, name=None):
             func_name = name and name or func.__name__
             old_func_name = '_old_'+func_name
             if hasattr(cls, old_func_name):
-                raise Warning("{0} was already monkey patched. Detected _old_ func".format(func_name))
+                warnings.warn("{0} was already monkey patched. Detected _old_ func".format(func_name))
                 continue
 
             if hasattr(cls, func_name):
@@ -40,7 +42,7 @@ def patcher(classes, func, name=None):
         func_name = name and name or func.__name__
         old_func_name = '_old_'+func_name
         if hasattr(cls, old_func_name):
-            raise Warning("{0} was already monkey patched. Detected _old_ func".format(func_name))
+            warnings.warn("{0} was already monkey patched. Detected _old_ func".format(func_name))
             continue
 
         if hasattr(cls, func_name):
