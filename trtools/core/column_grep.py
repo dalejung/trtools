@@ -20,7 +20,7 @@ Op = lambda df: df[col_grep(df, 'open')]
 Hi = lambda df: df[col_grep(df, 'high')]
 Lo = lambda df: df[col_grep(df, 'low')]
 Cl = lambda df: df[col_grep(df, 'close')]
-Vo = lambda df: df[col_grep(df, 'volume')]
+Vo = lambda df: df[col_grep(df, 'vol')]
 
 def normalize_ohlc(df, copy=True):
     # copy only the ohlc parts of a df
