@@ -2,7 +2,7 @@ from unittest import TestCase
 from StringIO import StringIO
 
 
-import trtools.cache.filecache as fc
+import trtools.io.filecache as fc
 
 class TestFileCache(TestCase):
 

@@ -70,6 +70,9 @@ class FileCache(object):
         keys = os.listdir(dir)
         return keys
 
+    def __getstate__(self): return self.__dict__
+    def __setstate__(self, d): self.__dict__.update(d)
+
 def leveled_filename(fc, name, length=1):
     name = _filename(name)
     subdir = os.path.join(fc.cache_dir, name[:length])
@@ -79,9 +82,10 @@ def leveled_filename(fc, name, length=1):
 class LeveledFileCache(FileCache):
     def __init__(self, cache_dir, length=1):
         self.length = length
-        func = partial(leveled_filename, length=length)
-        super(LeveledFileCache, self).__init__(cache_dir, 
-                                               filename_func=func)
+        super(LeveledFileCache, self).__init__(cache_dir) 
+
+    def get_filename(self, name):
+        return leveled_filename(self, name, self.length)
 
     def keys(self):
         pat = self.cache_dir + '/*/*'

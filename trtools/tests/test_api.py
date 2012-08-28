@@ -14,7 +14,7 @@ class TestAPI(TestCase):
     def test_api(self):
         import trtools.api
         import trtools.core.api
-        import trtools.cache.api
+        import trtools.io.api
         import trtools.pandasdb.api
 
 if __name__ == '__main__':                                                                                          

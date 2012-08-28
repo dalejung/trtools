@@ -2,7 +2,7 @@ import os.path
 
 from unittest import TestCase
 
-from traderoom.util.caching import cacher
+from trtools.io.cacher import cacher
 
 class TestClass(object):
     def __init__(self):
