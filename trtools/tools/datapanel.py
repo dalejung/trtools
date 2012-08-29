@@ -52,8 +52,8 @@ class DataPanel(object):
         df = self.get_data(job)
         return (job, func(df))
 
-    def process_parallel(self, func, num_consumers=8):
+    def process_parallel(self, func, num_consumers=8, verbose=False):
         batch = self.stocks
         tasks = [parallel.Task(Wrap(func, self.mgr), job) for job in batch]
-        res = parallel.farm(tasks, num_consumers=num_consumers, verbose=True)
+        res = parallel.farm(tasks, num_consumers=num_consumers, verbose=verbose)
         return dict(res)
