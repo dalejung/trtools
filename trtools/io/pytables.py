@@ -1,8 +1,10 @@
+from itertools import izip
+
 from tables import *
 import pandas as pd
 import numpy as np
 
-from itertools import izip
+from trtools.io.common import _filename
 
 def get_atom(dtype):
     try:
@@ -49,9 +51,17 @@ def unconvert_index(index_values, index_dtype):
         return pd.DatetimeIndex(index_values)
 
 def frame_to_table(df, hfile, hgroup, name=None):
-    name = df.name
+
+    if name is None:
+        name = df.name
+
+    # kind of a kludge to get series to work
+    if isinstance(df, pd.Series):
+        series_name = 'vals'
+        df = pd.DataFrame({series_name:df}, index=df.index)
+
     desc = frame_description(df)
-    table = hfile.createTable(hgroup, str(name), desc, str(name),
+    table = hfile.createTable(hgroup, _filename(name), desc, str(name),
                               expectedrows=len(df))
 
     table.attrs.pandas_columns = df.columns

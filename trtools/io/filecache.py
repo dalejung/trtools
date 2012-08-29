@@ -5,12 +5,7 @@ from functools import partial
 
 import pandas as pd
 
-def _filename(obj):
-    try:
-        return obj.__filename__()
-    except:
-        pass
-    return str(obj)
+from trtools.io.common import _filename
 
 class FileCache(object):
     """
