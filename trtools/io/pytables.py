@@ -1,3 +1,4 @@
+import warnings
 from itertools import izip
 
 from tables import *
@@ -21,6 +22,10 @@ def get_col(dtype, pos=None):
     """
     atom = get_atom(dtype)
     return Col.from_atom(atom, pos=pos) 
+
+def _name(table):
+    name = table.attrs.pandas_name
+    return name
 
 def frame_description(df):
     """
@@ -61,8 +66,10 @@ def frame_to_table(df, hfile, hgroup, name=None):
         df = pd.DataFrame({series_name:df}, index=df.index)
 
     desc = frame_description(df)
-    table = hfile.createTable(hgroup, _filename(name), desc, str(name),
-                              expectedrows=len(df))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        table = hfile.createTable(hgroup, _filename(name), desc, str(name),
+                                  expectedrows=len(df))
 
     table.attrs.pandas_columns = df.columns
     table.attrs.pandas_index_name = df.index.name or 'pd_index'
@@ -81,7 +88,7 @@ def table_to_frame(table):
     columns = table.attrs.pandas_columns
     index_name = table.attrs.pandas_index_name
     index_type = table.attrs.pandas_index_type
-    name = table.attrs.pandas_name
+    name = _name(table)
 
     index_values = table.col(index_name)
     index = unconvert_index(index_values, index_type)
@@ -93,3 +100,46 @@ def table_to_frame(table):
     df = pd.DataFrame(data, columns=columns, index=index)
     df.name = name
     return df
+
+class HDFPanel(object):
+    """
+        Kind of like HDFStore but restricts it to a group of 
+        similar DataFrames. Like panel except not sharing index
+    """
+    def __init__(self, filepath):
+        self.filepath = filepath
+        self.handle = self.get_handle()
+
+    def get_handle(self):
+        return openFile(self.filepath)
+
+    def groups(self):
+        handle = self.handle
+        nodes = handle.root._f_listNodes()
+        return [node._v_name for node in nodes]
+
+    def get_group(self, group):
+        handle = self.handle
+        group = handle.root._f_getChild(group)
+        return HDFPanelGroup(group)
+
+class HDFPanelGroup(object):
+    def __init__(self, group):
+        self.group = group
+
+    def get_table(self, name):
+        group = self.group
+        if hasattr(group, str(name)):
+            return getattr(group, str(name))
+
+        tables = group._f_iterNodes()
+        for table in tables:
+            if _name(table) == name:
+                return table
+
+        raise Exception("Name does not exist in this Group")
+
+    def get_data(self, name):
+        table = self.get_table(name)
+        df = table_to_frame(table)
+        return df
