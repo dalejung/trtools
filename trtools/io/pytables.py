@@ -24,8 +24,38 @@ def get_col(dtype, pos=None):
     return Col.from_atom(atom, pos=pos) 
 
 def _name(table):
-    name = table.attrs.pandas_name
+    try:
+        name = table.attrs.pandas_name
+    except:
+        name = table._v_name
     return name
+
+def _columns(table):
+    try:
+        columns = table.attrs.pandas_columns
+    except:
+        # assume first is index
+        columns = table.colnames[1:]
+    return columns
+
+def _index_name(table):
+    try:
+        index_name = table.attrs.pandas_index_name
+    except:
+        # assume first is index
+        index_name = table.colnames[0]
+    return index_name
+
+def _index_type(table):
+    try:
+        index_type = table.attrs.pandas_index_type
+    except:
+        iname = _index_name(table)
+        index_type = getattr(table.cols, iname).dtype
+        if index_type.type == np.int64 and 'time' in iname:
+            index_type = np.dtype('M8[ns]')
+
+    return index_type
 
 def frame_description(df):
     """
@@ -76,30 +106,39 @@ def frame_to_table(df, hfile, hgroup, name=None):
     table.attrs.pandas_index_type = df.index.dtype
     table.attrs.pandas_name = name
 
-    #index_values = convert_index(df.index)
-    #rows = izip(index_values, df.open, df.high, df.low, df.close, df.vol)
-
     # TODO this is fast but can't support multiindex
     table.append(df.to_records())
 
     hfile.flush()
 
-def table_to_frame(table):
-    columns = table.attrs.pandas_columns
-    index_name = table.attrs.pandas_index_name
-    index_type = table.attrs.pandas_index_type
+def table_to_frame(table, where=None):
+    columns = _columns(table)
+    index_name = _index_name(table)
+    index_type = _index_type(table)
     name = _name(table)
 
-    index_values = table.col(index_name)
-    index = unconvert_index(index_values, index_type)
 
-    data = {}
-    for col in columns:
-        data[col] = table.col(col)
+    if where:
+        data = table.readWhere(where)
+    else:
+        data = table.read()
 
-    df = pd.DataFrame(data, columns=columns, index=index)
+    df = table_data_to_frame(data, columns, index_name, index_type)
+
     df.name = name
     return df
+
+def table_data_to_frame(data, columns, index_name, index_type):
+    index_values = data[index_name]
+    index = unconvert_index(index_values, index_type)
+
+    sdict = {}
+    for col in columns:
+        sdict[col] = data[col]
+
+    df = pd.DataFrame(sdict, columns=columns, index=index)
+    return df
+
 
 class HDFPanel(object):
     """
@@ -132,14 +171,46 @@ class HDFPanelGroup(object):
         if hasattr(group, str(name)):
             return getattr(group, str(name))
 
-        tables = group._f_iterNodes()
-        for table in tables:
-            if _name(table) == name:
-                return table
-
         raise Exception("Name does not exist in this Group")
 
-    def get_data(self, name):
+    def get_data(self, name, start=None, end=None):
         table = self.get_table(name)
-        df = table_to_frame(table)
+        df = self._get_data(table, start, end)
         return df
+
+    def get_all(self, start=None, end=None):
+        ret = {}
+        for node in self.group._f_iterNodes():
+            #df = self._get_data(node, start, end)
+            df = node.read()
+            ret[node._v_name] = df
+        return ret
+            
+    def _get_data(self, table, start=None, end=None):
+        index_name = _index_name(table)
+        where = []
+        if start:
+            start = pd.Timestamp(start).value
+            start_where = "({0} > {1})".format(index_name, start)
+            where.append(start_where)
+        if end:
+            end = pd.Timestamp(end).value
+            end_where = "({0} < {1})".format(index_name, end)
+            where.append(end_where)
+
+        if len(where) > 0:
+            where = " & ".join(where)
+        else:
+            where = None
+
+        df = table_to_frame(table, where=where)
+        return df
+
+    def add_index(self):
+        #TODO add indexes to all
+        pass
+
+    def foreach(self, func):
+        pass
+        # call func on each node
+
