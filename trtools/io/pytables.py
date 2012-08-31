@@ -396,7 +396,8 @@ class OBTGroup(HDFPanelGroup):
 
     @property
     def sql(self):
-        return HDFSql(self.table)
+        mappings = {'items' : self.frame_key}
+        return HDFSql(self.table, mappings)
 
     def keys(self):
         data = self.table.col(self.frame_key)
@@ -425,8 +426,11 @@ class HDFSql(object):
     """
         HDFSql object. Kept in separate obj so we don't polute __getattr__ on table
     """
-    def __init__(self, table):
+    def __init__(self, table, mapping=None):
+        # TODO I could coalesce all types/mapping/table into one dict 
+        # so HDFSql doesn't need to know about the table
         self.table = table
+        self.mapping = mapping or {}
         # assuming meta won't change during object lifetime...
         self.meta = _meta(table)
         self.types = self.meta['value_types']
@@ -447,8 +451,8 @@ class HDFSql(object):
         # shortcuts
         if key == 'index':
             return _index_name(self.table)
-        if key == 'items':
-            return self.frame_key
+        if key in self.mapping:
+            return self.mapping[key]
         raise AttributeError("No column")
 
 class HDFQuery(object):
