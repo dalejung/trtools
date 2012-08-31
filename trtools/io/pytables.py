@@ -242,12 +242,14 @@ class HDFPanel(object):
         group = handle.root._f_getChild(group)
 
         meta = _meta(group)
+        old_meta = meta.copy()
         meta.update(kwargs)
 
         group_type = meta.setdefault('group_type', 'panel')
 
-        # update meta if we're overidding here
-        _meta(group, meta)
+        # update meta if we're overidding here. probably better way to do this
+        if old_meta != meta:
+            _meta(group, meta)
 
         klass = HDFPanelGroup
         if group_type == 'obt':
