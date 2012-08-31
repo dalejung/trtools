@@ -117,7 +117,11 @@ def _get_atom(obj, check_string=False):
     
     return ObjectAtom()
 
-def _meta(obj):
+def _meta(obj, meta=None):
+    if meta:
+        obj._v_attrs.pd_meta = meta
+        return
+
     try:
         return obj._v_attrs.pd_meta
     except:
@@ -266,26 +270,37 @@ class HDFPanel(object):
         self.handle = self.open(self.mode)
 
     def open(self, mode="a", warn=True):
+        self.close()
+        return openFile(self.filepath, mode)
+
+    def close(self):
         if self.handle is not None and self.handle.isopen:
             self.handle.close()
-        return openFile(self.filepath, mode)
 
     def groups(self):
         handle = self.handle
         nodes = handle.root._f_listNodes()
         return [node._v_name for node in nodes]
 
-    def get_group(self, group):
+    def get_group(self, group, *args, **kwargs):
         handle = self.handle
         group = handle.root._f_getChild(group)
 
         meta = _meta(group)
+        meta.update(kwargs)
+
         group_type = meta.setdefault('group_type', 'panel')
+
+        # update meta if we're overidding here
+        _meta(group, meta)
+
         klass = HDFPanelGroup
         if group_type == 'obt':
-            print meta
             klass = OBTGroup
         return klass(group, self, **meta)
+
+    def __getitem__(self, key):
+        return self.get_group(key)
 
     def create_group(self, group_name):
         handle = self.handle    
@@ -405,6 +420,8 @@ class OBTGroup(HDFPanelGroup):
             self._table = table
 
     def __getitem__(self, key):
+        # TODO This can be faster if we cache the getWhereList somewhere on disk
+
         if isinstance(key, basestring):
             key = "'{0}'".format(key)
         where = "{0} == {1}".format(self.frame_key, key)
@@ -424,7 +441,55 @@ class OBTGroup(HDFPanelGroup):
 
         return self._table
 
+    @property
+    def sql(self):
+        return HDFSql(self.table)
+
     def keys(self):
         data = self.table.col(self.frame_key)
         return list(np.unique(data))
 
+
+def _convert_param(param):
+    if isinstance(param, basestring):
+        param = "'{0}'".format(param)
+
+    if isinstance(param, pd.Timestamp):
+        param = param.value
+
+    return param
+
+class HDFSql(object):
+    def __init__(self, table):
+        self.table = table
+
+    def __getattr__(self, key):
+        if key in self.table.colnames:
+            return HDFQuery(key)
+        raise AttributeError("No column")
+
+class HDFQuery(object):
+
+    def __init__(self, base):
+        self.base = base
+
+    def base_op(self, other, op):
+        base = "{0} {1} {2}".format(self.base, op, _convert_param(other))
+        return HDFQuery(base)
+
+    __eq__  = lambda self, other: self.base_op(other, "==")
+    __gt__  = lambda self, other: self.base_op(other, ">")
+    __ge__  = lambda self, other: self.base_op(other, ">=")
+    __lt__  = lambda self, other: self.base_op(other, "<")
+    __le__  = lambda self, other: self.base_op(other, "<=")
+
+    def __and__(self, other):
+        base = "({0}) & ({1})".format(self.base, other)
+        return HDFQuery(base)
+
+    def __or__(self, other):
+        base = "({0}) | ({1})".format(self.base, other)
+        return HDFQuery(base)
+
+    def __repr__(self):
+        return str(self.base)
