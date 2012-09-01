@@ -346,12 +346,13 @@ class HDFPanelGroup(object):
         # call func on each node
 
 class OBTGroup(HDFPanelGroup):
-    def __init__(self, group, panel, frame_key, table_name, *args, **kwargs):
+    def __init__(self, group, panel, frame_key, table_name, copy=True, *args, **kwargs):
         super(OBTGroup, self).__init__(group, panel, *args, **kwargs)
 
         self.frame_key = frame_key
         self.table_name = table_name
         self._table = None
+        self.copy = copy
 
     def __setitem__(self, key, value):
         # TODO This should be like mode 'w'. Where another method will be the append
@@ -359,7 +360,7 @@ class OBTGroup(HDFPanelGroup):
         ind = value.index
         if isinstance(value, pd.Series):
             value = {'vals': value}
-        df = pd.DataFrame(value, index=ind, copy=True) # not liking having to copy
+        df = pd.DataFrame(value, index=ind, copy=self.copy) # not liking having to copy
         df[self.frame_key] = key # we copy cuz of this
         table_name = self.table_name
         if hasattr(self.group, table_name):
