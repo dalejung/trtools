@@ -356,12 +356,16 @@ class OBTGroup(HDFPanelGroup):
     def __setitem__(self, key, value):
         # TODO This should be like mode 'w'. Where another method will be the append
         # Right now it will just append to the same frame_key
-        value[self.frame_key] = key
+        ind = value.index
+        if isinstance(value, pd.Series):
+            value = {'vals': value}
+        df = pd.DataFrame(value, index=ind, copy=True) # not liking having to copy
+        df[self.frame_key] = key # we copy cuz of this
         table_name = self.table_name
         if hasattr(self.group, table_name):
-            self.append(value, name=table_name)
+            self.append(df, name=table_name)
         else:
-            table = self.create_table(value, name=table_name)
+            table = self.create_table(df, name=table_name)
             self._table = table
 
     def __getitem__(self, key):
