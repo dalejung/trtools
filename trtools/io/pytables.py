@@ -430,8 +430,7 @@ class OBTGroup(HDFPanelGroup):
         column = self.col(col)
         if column.is_indexed:
             print "Re-indexing on {0}".format(col)
-            num = column.reIndex()
-            print "Re-indexed with {0} vals".format(num)
+            column.reIndex()
         else:
             print "{0} is not indexed".format(col)
 
