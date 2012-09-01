@@ -221,6 +221,9 @@ class HDFPanel(object):
         self.mode = mode
         self.handle = self.open(self.mode)
 
+    def reopen(self):
+        self.handle = self.open(self.mode)
+
     def open(self, mode="a", warn=True):
         self.close()
         return openFile(self.filepath, mode)
@@ -337,10 +340,6 @@ class HDFPanelGroup(object):
     def __getitem__(self, key):
         return self.get_data(key)
 
-    def add_index(self):
-        #TODO add indexes to all
-        pass
-
     def foreach(self, func):
         pass
         # call func on each node
@@ -412,6 +411,40 @@ class OBTGroup(HDFPanelGroup):
 
     def __repr__(self):
         return repr(self.table)
+
+    def col(self, col):
+        column = getattr(self.table.cols, col)
+        return column
+
+
+    def add_index(self, col):
+        column = self.col(col)
+        if not column.is_indexed:
+            print "Creating Index on {0}".format(col)
+            num = column.createCSIndex()
+            print "Index created with {0} vals".format(num)
+        else:
+            print "Index already exists {0}. Reindex?".format(col)
+
+    def reindex(self, col):
+        column = self.col(col)
+        if column.is_indexed:
+            print "Re-indexing on {0}".format(col)
+            num = column.reIndex()
+            print "Re-indexed with {0} vals".format(num)
+        else:
+            print "{0} is not indexed".format(col)
+
+    def reindex_all(self):
+        cols = self.table.colnames
+        for col in cols:
+            self.reindex(col)
+
+    def index_default(self):
+        table_meta = _meta(self.table)
+        index_name = table_meta['index_name']
+        self.add_index(index_name)
+        self.add_index(self.frame_key)
 
 
 def _convert_param(param, base_type=None):
