@@ -9,7 +9,18 @@ def chunker(seq, size):
 # OSX Max Queue Size
 MAX_SIZE = 32000
 
-def farm(tasks, num_consumers=None, verbose=False):
+class ResultHandler(object):
+    """ Default result handler """
+    def __init__(self):
+        self.results = []
+
+    def __call__(self, result):
+        self.results.append(result)
+
+
+def farm(tasks, num_consumers=None, verbose=False, result_handler=None):
+    if result_handler is None:
+        result_handler = ResultHandler()
     if num_consumers is None:
         num_consumers = default_consumers
     task_queue = mp.Queue()
@@ -36,15 +47,14 @@ def farm(tasks, num_consumers=None, verbose=False):
     start_process(task_queue, consumers)
 
     # Start printing results
-    results = []
     while num_consumers:
         result = result_queue.get()
         if result is None:
             num_consumers -= 1
             continue
-        results.extend(result)       
+        result_handler(result)       
 
-    return results
+    return result_handler
 
 def start_process(task_queue, consumers):
 
@@ -92,7 +102,6 @@ class DataProcess(mp.Process):
         self.current_task = task
         if task is None:
             # Poison pill means we should exit
-            #self.task_queue.task_done()
             return False
         if self.verbose:
             print str(self)+'Processing '+str(task)+' Jobs Complete: '+str(self.jobs_complete)
@@ -102,7 +111,6 @@ class DataProcess(mp.Process):
             d = t()
             if d is not None:
                 data.append(d)
-        #self.task_queue.task_done()
         if len(data) > 0:
             self.result_queue.put(data)
         return True
