@@ -18,6 +18,10 @@ class Timer:
             ret = func(df)
         print(t.interval)
     """
+    def __init__(self, name='', verbose=True):
+        self.name = name
+        self.verbose = verbose
+
     def __enter__(self):
         self.start = time.clock()
         return self
@@ -25,3 +29,5 @@ class Timer:
     def __exit__(self, *args):
         self.end = time.clock()
         self.interval = self.end - self.start
+        if self.verbose:
+            print "Run {0}: {1}".format(self.name, self.interval)
