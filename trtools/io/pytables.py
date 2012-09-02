@@ -141,11 +141,11 @@ def unconvert_obj(values, type):
 def unconvert_index(index_values, type):
     return pdtables._unconvert_index(index_values, type)
 
-def create_table_from_frame(name, df, hfile, hgroup, desc, types):
+def create_table_from_frame(name, df, hfile, hgroup, desc, types, filters=None):
     with warnings.catch_warnings(): # ignore the name warnings
         warnings.simplefilter("ignore")
         table = hfile.createTable(hgroup, _filename(name), desc, str(name),
-                                  expectedrows=len(df))
+                                  expectedrows=len(df), filters=filters)
 
     meta = {}
     meta['columns'] = df.columns
@@ -157,7 +157,7 @@ def create_table_from_frame(name, df, hfile, hgroup, desc, types):
 
     return table
 
-def frame_to_table(df, hfile, hgroup, name=None):
+def frame_to_table(df, hfile, hgroup, name=None, filters=None):
     """
     """
     if name is None:
@@ -169,7 +169,7 @@ def frame_to_table(df, hfile, hgroup, name=None):
         df = pd.DataFrame({series_name:df}, index=df.index)
 
     desc, recs, types = convert_frame(df)
-    table = create_table_from_frame(name, df, hfile, hgroup, desc, types)
+    table = create_table_from_frame(name, df, hfile, hgroup, desc, types, filters=filters)
     table.append(recs)
     hfile.flush()
 
@@ -262,21 +262,21 @@ class HDFPanel(object):
     def __getitem__(self, key):
         return self.get_group(key)
 
-    def create_group(self, group_name):
+    def create_group(self, group_name, filters=None):
         """
             Create HDFPanelGroup
         """
         handle = self.handle    
-        group = handle.createGroup(handle.root, group_name, group_name)
+        group = handle.createGroup(handle.root, group_name, group_name, filters=filters)
 
         meta = {}
         meta['group_type'] = 'panel'
 
         _meta(group, meta)
 
-        return HDFPanelGroup(group, self)
+        return HDFPanelGroup(group, self, filters=filters)
 
-    def create_obt(self, group_name, frame_key=None, table_name=None):
+    def create_obt(self, group_name, frame_key=None, table_name=None, filters=None):
         """
             Create OBTGroup
         """
@@ -293,7 +293,7 @@ class HDFPanel(object):
 
         _meta(group, meta)
 
-        return OBTGroup(group, self, **meta)
+        return OBTGroup(group, self, filters=filters, **meta)
 
 class HDFPanelGroup(object):
     pd_group_type = 'panel_group'
@@ -301,6 +301,7 @@ class HDFPanelGroup(object):
     def __init__(self, group, panel, *args, **kwargs):
         self.group = group
         self.panel = panel
+        self.filters = kwargs.pop('filters', None)
 
     def get_table(self, name):
         group = self.group
@@ -326,7 +327,8 @@ class HDFPanelGroup(object):
 
     def create_table(self, df, name=None):
         handle = self.panel.handle
-        table = frame_to_table(df, handle, self.group, name=name)
+        filters = self.filters
+        table = frame_to_table(df, handle, self.group, name=name, filters=filters)
         return table
 
     def append(self, df, name=None):
