@@ -295,6 +295,12 @@ def downsample(self, freq, closed='right', label='right', axis=0):
     """
     tg = TimeGrouper(freq, closed=closed, label=label, axis=axis)
     grouper = tg.get_grouper(self)
+
+    # TODO Get rid of empty bins? 
+    #bins = [0] 
+    #bins.extend(grouper.bins)
+    #periods_in_bin = np.diff(bins)
+
     return self.groupby(grouper, axis=axis)
 
 # Quick groupbys. _rs stands for resample, though they really use TimeGrouper.
