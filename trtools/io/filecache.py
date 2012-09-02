@@ -1,7 +1,6 @@
 import os
 import types
 import glob
-from functools import partial
 
 import pandas as pd
 

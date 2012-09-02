@@ -311,7 +311,7 @@ class HDFPanelGroup(object):
 
     def get_data(self, name):
         table = self.get_table(name)
-        df = table_to_frame(table, where=where)
+        df = table_to_frame(table)
         return df
 
     def get_all(self, start=None, end=None):
