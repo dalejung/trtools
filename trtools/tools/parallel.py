@@ -18,13 +18,16 @@ class ResultHandler(object):
         self.results.append(result)
 
 
-def farm(tasks, num_consumers=None, verbose=False, result_handler=None):
-    if result_handler is None:
+missing = object() # sentinel since None is valid input
+def farm(tasks, num_consumers=None, verbose=False, result_handler=missing):
+    if result_handler is missing:
         result_handler = ResultHandler()
     if num_consumers is None:
         num_consumers = default_consumers
     task_queue = mp.Queue()
     result_queue = mp.Queue()
+
+    print result_handler
 
     # Start consumers
     print 'Creating %d consumers' % num_consumers
@@ -47,12 +50,23 @@ def farm(tasks, num_consumers=None, verbose=False, result_handler=None):
     start_process(task_queue, consumers)
 
     # Start printing results
+    jobs_processed = 0
+    bins = num_jobs // 20
+    bins = max(bins, 1)
     while num_consumers:
         result = result_queue.get()
         if result is None:
             num_consumers -= 1
             continue
-        result_handler(result)       
+        # We send jobs in batches.
+        # call result_handler independently to hide implementation from 
+        # client
+        for r in result:
+            if result_handler is not None:
+                result_handler(r)       
+            jobs_processed += 1
+            if jobs_processed % bins == 0:
+                print "{0} jobs processed".format(jobs_processed)
 
     return result_handler
 
