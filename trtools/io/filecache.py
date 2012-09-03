@@ -10,7 +10,7 @@ class FileCache(object):
     """
         Basically a replacement for the HDF5Store. It stores as flat files.
     """
-    def __init__(self, cache_dir, filename_func=None):
+    def __init__(self, cache_dir, filename_func=None, *args, **kwargs):
         self.cache_dir = cache_dir
         if filename_func:
             self.get_filename = types.MethodType(filename_func, self)
@@ -74,9 +74,9 @@ def leveled_filename(fc, name, length=1):
     return os.path.join(subdir, name)
 
 class LeveledFileCache(FileCache):
-    def __init__(self, cache_dir, length=1):
+    def __init__(self, cache_dir, length=1, *args, **kwargs):
         self.length = length
-        super(LeveledFileCache, self).__init__(cache_dir) 
+        super(LeveledFileCache, self).__init__(cache_dir, *args, **kwargs) 
 
     def get_filename(self, name):
         return leveled_filename(self, name, self.length)

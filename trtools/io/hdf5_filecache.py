@@ -7,10 +7,10 @@ from trtools.io.pytables import HDFPanel
 class SingleHDF(object):
 
     @staticmethod
-    def put(filename, obj):
+    def put(filename, obj, filters=None):
         panel = HDFPanel(filename, 'w')
         with panel.handle:
-            gr = panel.create_group('data')
+            gr = panel.create_group('data', filters=filters)
             gr['data'] = obj
 
     @staticmethod
@@ -22,6 +22,10 @@ class SingleHDF(object):
         return df
 
 class HDF5FileCache(FileCache):
+    def __init__(self, cache_dir, filename_func=None, filters=None, *args, **kwargs):
+        self.filters = None
+        super(HDF5FileCache, self).__init__(cache_dir, filename_func, *args, **kwargs)
+
     def get_filename(self, name):
         name = _filename(name) + '.h5'
         filename = os.path.join(self.cache_dir, name)
@@ -29,16 +33,16 @@ class HDF5FileCache(FileCache):
 
     def put(self, name, obj):
         filename = self.get_filename(name)
-        SingleHDF.put(filename, obj)
+        SingleHDF.put(filename, obj, filters=self.filters)
 
     def get(self, name):
         filename = self.get_filename(name)
         return SingleHDF.get(filename)
 
 class HDF5LeveledFileCache(HDF5FileCache):
-    def __init__(self, cache_dir, length=1):
+    def __init__(self, cache_dir, length=1, *args, **kwargs):
         self.length = length
-        super(HDF5LeveledFileCache, self).__init__(cache_dir) 
+        super(HDF5LeveledFileCache, self).__init__(cache_dir, *args, **kwargs) 
 
     def get_filename(self, name):
         filename = leveled_filename(fc=self, name=name, length=self.length)
