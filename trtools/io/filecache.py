@@ -14,12 +14,14 @@ class FileCache(object):
         self.cache_dir = cache_dir
         if filename_func:
             self.get_filename = types.MethodType(filename_func, self)
-        FileCache.create_dir(cache_dir)
 
     @staticmethod
     def create_dir(dir):
         if not os.path.isdir(dir):
             os.makedirs(dir)
+
+    def cache_dir_check(self):
+        FileCache.create_dir(self.cache_dir)
 
     def get_filename(self, name):
         name = _filename(name)
@@ -27,6 +29,8 @@ class FileCache(object):
         return filename
 
     def put(self, name, obj):
+        self.cache_dir_check()
+
         filename = self.get_filename(name)
         pd.save(obj, filename)
 

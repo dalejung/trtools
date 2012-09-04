@@ -23,7 +23,7 @@ class SingleHDF(object):
 
 class HDF5FileCache(FileCache):
     def __init__(self, cache_dir, filename_func=None, filters=None, *args, **kwargs):
-        self.filters = None
+        self.filters = filters
         super(HDF5FileCache, self).__init__(cache_dir, filename_func, *args, **kwargs)
 
     def get_filename(self, name):
