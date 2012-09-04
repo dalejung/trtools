@@ -39,6 +39,10 @@ class HDF5FileCache(FileCache):
         filename = self.get_filename(name)
         return SingleHDF.get(filename)
 
+    def keys(self):
+        keys = super(HDF5FileCache, self).keys()
+        return [filename[:-3] for filename in keys]
+
 class HDF5LeveledFileCache(HDF5FileCache):
     def __init__(self, cache_dir, length=1, *args, **kwargs):
         self.length = length
@@ -51,4 +55,5 @@ class HDF5LeveledFileCache(HDF5FileCache):
     def keys(self):
         pat = self.cache_dir + '/*/*'
         files = glob.glob(pat)
-        return [os.path.basename(f) for f in files]
+        keys =  [os.path.basename(f) for f in files]
+        return [filename[:-3] for filename in keys]
