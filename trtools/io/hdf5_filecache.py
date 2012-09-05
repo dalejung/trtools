@@ -59,11 +59,16 @@ class HDF5LeveledFileCache(HDF5FileCache):
         return [filename[:-3] for filename in keys]
 
 class OBTContext(object):
-    def __init__(self, filename, frame_key=None, filters=None):
+    """
+        The idea originally was to have a context that closed handle on exit.
+        To minimize possible data corruption. 
+    """
+    def __init__(self, filename, frame_key=None, filters=None, expectedrows=None):
         self.filename = filename
         self.frame_key = frame_key
         self.filters = filters
         self.hdf = None
+        self.expectedrows = expectedrows
 
     def open(self):
         if not (self.hdf and self.hdf.handle.isopen):
@@ -74,7 +79,8 @@ class OBTContext(object):
     def __enter__(self):
         hdf = self.open()
         if not hasattr(hdf.handle.root, 'obt'):
-            hdf.create_obt('obt', frame_key=self.frame_key, filters=self.filters)
+            hdf.create_obt('obt', frame_key=self.frame_key, filters=self.filters, 
+                          expectedrows=self.expectedrows)
         obt = hdf['obt']
         return obt
 
@@ -83,12 +89,13 @@ class OBTContext(object):
         pass
 
 class OBTFileCache(object):
-    def __init__(self, cache_file, frame_key=None, filters=None, *args, **kwargs):
+    def __init__(self, cache_file, frame_key=None, filters=None, expectedrows=None, 
+                 *args, **kwargs):
         self.filters = filters
         self.cache_file = cache_file
         self.check_dir()
         self.frame_key = frame_key
-        self.obt = OBTContext(self.cache_file, self.frame_key)
+        self.obt = OBTContext(self.cache_file, self.frame_key, expectedrows=expectedrows)
 
     def check_dir(self):
         dir = os.path.dirname(self.cache_file)

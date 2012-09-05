@@ -1,6 +1,7 @@
 import warnings
 from collections import OrderedDict
 from itertools import izip
+import cPickle as pickle
 
 from tables import *
 import pandas as pd
@@ -104,7 +105,10 @@ def _meta(obj, meta=None):
         return
 
     try:
-        return obj._v_attrs.pd_meta
+        meta = obj._v_attrs.pd_meta
+        if isinstance(meta, basestring):
+            meta = pickle.loads(meta)
+        return meta
     except:
         return {}
 
@@ -140,11 +144,15 @@ def unconvert_obj(values, type):
 def unconvert_index(index_values, type):
     return pdtables._unconvert_index(index_values, type)
 
-def create_table_from_frame(name, df, hfile, hgroup, desc, types, filters=None):
+def create_table_from_frame(name, df, hfile, hgroup, desc, types, filters=None, 
+                            expectedrows=None):
+    if expectedrows is None:
+        expectedrows = len(df)
     with warnings.catch_warnings(): # ignore the name warnings
         warnings.simplefilter("ignore")
+        print 'Expected rows{0}'.format(expectedrows)
         table = hfile.createTable(hgroup, _filename(name), desc, str(name),
-                                  expectedrows=len(df), filters=filters)
+                                  expectedrows=expectedrows, filters=filters)
 
     meta = {}
     meta['columns'] = df.columns
@@ -156,7 +164,7 @@ def create_table_from_frame(name, df, hfile, hgroup, desc, types, filters=None):
 
     return table
 
-def frame_to_table(df, hfile, hgroup, name=None, filters=None):
+def frame_to_table(df, hfile, hgroup, name=None, filters=None, *args, **kwargs):
     """
     """
     if name is None:
@@ -168,7 +176,8 @@ def frame_to_table(df, hfile, hgroup, name=None, filters=None):
         df = pd.DataFrame({series_name:df}, index=df.index)
 
     desc, recs, types = convert_frame(df)
-    table = create_table_from_frame(name, df, hfile, hgroup, desc, types, filters=filters)
+    table = create_table_from_frame(name, df, hfile, hgroup, desc, types, filters=filters, 
+                                   *args, **kwargs)
     table.append(recs)
     hfile.flush()
 
@@ -275,7 +284,8 @@ class HDFPanel(object):
 
         return HDFPanelGroup(group, self, filters=filters)
 
-    def create_obt(self, group_name, frame_key=None, table_name=None, filters=None):
+    def create_obt(self, group_name, frame_key=None, table_name=None, filters=None,
+                  expectedrows=None):
         """
             Create OBTGroup
         """
@@ -289,6 +299,7 @@ class HDFPanel(object):
         meta['frame_key'] = frame_key
         meta['table_name'] = table_name
         meta['group_type'] = 'obt'
+        meta['expectedrows'] = expectedrows
 
         _meta(group, meta)
 
@@ -324,10 +335,11 @@ class HDFPanelGroup(object):
     def keys(self):
         return self.group._v_children.keys()
 
-    def create_table(self, df, name=None):
+    def create_table(self, df, name=None, *args, **kwargs):
         handle = self.panel.handle
         filters = self.filters
-        table = frame_to_table(df, handle, self.group, name=name, filters=filters)
+        table = frame_to_table(df, handle, self.group, name=name, filters=filters, 
+                               *args, **kwargs)
         return table
 
     def append(self, df, name=None):
@@ -346,13 +358,19 @@ class HDFPanelGroup(object):
         # call func on each node
 
 class OBTGroup(HDFPanelGroup):
-    def __init__(self, group, panel, frame_key, table_name, copy=True, *args, **kwargs):
+    def __init__(self, group, panel, frame_key, table_name, copy=True, 
+                 expectedrows=None, *args, **kwargs):
         super(OBTGroup, self).__init__(group, panel, *args, **kwargs)
 
         self.frame_key = frame_key
         self.table_name = table_name
         self._table = None
         self.copy = copy
+        # having this kind of hacky expectedrows pass through is because
+        # there isn't an explicit tabel creation step. It does it
+        # automagically on first __setitem__. Which might be a mistake for 
+        # OBT. Makes sense for non-OBT. HMMM.
+        self.expectedrows = expectedrows
 
     def __setitem__(self, key, value):
         # TODO This should be like mode 'w'. Where another method will be the append
@@ -366,7 +384,7 @@ class OBTGroup(HDFPanelGroup):
         if hasattr(self.group, table_name):
             self.append(df, name=table_name)
         else:
-            table = self.create_table(df, name=table_name)
+            table = self.create_table(df, name=table_name, expectedrows=self.expectedrows)
             self._table = table
 
     def __getitem__(self, key):

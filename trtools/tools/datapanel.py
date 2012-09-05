@@ -155,6 +155,9 @@ class DataPanel(object):
 
     def remaining_jobs(self):
         done = self.job_trans(self.store.keys()) # most stores will enforce int/str
+        if len(done) == 0:
+            return self.jobs
+
         remaining = set(self.jobs).difference(set(done))
         return list(remaining)
 
