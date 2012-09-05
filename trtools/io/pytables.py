@@ -96,8 +96,7 @@ def _convert_obj(obj):
     elif inferred_type == 'floating':
         converted = np.asarray(values, dtype=np.float64)
         return converted, inferred_type, Float64Atom()
-
-    raise Exception("Unsupported inferred_type {0}".format(inferred_type))
+    raise Exception("Unsupported inferred_type {0} {1}".format(inferred_type, str(values[-5:])))
     
 def _meta(obj, meta=None):
     if meta:

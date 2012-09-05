@@ -1,7 +1,9 @@
 import trtools.tools.parallel as parallel 
-reload(parallel)
 import cPickle as pickle
 from functools import partial
+import operator
+
+import pandas as pd
 
 class DataPanelTask(parallel.Task):
     """
@@ -45,9 +47,9 @@ class AggregateResultStore(object):
         self.results[job] = data
 
 missing = object() # sentinel since None is valid input
-class DataPanel(object):
+class DataProcessor(object):
     """
-        The basic idea is we setup a DataPanel which is a mgr and jobs
+        The basic idea is we setup a DataProcessor which is a mgr and jobs
         In finance data that would be something like EOD and a list of symbols
 
         Note: mgr is really just a callable, so if your data/process step can be
@@ -60,6 +62,9 @@ class DataPanel(object):
         if result_handler is missing:
             result_handler = AggregateResultStore()
         self.result_handler = result_handler
+
+    def add_jobs(self, new_jobs):
+        self.jobs.extend(new_jobs)
 
     def process(self, func=None, *args, **kwargs):
         wrap_func = func
@@ -87,11 +92,10 @@ class DataPanel(object):
     def __getstate__(self): return self.__dict__
     def __setstate__(self, d): self.__dict__.update(d)
 
-class ParallelDataPanel(DataPanel):
+class ParallelDataProcessor(DataProcessor):
     def process(self, func=None, *args, **kwargs):
         batch = self.jobs
         return self.process_parallel(batch, func, *args, **kwargs)
-
 
     def process_parallel(self, batch, func, num_consumers=8, verbose=False):
         tasks = [DataPanelTask(func, job, self.mgr) for job in batch]
@@ -109,3 +113,50 @@ class ParallelDataPanel(DataPanel):
         """
         job, data = result
         return self.result_handler(job, data)
+
+class DataPanel(object):
+    """
+    Should accept a store, which is dict like.
+    DataProcessor doesn't have any machinery for data retention, only a result handler
+
+    job_trans is to handle the fact that sometimes jobs are object, but need to 
+    be converted into int/strings for data storage
+
+    store_key is if the job needs translation
+    """
+    def __init__(self, jobs, store, mgr=None, job_trans=None, store_key=None):
+        if job_trans is None:
+            job_trans = lambda x: x
+
+        self.job_trans = job_trans
+        self.store = store
+        self.jobs = job_trans(jobs)
+        if isinstance(store_key, basestring):
+            store_key = operator.attrgetter(store_key)
+        if store_key is None:
+            store_key = lambda x: x
+        self.store_key = store_key
+
+        self.mgr = mgr
+
+    def handler(self, job, result):
+        key = self.store_key(job)
+        self.store[key] = result
+
+    def process(self, func, *args, **kwargs):
+        jobs = self.remaining_jobs()
+        processor = DataProcessor(jobs, result_handler=self.handler, 
+                                          mgr=self.mgr)
+        processor.process(func, *args, **kwargs)
+
+    def remaining_jobs(self):
+        done = self.job_trans(self.store.keys()) # most stores will enforce int/str
+        remaining = [job for job in self.jobs if job not in done]
+        return remaining
+
+    def __getitem__(self, key):
+        return self.store[key]
+
+    @property
+    def sql(self):
+        return self.store.sql
