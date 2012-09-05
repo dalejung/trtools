@@ -1,6 +1,4 @@
 import trtools.tools.parallel as parallel 
-import cPickle as pickle
-from functools import partial
 import operator
 
 import pandas as pd
@@ -19,7 +17,7 @@ class DataPanelTask(parallel.Task):
         try:
             result = self.run_job()
         except Exception as e:
-            result = None
+            result = (self.job, None)
             print "Error: job: {0} {1}".format(self.job, str(e))
         return result
 
@@ -144,8 +142,10 @@ class DataPanel(object):
         self.store[key] = result
 
     def process(self, func, *args, **kwargs):
+        self.store.delete_all()
+
         jobs = self.remaining_jobs()
-        processor = DataProcessor(jobs, result_handler=self.handler, 
+        processor = ParallelDataProcessor(jobs, result_handler=self.handler, 
                                           mgr=self.mgr)
         processor.process(func, *args, **kwargs)
 
@@ -160,3 +160,6 @@ class DataPanel(object):
     @property
     def sql(self):
         return self.store.sql
+
+    def close(self):
+        self.store.close()
