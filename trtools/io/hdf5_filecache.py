@@ -86,8 +86,14 @@ class OBTFileCache(object):
     def __init__(self, cache_file, frame_key=None, filters=None, *args, **kwargs):
         self.filters = filters
         self.cache_file = cache_file
+        self.check_dir()
         self.frame_key = frame_key
         self.obt = OBTContext(self.cache_file, self.frame_key)
+
+    def check_dir(self):
+        dir = os.path.dirname(self.cache_file)
+        if not os.path.isdir(dir):
+            os.makedirs(dir)
 
     def __setitem__(self, key, value):
         with self.obt as obt:
