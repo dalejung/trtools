@@ -141,18 +141,22 @@ class DataPanel(object):
         key = self.store_key(job)
         self.store[key] = result
 
-    def process(self, func, *args, **kwargs):
-        self.store.delete_all()
+    def process(self, func, refresh=False, num=None, *args, **kwargs):
+        if refresh:  
+            self.store.delete_all()
 
         jobs = self.remaining_jobs()
+        if num > 0:
+            jobs = jobs[:num]
+
         processor = ParallelDataProcessor(jobs, result_handler=self.handler, 
                                           mgr=self.mgr)
         processor.process(func, *args, **kwargs)
 
     def remaining_jobs(self):
         done = self.job_trans(self.store.keys()) # most stores will enforce int/str
-        remaining = [job for job in self.jobs if job not in done]
-        return remaining
+        remaining = set(self.jobs).difference(set(done))
+        return list(remaining)
 
     def __getitem__(self, key):
         return self.store[key]
