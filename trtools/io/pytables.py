@@ -406,7 +406,8 @@ class OBTGroup(HDFPanelGroup):
     def _getitem_query(self, query):
         where = str(query)
         df = table_to_frame(self.table, where=where)
-        return df
+        # return in a form that's more useful. considering outputting panel
+        return df.pivot(df.index, self.frame_key).stack()
 
     def get_all(self):
         all_df = table_to_frame(self.table)
