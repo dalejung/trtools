@@ -387,10 +387,17 @@ class OBTGroup(HDFPanelGroup):
         if hasattr(self.group, table_name):
             self.append(df, name=table_name)
         else:
+            # to create table we need some data to infer type
+            if len(df) == 0:
+                return
             table = self.create_table(df, name=table_name, expectedrows=self.expectedrows)
             self._table = table
 
     def append(self, df):
+        # to create table we need some data to infer type
+        if len(df) == 0:
+            return
+
         table_name = self.table_name
         if hasattr(self.group, table_name):
             self._append(df, name=table_name)
