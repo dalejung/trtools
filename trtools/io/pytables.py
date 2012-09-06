@@ -194,7 +194,7 @@ def table_to_frame(table, where=None):
 
     if where:
         try:
-            print "Where Clause: {0}\n".format(where)
+            #print "Where Clause: {0}\n".format(where)
             data = table.readWhere(where)
         except Exception as err:
             raise Exception("readWhere error: {0} {1}".format(where, str(err)))
@@ -211,7 +211,8 @@ def table_data_to_frame(data, columns, index_name, types):
 
     sdict = {}
     for col in columns:
-        temp = data[col]
+        # recarrays have only str columns
+        temp = data[str(col)]
         temp = unconvert_obj(temp, types[col])
         sdict[col] = temp
 
@@ -349,6 +350,7 @@ class HDFPanelGroup(object):
         table = self.get_table(name)
         desc, recs, types = convert_frame(df)
         table.append(recs)
+        table.flush()
 
     def __setitem__(self, key, value):
         self.create_table(value, name=key)
