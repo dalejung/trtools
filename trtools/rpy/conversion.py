@@ -1,13 +1,15 @@
 import sys, copy, os, itertools
 import time
 
+
 import rpy2.robjects as robjects
 import rpy2.rinterface as rinterface
-from rpy2.robjects.vectors import SexpVector, ListVector, StrSexpVector
+from rpy2.robjects.vectors import SexpVector, ListVector, StrSexpVector, Vector
 from rpy2.robjects.robject import RObjectMixin, RObject
 import numpy as np
 import pandas.rpy.common as rcom
 import pandas as pd
+
 
 NA_TYPES = rcom.NA_TYPES
 VECTOR_TYPES = rcom.VECTOR_TYPES
@@ -40,10 +42,10 @@ def convert_xts_to_df(o):
         Will convert xts objects to DataFrame
     """
     dates = o.do_slot('index')
-    dates = np.array(dates, dtype=np.dtype("M8[s]"))
+    index = convert_posixct_to_index(dates)
     res = robjects.default_ri2py(o)
     df = _convert_Matrix(res)
-    df.index = dates
+    df.index = index
     return df
 
 def convert_posixct_to_index(o):
@@ -75,12 +77,14 @@ def convert_dataframe_columns(df, strings_as_factors=False):
     for column in df:
         value = df[column]
         value_type = value.dtype.type
-        value = [item if pd.notnull(item) else NA_TYPES[value_type]
-                 for item in value]
+        # speed up over list comprehension
+        na_value = NA_TYPES[value_type]
+        value = value.astype(object)
+        value = np.where(value.isnull(), na_value, value)
 
         value = VECTOR_TYPES[value_type](value)
 
-        if not strings_as_factors:
+        if not strings_as_factors and False:
             I = robjects.baseenv.get("I")
             value = I(value)
 

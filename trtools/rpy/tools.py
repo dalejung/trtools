@@ -1,5 +1,10 @@
 from collections import OrderedDict
 from rpy2.rinterface import SexpVector, RNULLType
+from rpy2.robjects.vectors import Vector
+import rpy2.robjects as robjects
+
+from trtools.monkey import patch
+import trtools.rpy.conversion as rconv 
 
 def is_null(obj):
     return isinstance(obj, RNULLType)
@@ -53,12 +58,35 @@ class RObjectWrapper(object):
 
         # wrap attribute. 
         if obj is not None: 
-            if isinstance(obj, SexpVector):
-                return RObjectWrapper(obj)
-            else:
-                return obj
+            return obj.to_py()
     
         raise AttributeError()
+
+@patch([Vector], 'to_py')
+def to_py(o):
+    """
+        Converts to python object if possible. 
+        Otherwise wraps in ROBjectWrapper
+    """
+    res = None
+    try:
+        rcls = o.do_slot("class")
+    except LookupError, le:
+        rcls = []
+
+    if isinstance(o, SexpVector) and len(rcls) > 0:
+        if 'xts' in rcls:
+            res = rconv.convert_xts_to_df(o)
+        elif 'POSIXct' in rcls:
+            res = rconv.convert_posixct_to_index(o)
+        
+    if res is None and isinstance(o, SexpVector):
+        res = RObjectWrapper(o)
+
+    if res is None:
+        res = o
+
+    return res
 
 def simple_string_vector_repr(self):
     if len(self) == 1:
