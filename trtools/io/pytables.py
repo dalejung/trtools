@@ -42,13 +42,13 @@ def convert_frame(df):
     for pos, data in enumerate(atoms.items()):
         k, atom = data
         col = Col.from_atom(atom, pos=pos) 
-        desc[k] = col
+        desc[str(k)] = col
 
     # create recarray
-    dtypes = [(k, v.dtype) for k, v in sdict.items()]
+    dtypes = [(str(k), v.dtype) for k, v in sdict.items()]
     recs = np.recarray(shape=len(df), dtype=dtypes)
     for k, v in sdict.items():
-        recs[k] = v
+        recs[str(k)] = v
     return desc, recs, types
 
 def _convert_obj(obj):
@@ -343,6 +343,9 @@ class HDFPanelGroup(object):
         return table
 
     def append(self, df, name=None):
+        self._append(df, name)
+
+    def _append(self, df, name=None):
         table = self.get_table(name)
         desc, recs, types = convert_frame(df)
         table.append(recs)
@@ -387,6 +390,14 @@ class OBTGroup(HDFPanelGroup):
             table = self.create_table(df, name=table_name, expectedrows=self.expectedrows)
             self._table = table
 
+    def append(self, df):
+        table_name = self.table_name
+        if hasattr(self.group, table_name):
+            self._append(df, name=table_name)
+        else:
+            table = self.create_table(df, name=table_name, expectedrows=self.expectedrows)
+            self._table = table
+
     def __getitem__(self, key):
         # TODO This can be faster if we cache the getWhereList somewhere on disk
 
@@ -407,7 +418,7 @@ class OBTGroup(HDFPanelGroup):
         where = str(query)
         df = table_to_frame(self.table, where=where)
         # return in a form that's more useful. considering outputting panel
-        return df.pivot(df.index, self.frame_key).stack()
+        return df.pivot(df.index, self.frame_key).stack().to_panel()
 
     def get_all(self):
         all_df = table_to_frame(self.table)
@@ -464,6 +475,7 @@ class OBTGroup(HDFPanelGroup):
         index_name = table_meta['index_name']
         self.add_index(index_name)
         self.add_index(self.frame_key)
+
 
 
 def _convert_param(param, base_type=None):

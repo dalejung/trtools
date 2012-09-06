@@ -90,12 +90,13 @@ class OBTContext(object):
 
 class OBTFileCache(object):
     def __init__(self, cache_file, frame_key=None, filters=None, expectedrows=None, 
-                 *args, **kwargs):
+                 append_only=False, *args, **kwargs):
         self.filters = filters
         self.cache_file = cache_file
         self.check_dir()
         self.frame_key = frame_key
         self.obt = OBTContext(self.cache_file, self.frame_key, expectedrows=expectedrows)
+        self.append_only = append_only
 
     def check_dir(self):
         dir = os.path.dirname(self.cache_file)
@@ -104,7 +105,10 @@ class OBTFileCache(object):
 
     def __setitem__(self, key, value):
         with self.obt as obt:
-            obt[key] = value
+            if self.append_only:
+                obt.append(value)
+            else:
+                obt[key] = value
 
     def __getitem__(self, key):
         with self.obt as obt:
