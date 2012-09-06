@@ -1,12 +1,15 @@
 from collections import OrderedDict
-from rpy2.rinterface import SexpVector
+from rpy2.rinterface import SexpVector, RNULLType
+
+def is_null(obj):
+    return isinstance(obj, RNULLType)
 
 def rinfo(obj):
     info = OrderedDict()
     info['classes'] = list(obj.rclass)
-    if hasattr(obj, 'names'):
+    if hasattr(obj, 'names') and not is_null(obj.names):
         info['names'] = list(obj.names)
-    if hasattr(obj, 'list_attrs'):
+    if hasattr(obj, 'list_attrs') and not is_null(obj.names):
         info['list_attrs'] = list(obj.list_attrs())
         
     return info    

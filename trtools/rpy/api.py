@@ -3,13 +3,20 @@ import pandas.rpy.common as rcom
 
 import rpy2.robjects as robjects
 from rpy2.robjects.vectors import SexpVector, ListVector, StrSexpVector
+from trtools.monkey import patch, patch_prop
+from rpy2.robjects.vectors import Vector
 
 import trtools.rpy.conversion as rconv 
 import trtools.rpy.tools as rtools
 reload(rtools)
 reload(rconv)
 
-def pd_ri2py(o):
+@patch([Vector], 'to_py')
+def to_py(o):
+    """
+        Converts to python object if possible. 
+        Otherwise wraps in ROBjectWrapper
+    """
     res = None
     try:
         rcls = o.do_slot("class")
@@ -31,7 +38,7 @@ def pd_ri2py(o):
 
     return res
 
-robjects.conversion.ri2py = pd_ri2py
+robjects.conversion.ri2py = robjects.default_ri2py
 
 def pd_py2ri(o):
     """ 
