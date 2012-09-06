@@ -119,3 +119,11 @@ def __getattr__(self, name):
         pass
 
     return self._old___getattr__(name) 
+
+
+@patch([DataFrame], 'peek')
+def peek(self, num_rows=5, max_col=None):
+    # need to access the pandas column logic instead of hardcoded five
+    max_col = max_col or 5
+    max_col = self.columns.values[max_col]
+    return self.ix[:num_rows, :max_col]
