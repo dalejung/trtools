@@ -119,7 +119,11 @@ class OBTFileCache(object):
             try:
                 return obt.keys()
             except:
-                []
+                return []
+
+    def sortby(self, key):
+        # TODO use table.copy to reorder the data
+        pass
 
     def delete_all(self):
         with self.obt as obt:
