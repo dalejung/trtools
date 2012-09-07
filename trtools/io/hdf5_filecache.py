@@ -95,7 +95,7 @@ class OBTFileCache(object):
         self.cache_file = cache_file
         self.check_dir()
         self.frame_key = frame_key
-        self.obt = OBTContext(self.cache_file, self.frame_key, expectedrows=expectedrows)
+        self.obt_context = OBTContext(self.cache_file, self.frame_key, expectedrows=expectedrows)
         self.append_only = append_only
 
     def check_dir(self):
@@ -104,18 +104,18 @@ class OBTFileCache(object):
             os.makedirs(dir)
 
     def __setitem__(self, key, value):
-        with self.obt as obt:
+        with self.obt_context as obt:
             if self.append_only:
                 obt.append(value)
             else:
                 obt[key] = value
 
     def __getitem__(self, key):
-        with self.obt as obt:
+        with self.obt_context as obt:
             return obt[key]
 
     def keys(self):
-        with self.obt as obt:
+        with self.obt_context as obt:
             try:
                 return obt.keys()
             except:
@@ -126,10 +126,20 @@ class OBTFileCache(object):
         pass
 
     def delete_all(self):
-        with self.obt as obt:
+        with self.obt_context as obt:
             obt.group._f_remove(recursive=True)
 
     @property
     def sql(self):
-        with self.obt as obt:
+        with self.obt_context as obt:
             return obt.sql
+
+    @property
+    def hdf(self):
+        with self.obt_context:
+            return self.obt_context.hdf
+
+    @property
+    def obt(self):
+        with self.obt_context as obt:
+            return obt

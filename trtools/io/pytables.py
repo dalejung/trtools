@@ -230,6 +230,11 @@ class HDFPanel(object):
         self.mode = mode
         self.handle = self.open(self.mode)
 
+    def __getattr__(self, key):
+        if hasattr(self.handle, key):
+            return getattr(self.handle, key)
+        raise AttributeError()
+
     def reopen(self):
         self.handle = self.open(self.mode)
 
@@ -314,12 +319,20 @@ class HDFPanelGroup(object):
         self.panel = panel
         self.filters = kwargs.pop('filters', None)
 
+    def __getattr__(self, key):
+        if hasattr(self.group, key):
+            return getattr(self.group, key)
+        raise AttributeError()
+
+    def meta(self):
+        return _meta(self.group)
+
     def get_table(self, name):
         group = self.group
         if hasattr(group, str(name)):
             return getattr(group, str(name))
 
-        raise Exception("Name does not exist in this Group")
+        raise Exception("{0} does not exist in this Group".format(name))
 
     def get_data(self, name):
         table = self.get_table(name)
