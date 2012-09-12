@@ -38,7 +38,7 @@ def convert_frame(df):
         types[col] = inferred_type
 
     # create table desc
-    desc = {}
+    desc = OrderedDict() 
     for pos, data in enumerate(atoms.items()):
         k, atom = data
         col = Col.from_atom(atom, pos=pos) 
@@ -195,7 +195,7 @@ def table_to_frame(table, where=None):
     if where:
         try:
             #print "Where Clause: {0}\n".format(where)
-            data = table.readWhere(where)
+            data = table_where(table, where)
         except Exception as err:
             raise Exception("readWhere error: {0} {1}".format(where, str(err)))
     else:
@@ -205,9 +205,19 @@ def table_to_frame(table, where=None):
     df.name = name
     return df
 
+def table_where(table, where):
+    return table.readWhere(where)
+
 def table_data_to_frame(data, columns, index_name, types):
-    index_values = data[index_name]
-    index = unconvert_index(index_values, types[index_name])
+    index = None
+    if index_name:
+        index_values = data[index_name]
+        index = unconvert_index(index_values, types[index_name])
+
+    try:
+        columns.remove(index_name)
+    except ValueError:
+        pass
 
     sdict = {}
     for col in columns:
@@ -303,6 +313,12 @@ class HDF5Wrapper(object):
     def __repr__(self):
         return hdf5_obj_repr(self, self.obj)
 
+    def keys(self):
+        return self.obj._v_children.keys()
+
+def _wrap(obj):
+    return obj
+
 class HDF5Handle(HDF5Wrapper):
     """
         This wraps around the handle object
@@ -350,6 +366,11 @@ class HDF5Handle(HDF5Wrapper):
 
         return HDF5Group(group, self, filters=filters)
 
+    def __getattr__(self, key):
+        if hasattr(self.obj, key):
+            return getattr(self.obj, key)
+        raise AttributeError()
+
 class HDF5Group(HDF5Wrapper):
     def __init__(self, group, handle, filters=None):
         self.obj = group
@@ -360,28 +381,61 @@ class HDF5Group(HDF5Wrapper):
     def group(self):
         return self.obj
 
-    def create_table(self, df, name=None, *args, **kwargs):
-        handle = self.panel.handle
-        filters = self.filters
-        table = frame_to_table(df, handle, self.group, name=name, filters=filters, 
-                               *args, **kwargs)
-        return table
-
-    def create_table_from_frame(self, name, desc, types, filters=None, expectedrows=None, title=None):
+    def create_table(self, name, desc, types, filters=None, expectedrows=None, title=None, columns=None, index=None):
         if title is None:
             title = name
 
         with warnings.catch_warnings(): # ignore the name warnings
             warnings.simplefilter("ignore")
-            table = hfile.createTable(hgroup, name, desc, title,
+            table = self.handle.createTable(self.group, name, desc, title,
                                       expectedrows=expectedrows, filters=filters)
 
         meta = {}
-        meta['columns'] = df.columns
+        meta['columns'] = columns or desc.keys()
         meta['value_types'] = types
-        meta['index_name'] = df.index.name or 'pd_index'
+        meta['index_name'] = index
         meta['name'] = name
 
         _meta(table, meta)
 
-        return table
+        return HDF5Table(table)
+
+
+class HDF5Table(HDF5Wrapper):
+    def __init__(self, table, mapping=None):
+        self.obj = table
+        self.mapping = mapping or {}
+
+    @property
+    def table(self):
+        return self.obj
+
+    def append(self, data):
+        if isinstance(data, pd.DataFrame):
+            self._append_frame(data)
+
+    def _append_frame(self, df, flush=False):
+        desc, recs, types = convert_frame(df)
+        self.table.append(recs)
+        if flush:
+            self.table.flush()
+
+    def keys(self):
+        return self.table.colnames
+
+    @property
+    def sql(self):
+        return HDFSql(self.table, self.mapping)
+
+    def __getitem__(self, key):
+        # TODO This can be faster if we cache the getWhereList somewhere on disk
+        key = _convert_param(key)
+        if isinstance(key, HDFQuery):
+            return self.query(key)
+        if isinstance(key, slice):
+            raise NotImplementedError('TODO work on slicing')
+
+    def query(self, query):
+        where = str(query)
+        df = table_to_frame(self.table, where=where)
+        return df

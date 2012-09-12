@@ -4,4 +4,4 @@ from cacher import cacher
 #from hdf5_filecache import HDF5FileCache, HDF5LeveledFileCache, OBTFileCache
 import pytables
 reload(pytables)
-from pytables import HDF5Handle
+from pytables import HDF5Handle, convert_frame
