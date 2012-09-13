@@ -183,7 +183,30 @@ def frame_to_table(df, hfile, hgroup, name=None, filters=None, *args, **kwargs):
 
 def table_to_frame(table, where=None):
     """
-        Convert pytable table to dataframe
+        Simple converison of table to DataFrame
+    """
+    if where:
+        try:
+            data = table_where(table, where)
+        except Exception as err:
+            raise Exception("readWhere error: {0} {1}".format(where, str(err)))
+    else:
+        data = table.read()
+
+
+    df = table_data_to_frame(data, table)
+    return df
+
+def table_where(table, where):
+    """
+        Optimized Where
+    """
+    return table.readWhere(where)
+
+def table_data_to_frame(data, table):
+    """
+        Given the pytables.recarray data and the metadata taken from table, 
+        create a DataFrame
     """
     columns = _columns(table)
     index_name = _index_name(table)
@@ -192,23 +215,6 @@ def table_to_frame(table, where=None):
     meta = _meta(table)
     types = meta.setdefault('value_types', {})
 
-    if where:
-        try:
-            #print "Where Clause: {0}\n".format(where)
-            data = table_where(table, where)
-        except Exception as err:
-            raise Exception("readWhere error: {0} {1}".format(where, str(err)))
-    else:
-        data = table.read()
-
-    df = table_data_to_frame(data, columns, index_name, types)
-    df.name = name
-    return df
-
-def table_where(table, where):
-    return table.readWhere(where)
-
-def table_data_to_frame(data, columns, index_name, types):
     index = None
     if index_name:
         index_values = data[index_name]
@@ -227,6 +233,7 @@ def table_data_to_frame(data, columns, index_name, types):
         sdict[col] = temp
 
     df = pd.DataFrame(sdict, columns=columns, index=index)
+    df.name = name
     return df
 
 def _convert_param(param, base_type=None):
@@ -433,7 +440,9 @@ class HDF5Table(HDF5Wrapper):
         if isinstance(key, HDFQuery):
             return self.query(key)
         if isinstance(key, slice):
-            raise NotImplementedError('TODO work on slicing')
+            data = self.table[key]
+            df = table_data_to_frame(data, self.table)
+            return df
 
     def query(self, query):
         where = str(query)
