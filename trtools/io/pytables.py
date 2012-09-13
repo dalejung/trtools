@@ -121,7 +121,7 @@ def _name(table):
 
 def _columns(table):
     try:
-        columns = _meta(table)['columns']
+        columns = list(_meta(table)['columns'])
     except:
         # assume first is index
         columns = table.colnames[1:]
@@ -155,7 +155,7 @@ def create_table_from_frame(name, df, hfile, hgroup, desc, types, filters=None,
                                   expectedrows=expectedrows, filters=filters)
 
     meta = {}
-    meta['columns'] = df.columns
+    meta['columns'] = list(df.columns)
     meta['value_types'] = types
     meta['index_name'] = df.index.name or 'pd_index'
     meta['name'] = name
@@ -221,7 +221,7 @@ def table_data_to_frame(data, table):
         index = unconvert_index(index_values, types[index_name])
 
     try:
-        columns.remove(index_name)
+        del columns['index_name']
     except ValueError:
         pass
 
@@ -411,7 +411,6 @@ class HDF5Group(HDF5Wrapper):
             title = name
 
         with warnings.catch_warnings(): # ignore the name warnings
-            warnings.simplefilter("ignore")
             table = self.handle.createTable(self.group, name, desc, title,
                                       expectedrows=expectedrows, filters=filters)
 
@@ -472,3 +471,10 @@ class HDF5Table(HDF5Wrapper):
         where = str(query)
         df = table_to_frame(self.table, where=where)
         return df
+
+    def __getattr__(self, key):
+        if hasattr(self.obj, key):
+            val = getattr(self.obj, key)
+            return _wrap(val)
+        raise AttributeError()
+
