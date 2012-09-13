@@ -2,7 +2,7 @@ import os.path
 import glob
 
 from trtools.io.filecache import FileCache, _filename, leveled_filename
-from trtools.io.pytables import HDFPanel
+from trtools.io.hdf5_grouping import HDFPanel
 
 class SingleHDF(object):
 

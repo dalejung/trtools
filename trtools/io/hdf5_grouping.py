@@ -1,3 +1,7 @@
+import numpy as np
+
+from trtools.io.pytables import openFile, _meta, HDFSql, table_to_frame, frame_to_table, _convert_param, HDFQuery
+
 class HDFPanel(object):
     """
         Kind of like HDFStore but restricts it to a group of 

@@ -10,6 +10,7 @@ import numpy as np
 import pandas.io.pytables as pdtables
 
 from trtools.io.common import _filename
+from trtools.io.table_indexing import create_slices
 
 MIN_ITEMSIZE = 10
 
@@ -221,7 +222,7 @@ def table_data_to_frame(data, table):
         index = unconvert_index(index_values, types[index_name])
 
     try:
-        del columns['index_name']
+        columns.remove('index_name')
     except ValueError:
         pass
 
@@ -466,6 +467,32 @@ class HDF5Table(HDF5Wrapper):
             data = self.table[key]
             df = table_data_to_frame(data, self.table)
             return df
+
+        if isinstance(key, np.ndarray):
+            if key.dtype == 'bool':
+                return self._getitem_bool(key)
+
+        try:
+            # list of slices
+            if isinstance(key[0], slice):
+                print 'slices'
+                return self._getitem_slices(key)
+        except:
+            pass
+
+    def _getitem_slices(self, key):
+        parts = []
+        for slice in key:
+            part = self.table[slice]
+            parts.append(part)
+
+        data = np.concatenate(parts)
+        df = table_data_to_frame(data, self.table)
+        return df
+
+    def _getitem_bool(self, key):
+        slices = create_slices(key)
+        return self._getitem_slices(slices)
 
     def query(self, query):
         where = str(query)
