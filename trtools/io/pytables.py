@@ -323,7 +323,16 @@ class HDF5Wrapper(object):
     def keys(self):
         return self.obj._v_children.keys()
 
-def _wrap(obj):
+def _wrap(obj, parent=None):
+    """
+        Wrap the pytables object with an appropiate Object. 
+        Note: since only obj, parent is passed in here, all other params need to be stored
+        in _meta. This is to make creation/reading the same process
+    """
+    if isinstance(obj, Group):
+        return HDF5Group(obj, parent)
+    if isinstance(obj, Table):
+        return HDF5Table(obj)
     return obj
 
 class HDF5Handle(HDF5Wrapper):
@@ -369,20 +378,29 @@ class HDF5Handle(HDF5Wrapper):
             meta = {}
             meta['group_type'] = 'default'
 
+        meta['filters'] = 'filters'
+
         _meta(group, meta)
 
-        return HDF5Group(group, self, filters=filters)
+        return _wrap(group, self)
 
     def __getattr__(self, key):
         if hasattr(self.obj, key):
-            return getattr(self.obj, key)
+            val = getattr(self.obj, key)
+            return _wrap(val)
         raise AttributeError()
 
+    def __getitem__(self, key):
+        if hasattr(self.obj.root, key):
+            val = getattr(self.obj.root, key)
+            return _wrap(val)
+        raise KeyError()
+
 class HDF5Group(HDF5Wrapper):
-    def __init__(self, group, handle, filters=None):
+    def __init__(self, group, handle):
         self.obj = group
         self.handle = handle
-        self.filters = filters
+        self.filters = None
 
     @property
     def group(self):
@@ -405,7 +423,13 @@ class HDF5Group(HDF5Wrapper):
 
         _meta(table, meta)
 
-        return HDF5Table(table)
+        return _wrap(table)
+
+    def __getitem__(self, key):
+        if hasattr(self.obj, key):
+            val = getattr(self.obj, key)
+            return _wrap(val)
+        raise KeyError()
 
 
 class HDF5Table(HDF5Wrapper):
