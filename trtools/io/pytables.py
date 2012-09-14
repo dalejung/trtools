@@ -464,8 +464,8 @@ class HDF5Table(HDF5Wrapper):
 
     @property
     def index(self):
-        if self._index is None:
-            self._index = get_table_index(self.table)
+        if self._index is None and self.cache_index:
+            self._index = CachingIndex(self)
 
         return self._index
 
@@ -540,6 +540,25 @@ class HDF5Table(HDF5Wrapper):
             self._ix = SimpleIndexer(self)
         return self._ix     
 
+class CachingIndex(object):
+    def __init__(self, obj):
+        self.obj = obj
+        self._index = get_table_index(obj.table)
+
+    def __getattr__(self, key):
+        if hasattr(self._index, key):
+            return getattr(self._index, key)
+        raise AttributeError()
+
+    __eq__ = lambda self, other: self._index.__eq__(other)
+    __ne__ = lambda self, other: self._index.__ne__(other)
+    __gt__ = lambda self, other: self._index.__gt__(other)
+    __ge__ = lambda self, other: self._index.__ge__(other)
+    __lt__ = lambda self, other: self._index.__lt__(other)
+    __le__ = lambda self, other: self._index.__le__(other)
+
+    def __repr__(self):
+        return repr(self._index)
 
 class SimpleIndexer(object):
     def __init__(self, obj):
