@@ -560,6 +560,10 @@ class CachingIndex(object):
     def __repr__(self):
         return repr(self._index)
 
+    def refresh(self):
+        self._index = get_table_index(obj.table)
+
+
 class SimpleIndexer(object):
     def __init__(self, obj):
         self.obj = obj
