@@ -204,6 +204,24 @@ def table_where(table, where):
     """
     return table.readWhere(where)
 
+def get_table_index(table, index_name=None, types=None):
+    """
+        Get the pandas index from a pytable
+    """
+    if index_name is None:
+        index_name = _index_name(table)
+
+    if index_name is None: #neither passed in or set in meta
+        return None
+
+    if types is None:
+        meta = _meta(table)
+        types = meta.setdefault('value_types', {})
+
+    index_values = table.col(index_name)
+    index = unconvert_index(index_values, types[index_name])
+    return index
+
 def table_data_to_frame(data, table):
     """
         Given the pytables.recarray data and the metadata taken from table, 
@@ -222,7 +240,7 @@ def table_data_to_frame(data, table):
         index = unconvert_index(index_values, types[index_name])
 
     try:
-        columns.remove('index_name')
+        columns.remove(index_name)
     except ValueError:
         pass
 
@@ -433,13 +451,23 @@ class HDF5Group(HDF5Wrapper):
 
 
 class HDF5Table(HDF5Wrapper):
-    def __init__(self, table, mapping=None):
+    def __init__(self, table, mapping=None, cache_index=True):
         self.obj = table
         self.mapping = mapping or {}
+        self.cache_index = cache_index
+        self._index = None
+        self._ix = None
 
     @property
     def table(self):
         return self.obj
+
+    @property
+    def index(self):
+        if self._index is None:
+            self._index = get_table_index(self.table)
+
+        return self._index
 
     def append(self, data):
         if isinstance(data, pd.DataFrame):
@@ -463,6 +491,7 @@ class HDF5Table(HDF5Wrapper):
         key = _convert_param(key)
         if isinstance(key, HDFQuery):
             return self.query(key)
+
         if isinstance(key, slice):
             data = self.table[key]
             df = table_data_to_frame(data, self.table)
@@ -475,7 +504,6 @@ class HDF5Table(HDF5Wrapper):
         try:
             # list of slices
             if isinstance(key[0], slice):
-                print 'slices'
                 return self._getitem_slices(key)
         except:
             pass
@@ -505,3 +533,18 @@ class HDF5Table(HDF5Wrapper):
             return _wrap(val)
         raise AttributeError()
 
+    @property
+    def ix(self):
+        # start splitting out
+        if self._ix is None:
+            self._ix = SimpleIndexer(self)
+        return self._ix     
+
+
+class SimpleIndexer(object):
+    def __init__(self, obj):
+        self.obj = obj
+
+    def __getitem__(self, key):
+        # TODO, get fancier slicing later on
+        return self.obj[key]
