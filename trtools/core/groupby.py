@@ -2,6 +2,7 @@ from pandas import Panel, MultiIndex, Series
 from pandas.core.groupby import DataFrameGroupBy, PanelGroupBy
 
 from trtools.monkey import patch, patch_prop
+from trtools.core.column_panel import PanelDict
 
 class PanelGroupByMap(object):
     """
@@ -65,12 +66,16 @@ def foreach_panelgroupby(self, func, *args, **kwargs):
     else:
         items = [(self.obj.name, self.obj)]
 
+    results = PanelDict()
     for key, df in items:
+        sub_results = PanelDict()
+        results[key] = sub_results
         for date, idx in indices.iteritems():
             sub_df = df.take(idx)
             res = func(df, sub_df)
             keys.append((key, date))
             values.append(res)
 
-    mi = MultiIndex.from_tuples(keys, names=['name', 'date'])
-    return Series(values, index=mi)
+    if len(results) == 1:
+        return results.values()[0]
+    return results
