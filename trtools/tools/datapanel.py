@@ -1,8 +1,6 @@
 import operator
 
-from trtools.common import missing
-
-from trtools.tools.processing import ParallelDataProcessor
+from trtools.tools.processing import ParallelDataProcessor, DataProcessor
 
 class StoreResultHandler(object):
     """
@@ -22,7 +20,8 @@ class StoreResultHandler(object):
         self.store_key = store_key
 
     def __call__(self, job, data):
-        self.store[job] = data
+        key = self.store_key(job)
+        self.store[key] = data
 
 class DataPanel(object):
     """
@@ -53,9 +52,13 @@ class DataPanel(object):
         if num > 0:
             jobs = jobs[:num]
 
+        processor = self.get_processor(jobs)
+        processor.process(func, *args, **kwargs)
+
+    def get_processor(self, jobs):
         processor = ParallelDataProcessor(jobs, result_handler=self.handler, 
                                           mgr=self.mgr)
-        processor.process(func, *args, **kwargs)
+        return processor
 
     def remaining_jobs(self):
         done = self.job_trans(self.store.keys()) # most stores will enforce int/str

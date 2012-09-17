@@ -1,3 +1,4 @@
+
 def _filename(obj):
     try:
         return obj.__filename__()

@@ -71,7 +71,7 @@ class DataProcessor(object):
         return self._process(batch, wrap_func, *args, **kwargs)
 
     def _process(self, batch, func, *args, **kwargs):
-        tasks = [DataPanelTask(func, job, self.mgr) for job in batch]
+        tasks = self.generate_tasks(func, batch)
         result_handler = self.result_handler
         for task in tasks:
             job, data = task()
@@ -79,16 +79,21 @@ class DataProcessor(object):
                 result_handler(job, data)
         return result_handler
 
+    def generate_tasks(self, func, batch):
+        tasks = [DataPanelTask(func, job, self.mgr) for job in batch]
+        return tasks
+
     def __getstate__(self): return self.__dict__
     def __setstate__(self, d): self.__dict__.update(d)
 
 class ParallelDataProcessor(DataProcessor):
+
     def process(self, func=None, *args, **kwargs):
         batch = self.jobs
         return self.process_parallel(batch, func, *args, **kwargs)
 
     def process_parallel(self, batch, func, num_consumers=8, verbose=False):
-        tasks = [DataPanelTask(func, job, self.mgr) for job in batch]
+        tasks = self.generate_tasks(func, batch)
         result_wrap = result_handler = self.result_handler
         if result_handler:
             # split up here so we don't have to job, data = result

@@ -1,3 +1,5 @@
+import os
+
 from trtools.io.pytables import HDF5Handle, convert_frame, frame_to_table
 from trtools.io.panda_hdf import OneBigTable, create_obt
 
@@ -35,11 +37,17 @@ class HDFFile(object):
         return repr(self.handle)
 
 class OBTFile(object):
-    def __init__(self, filename, mode='a', frame_key=None):
+    def __init__(self, filename, mode='a', frame_key=None, expectedrows=None):
         self.filename = filename
+        dir = os.path.dirname(filename)
+        if not os.path.isdir(dir):
+            os.makedirs(dir)
+
         self.mode = mode
         self.handle = HDF5Handle(filename, mode)
         self.frame_key = self.get_frame_key(frame_key)
+
+        self.expectedrows = expectedrows
 
         if self.obt is None and mode == 'r':
             raise Exception("Opening Empty File in mode r")
@@ -62,7 +70,8 @@ class OBTFile(object):
         return frame_key
 
     def create_table(self, df, key=None):
-        OBT = create_obt(self.handle.root, 'obt', df, 'symbol',frame_key_sample=key)
+        OBT = create_obt(self.handle.root, 'obt', df, 'symbol',frame_key_sample=key, 
+                         expectedrows=self.expectedrows)
         self._obt = OBT
 
     def close(self):
@@ -79,4 +88,11 @@ class OBTFile(object):
         self.obt.append(value)
 
     def __getattr__(self, key):
-        return getattr(self.obj, key)
+        if hasattr(self.obt, key):
+            return getattr(self.obt, key)
+        raise AttributeError()
+
+    def keys(self):
+        if self.obt is None:
+            return []
+        return self.obt.keys()
