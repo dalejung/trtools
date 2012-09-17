@@ -1,6 +1,11 @@
 import numpy as np
 
-from trtools.io.pytables import openFile, _meta, HDFSql, table_to_frame, frame_to_table, _convert_param, HDFQuery
+import pandas as pd
+
+from tables import openFile
+
+from trtools.io.pytables import _meta, HDFSql, table_to_frame, frame_to_table, \
+                                _convert_param, HDFQuery, convert_frame
 
 class HDFPanel(object):
     """
@@ -183,7 +188,7 @@ class OBTGroup(HDFPanelGroup):
         df[self.frame_key] = key # we copy cuz of this
         table_name = self.table_name
         if hasattr(self.group, table_name):
-            self.append(df, name=table_name)
+            self.append(df)
         else:
             # to create table we need some data to infer type
             if len(df) == 0:

@@ -5,7 +5,9 @@ from trtools.io.filecache import FileCache, _filename, leveled_filename
 from trtools.io.hdf5_grouping import HDFPanel
 
 class SingleHDF(object):
-
+    """
+    Methods for writing each result as it's own hdf
+    """
     @staticmethod
     def put(filename, obj, filters=None):
         panel = HDFPanel(filename, 'w')

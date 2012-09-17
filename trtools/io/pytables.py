@@ -2,8 +2,9 @@ import warnings
 from collections import OrderedDict
 from itertools import izip
 import cPickle as pickle
+from datetime import time
 
-from tables import *
+import tables as tb
 import pandas as pd
 import pandas.lib as lib
 import numpy as np
@@ -42,7 +43,7 @@ def convert_frame(df):
     desc = OrderedDict() 
     for pos, data in enumerate(atoms.items()):
         k, atom = data
-        col = Col.from_atom(atom, pos=pos) 
+        col = tb.Col.from_atom(atom, pos=pos) 
         desc[str(k)] = col
 
     # create recarray
@@ -58,20 +59,20 @@ def _convert_obj(obj):
     """
     if isinstance(obj, pd.DatetimeIndex):
         converted = obj.asi8
-        return converted, 'datetime64', Int64Atom()
+        return converted, 'datetime64', tb.Int64Atom()
     elif isinstance(obj, pd.PeriodIndex):
         converted = obj.values
-        return converted, 'periodindex', Int64Atom()
+        return converted, 'periodindex', tb.Int64Atom()
     elif isinstance(obj, pd.PeriodIndex):
         converted = obj.values
-        return converted, 'int64', Int64Atom()
+        return converted, 'int64', tb.Int64Atom()
 
     inferred_type = lib.infer_dtype(obj)
     values = np.asarray(obj)
 
     if inferred_type == 'datetime64':
         converted = values.view('i8')
-        return converted, inferred_type, Int64Atom()
+        return converted, inferred_type, tb.Int64Atom()
     if inferred_type == 'string':
         converted = np.array(list(values), dtype=np.str_)
         itemsize = converted.dtype.itemsize
@@ -80,24 +81,24 @@ def _convert_obj(obj):
         if itemsize < MIN_ITEMSIZE:
             itemsize = MIN_ITEMSIZE
             converted = converted.astype("S{0}".format(itemsize))
-        return converted, inferred_type, StringAtom(itemsize)
+        return converted, inferred_type, tb.StringAtom(itemsize)
     elif inferred_type == 'unicode':
         # table's don't seem to support objects
         raise Exception("Unsupported inferred_type {0}".format(inferred_type))
 
         converted = np.asarray(values, dtype='O')
-        return converted, inferred_type, ObjectAtom()
+        return converted, inferred_type, tb.ObjectAtom()
     elif inferred_type == 'datetime':
         converted = np.array([(time.mktime(v.timetuple()) +
                             v.microsecond / 1E6) for v in values],
                             dtype=np.float64)
-        return converted, inferred_type, Time64Atom()
+        return converted, inferred_type, tb.Time64Atom()
     elif inferred_type == 'integer':
         converted = np.asarray(values, dtype=np.int64)
-        return converted, inferred_type, Int64Atom()
+        return converted, inferred_type, tb.Int64Atom()
     elif inferred_type == 'floating':
         converted = np.asarray(values, dtype=np.float64)
-        return converted, inferred_type, Float64Atom()
+        return converted, inferred_type, tb.Float64Atom()
     raise Exception("Unsupported inferred_type {0} {1}".format(inferred_type, str(values[-5:])))
     
 def _meta(obj, meta=None):
@@ -145,21 +146,22 @@ def unconvert_obj(values, type):
 def unconvert_index(index_values, type):
     return pdtables._unconvert_index(index_values, type)
 
-def create_table_from_frame(name, df, hfile, hgroup, desc, types, filters=None, 
-                            expectedrows=None):
-    if expectedrows is None:
-        expectedrows = len(df)
+def create_table(group, name, desc, types, filters=None, expectedrows=None, title=None, columns=None, index_name=None, extra_meta=None):
+    if title is None:
+        title = name
+
     with warnings.catch_warnings(): # ignore the name warnings
-        warnings.simplefilter("ignore")
-        print 'Expected rows{0}'.format(expectedrows)
-        table = hfile.createTable(hgroup, _filename(name), desc, str(name),
+        print 'expectedrows: ', expectedrows
+        table = group._v_file.createTable(group, name, desc, title,
                                   expectedrows=expectedrows, filters=filters)
 
     meta = {}
-    meta['columns'] = list(df.columns)
+    meta['columns'] = columns or desc.keys()
     meta['value_types'] = types
-    meta['index_name'] = df.index.name or 'pd_index'
+    meta['index_name'] = index_name
     meta['name'] = name
+    if extra_meta:
+        meta.update(extra_meta)
 
     _meta(table, meta)
 
@@ -177,8 +179,10 @@ def frame_to_table(df, hfile, hgroup, name=None, filters=None, *args, **kwargs):
         df = pd.DataFrame({series_name:df}, index=df.index)
 
     desc, recs, types = convert_frame(df)
-    table = create_table_from_frame(name, df, hfile, hgroup, desc, types, filters=filters, 
-                                   *args, **kwargs)
+    columns = list(df.columns)
+    index_name = df.index.name or 'pd_index'
+    table = create_table(hgroup, name, desc, types, filters=filters, columns=columns,
+                         index_name=index_name,*args, **kwargs)
     table.append(recs)
     hfile.flush()
 
@@ -251,6 +255,7 @@ def table_data_to_frame(data, table):
         temp = unconvert_obj(temp, types[col])
         sdict[col] = temp
 
+    print sdict.keys(), index, columns
     df = pd.DataFrame(sdict, columns=columns, index=index)
     df.name = name
     return df
@@ -342,15 +347,21 @@ class HDF5Wrapper(object):
     def keys(self):
         return self.obj._v_children.keys()
 
+    def meta(self):
+        return _meta(self.obj)
+
 def _wrap(obj, parent=None):
     """
         Wrap the pytables object with an appropiate Object. 
         Note: since only obj, parent is passed in here, all other params need to be stored
         in _meta. This is to make creation/reading the same process
     """
-    if isinstance(obj, Group):
+    print type(obj)
+    if isinstance(obj, tb.group.RootGroup):
         return HDF5Group(obj, parent)
-    if isinstance(obj, Table):
+    if isinstance(obj, tb.Group):
+        return HDF5Group(obj, parent)
+    if isinstance(obj, tb.Table):
         return HDF5Table(obj)
     return obj
 
@@ -368,16 +379,15 @@ class HDF5Handle(HDF5Wrapper):
     def handle(self):
         return self.obj
 
-    @property
-    def root(self):
-        return self.handle.root
+    def keys(self):
+        return self.root._v_children.keys()
 
     def reopen(self):
         self.obj = self.open(self.mode)
 
     def open(self, mode="a", warn=True):
         self.close()
-        return openFile(self.filepath, mode)
+        return tb.openFile(self.filepath, mode)
 
     def close(self):
         if self.obj is not None and self.obj.isopen:
@@ -397,7 +407,7 @@ class HDF5Handle(HDF5Wrapper):
             meta = {}
             meta['group_type'] = 'default'
 
-        meta['filters'] = 'filters'
+        meta['filters'] = filters
 
         _meta(group, meta)
 
@@ -406,13 +416,16 @@ class HDF5Handle(HDF5Wrapper):
     def __getattr__(self, key):
         if hasattr(self.obj, key):
             val = getattr(self.obj, key)
-            return _wrap(val)
+            return _wrap(val, self)
+        if hasattr(self.obj.root, key):
+            val = getattr(self.obj.root, key)
+            return _wrap(val, self)
         raise AttributeError()
 
     def __getitem__(self, key):
         if hasattr(self.obj.root, key):
             val = getattr(self.obj.root, key)
-            return _wrap(val)
+            return _wrap(val, self)
         raise KeyError()
 
 class HDF5Group(HDF5Wrapper):
@@ -425,29 +438,31 @@ class HDF5Group(HDF5Wrapper):
     def group(self):
         return self.obj
 
-    def create_table(self, name, desc, types, filters=None, expectedrows=None, title=None, columns=None, index=None):
-        if title is None:
-            title = name
-
-        with warnings.catch_warnings(): # ignore the name warnings
-            table = self.handle.createTable(self.group, name, desc, title,
-                                      expectedrows=expectedrows, filters=filters)
-
-        meta = {}
-        meta['columns'] = columns or desc.keys()
-        meta['value_types'] = types
-        meta['index_name'] = index
-        meta['name'] = name
-
-        _meta(table, meta)
-
+    def create_table(self, name, desc, types, filters=None, expectedrows=None, title=None, columns=None, index_name=None):
+        table = create_table(self.group, name, desc, types, 
+                             filters, expectedrows, title, columns, index_name)
+  
         return _wrap(table)
+
+    def create_group(self, *args, **kwargs):
+        return self.handle.create_group(*args, root=self.obj, **kwargs)
+
+    def frame_to_table(self, df, *args, **kwargs):
+        file = self.handle
+        group = self.group
+        frame_to_table(df, file, group, *args, **kwargs)
 
     def __getitem__(self, key):
         if hasattr(self.obj, key):
             val = getattr(self.obj, key)
             return _wrap(val)
         raise KeyError()
+
+    def __getattr__(self, key):
+        if hasattr(self.obj, key):
+            val = getattr(self.obj, key)
+            return _wrap(val)
+        raise AttributeError()
 
 
 class HDF5Table(HDF5Wrapper):
@@ -469,9 +484,9 @@ class HDF5Table(HDF5Wrapper):
 
         return self._index
 
-    def append(self, data):
+    def append(self, data, flush=False):
         if isinstance(data, pd.DataFrame):
-            self._append_frame(data)
+            self._append_frame(data, flush)
 
     def _append_frame(self, df, flush=False):
         desc, recs, types = convert_frame(df)
@@ -499,7 +514,9 @@ class HDF5Table(HDF5Wrapper):
 
         if isinstance(key, np.ndarray):
             if key.dtype == 'bool':
-                return self._getitem_bool(key)
+                return self._getitem_bools(key)
+            if key.dtype == 'int':
+                return self._getitem_ints(key)
 
         try:
             # list of slices
@@ -518,7 +535,11 @@ class HDF5Table(HDF5Wrapper):
         df = table_data_to_frame(data, self.table)
         return df
 
-    def _getitem_bool(self, key):
+    def _getitem_ints(self, key):
+        slices = create_slices(key)
+        return self._getitem_slices(slices)
+
+    def _getitem_bools(self, key):
         slices = create_slices(key)
         return self._getitem_slices(slices)
 
@@ -539,6 +560,28 @@ class HDF5Table(HDF5Wrapper):
         if self._ix is None:
             self._ix = SimpleIndexer(self)
         return self._ix     
+
+    def add_index(self, col):
+        column = self.col(col)
+        if not column.is_indexed:
+            print "Creating Index on {0}".format(col)
+            num = column.createCSIndex()
+            print "Index created with {0} vals".format(num)
+        else:
+            print "Index already exists {0}. Reindex?".format(col)
+
+    def reindex(self, col):
+        column = self.col(col)
+        if column.is_indexed:
+            print "Re-indexing on {0}".format(col)
+            column.reIndex()
+        else:
+            print "{0} is not indexed".format(col)
+
+    def reindex_all(self):
+        cols = self.table.colnames
+        for col in cols:
+            self.reindex(col)
 
 class CachingIndex(object):
     def __init__(self, obj):
@@ -561,7 +604,7 @@ class CachingIndex(object):
         return repr(self._index)
 
     def refresh(self):
-        self._index = get_table_index(obj.table)
+        self._index = get_table_index(self.obj.table)
 
 
 class SimpleIndexer(object):
@@ -571,3 +614,24 @@ class SimpleIndexer(object):
     def __getitem__(self, key):
         # TODO, get fancier slicing later on
         return self.obj[key]
+
+# IPYTYHON
+def install_ipython_completers():  # pragma: no cover
+    """Register the DataFrame type with IPython's tab completion machinery, so
+    that it knows about accessing column names as attributes."""
+    from IPython.utils.generics import complete_object
+    from pandas.util import py3compat
+
+    @complete_object.when_type(CachingIndex)
+    def complete_index(obj, prev_completions):
+        return prev_completions + [c for c in dir(obj._index) \
+                    if isinstance(c, basestring) and py3compat.isidentifier(c)]                                          
+# Importing IPython brings in about 200 modules, so we want to avoid it unless
+# we're in IPython (when those modules are loaded anyway).
+import sys
+if "IPython" in sys.modules:  # pragma: no cover
+    try: 
+        install_ipython_completers()
+    except Exception:
+        print 'exception'
+        pass 
