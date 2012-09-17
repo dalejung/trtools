@@ -167,11 +167,15 @@ def create_table(group, name, desc, types, filters=None, expectedrows=None, titl
 
     return table
 
-def frame_to_table(df, hfile, hgroup, name=None, filters=None, *args, **kwargs):
+def frame_to_table(name, df, group, filters=None, expectedrows=None, create_only=False, *args, **kwargs):
     """
+        create_only will create the table but not appending the DF.
+        Since the machinery for figuring out a table definition and converting values for
+        appending are the same.
     """
-    if name is None:
-        name = df.name
+    # TODO: potentially could change this to subset the DF so we don't convert and iterate over all
+    # the values
+    hfile = group._v_file
 
     # kind of a kludge to get series to work
     if isinstance(df, pd.Series):
@@ -181,9 +185,12 @@ def frame_to_table(df, hfile, hgroup, name=None, filters=None, *args, **kwargs):
     desc, recs, types = convert_frame(df)
     columns = list(df.columns)
     index_name = df.index.name or 'pd_index'
-    table = create_table(hgroup, name, desc, types, filters=filters, columns=columns,
-                         index_name=index_name,*args, **kwargs)
-    table.append(recs)
+    print filters
+    table = create_table(group, name, desc, types, filters=filters, columns=columns,
+                         expectedrows=expectedrows, index_name=index_name,*args, **kwargs)
+    if not create_only:
+        table.append(recs)
+
     hfile.flush()
 
 def table_to_frame(table, where=None):
@@ -201,6 +208,17 @@ def table_to_frame(table, where=None):
 
     df = table_data_to_frame(data, table)
     return df
+
+def copy_table_def(group, name, orig):
+    table_meta = _meta(orig)
+    desc = orig.description
+    types = table_meta['value_types']
+    index_name = table_meta['index_name']
+    columns = table_meta['columns']
+    expectedrows = orig.nrows
+    table = group.create_table(name, desc, types, columns=columns, index_name=index_name, expectedrows=expectedrows)
+    return table
+
 
 def table_where(table, where):
     """
@@ -255,7 +273,6 @@ def table_data_to_frame(data, table):
         temp = unconvert_obj(temp, types[col])
         sdict[col] = temp
 
-    print sdict.keys(), index, columns
     df = pd.DataFrame(sdict, columns=columns, index=index)
     df.name = name
     return df
@@ -350,13 +367,17 @@ class HDF5Wrapper(object):
     def meta(self):
         return _meta(self.obj)
 
+def _unwrap(obj):
+    if isinstance(obj, HDF5Wrapper):
+        return obj.obj
+    return obj
+
 def _wrap(obj, parent=None):
     """
         Wrap the pytables object with an appropiate Object. 
         Note: since only obj, parent is passed in here, all other params need to be stored
         in _meta. This is to make creation/reading the same process
     """
-    print type(obj)
     if isinstance(obj, tb.group.RootGroup):
         return HDF5Group(obj, parent)
     if isinstance(obj, tb.Group):
@@ -444,13 +465,12 @@ class HDF5Group(HDF5Wrapper):
   
         return _wrap(table)
 
+    def frame_to_table(self, name, df, *args, **kwargs):
+        group = self.group
+        frame_to_table(name, df, group, *args, **kwargs)
+
     def create_group(self, *args, **kwargs):
         return self.handle.create_group(*args, root=self.obj, **kwargs)
-
-    def frame_to_table(self, df, *args, **kwargs):
-        file = self.handle
-        group = self.group
-        frame_to_table(df, file, group, *args, **kwargs)
 
     def __getitem__(self, key):
         if hasattr(self.obj, key):

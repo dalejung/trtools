@@ -3,19 +3,19 @@ from trtools.io.panda_hdf import OneBigTable, create_obt
 
 def hdf_save(obj, filename):
     try:
-        hdf = SingleHDF(filename, 'w')
+        hdf = HDFFile(filename, 'w')
         hdf.save(obj)
     finally:
         hdf.handle.close()
 
 def hdf_open(obj, filename):
     try:
-        hdf = SingleHDF(filename, 'r')
+        hdf = HDFFile(filename, 'r')
         hdf.save(obj)
     finally:
         hdf.handle.close()
 
-class SingleHDF(object):
+class HDFFile(object):
     """
     HDF that stored a single DataFrame
     """
@@ -26,7 +26,7 @@ class SingleHDF(object):
     def save(self, obj):
         group = self.handle.create_group('data')
         expectedrows = len(obj)
-        group.frame_to_table(obj, name='data_table', expectedrows=expectedrows)
+        group.frame_to_table('data_table', obj, expectedrows=expectedrows)
 
     def load(self):
         return self.handle.data['data_table'][:]
@@ -34,7 +34,7 @@ class SingleHDF(object):
     def __repr__(self):
         return repr(self.handle)
 
-class SingleOBT(object):
+class OBTFile(object):
     def __init__(self, filename, mode='a', frame_key=None):
         self.filename = filename
         self.mode = mode
@@ -61,8 +61,8 @@ class SingleOBT(object):
         frame_key = self.obt.frame_key
         return frame_key
 
-    def create_table(self, df):
-        OBT = create_obt(self.handle.root, 'obt', df, 'symbol')
+    def create_table(self, df, key=None):
+        OBT = create_obt(self.handle.root, 'obt', df, 'symbol',frame_key_sample=key)
         self._obt = OBT
 
     def close(self):
@@ -70,10 +70,13 @@ class SingleOBT(object):
 
     def __setitem__(self, key, value):
         if self.obt is None:
-            self.create_table(value)
+            self.create_table(value, key=key)
         self.obt[key] = value
 
     def append(self, value):
         if self.obt is None:
             self.create_table(value)
         self.obt.append(value)
+
+    def __getattr__(self, key):
+        return getattr(self.obj, key)

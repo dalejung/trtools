@@ -1,17 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from trtools.io.pytables import convert_frame, _meta
-
-def copy_table_def(group, name, orig):
-    table_meta = _meta(orig)
-    desc = orig.description
-    types = table_meta['value_types']
-    index_name = table_meta['index_name']
-    columns = table_meta['columns']
-    expectedrows = orig.nrows
-    table = group.create_table(name, desc, types, columns=columns, index_name=index_name, expectedrows=expectedrows)
-    return table
+from trtools.io.pytables import convert_frame, _meta, copy_table_def
 
 class OneBigTable(object):
     """
@@ -75,19 +65,21 @@ class OneBigTable(object):
         table = copy_table_def(self.group, 'indexed_table', self.table)
         table.append(df)
 
-def create_obt(parent, name, df, frame_key, frame_key_sample="", expectedrows=None):
+        self._table = None
+
+def create_obt(parent, name, df, frame_key, frame_key_sample=None, expectedrows=None):
     template = df.ix[0:1].copy()
+    # default to string frame_eky
+    if frame_key_sample is None:
+        frame_key_sample = ""
     if frame_key not in template.columns:
         template[frame_key] = frame_key_sample
-    conv = convert_frame(template)
-    desc = conv[0]
-    types = conv[2]
+
     meta = {'group_type':'obt', 'frame_key':frame_key}
     group = parent.create_group(name, meta=meta) 
     columns=list(template.columns)
 
-    table = group.create_table('obt', desc, types, columns=columns, index_name='pd_index', 
-                               expectedrows=expectedrows)
+    table = group.frame_to_table('obt', template, expectedrows=expectedrows)
 
     OBT = OneBigTable(group, frame_key)
     return OBT
