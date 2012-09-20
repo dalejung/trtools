@@ -265,6 +265,7 @@ class Grapher(object):
         props.update(kwargs)
 
         if xindex is not None:
+            series = series.copy()
             series.index = xindex
 
         self.plot(name, series, **props)
