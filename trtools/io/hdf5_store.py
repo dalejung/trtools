@@ -70,8 +70,8 @@ class OBTFile(object):
         return frame_key
 
     def create_table(self, df, key=None):
-        OBT = create_obt(self.handle.root, 'obt', df, 'symbol',frame_key_sample=key, 
-                         expectedrows=self.expectedrows)
+        OBT = create_obt(self.handle.root, 'obt', df, self.frame_key,
+                         frame_key_sample=key, expectedrows=self.expectedrows)
         self._obt = OBT
 
     def close(self):
