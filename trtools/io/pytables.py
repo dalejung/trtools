@@ -696,12 +696,18 @@ class CachingIndex(object):
             return getattr(self._index, key)
         raise AttributeError()
 
-    __eq__ = lambda self, other: self._index.__eq__(other)
-    __ne__ = lambda self, other: self._index.__ne__(other)
-    __gt__ = lambda self, other: self._index.__gt__(other)
-    __ge__ = lambda self, other: self._index.__ge__(other)
-    __lt__ = lambda self, other: self._index.__lt__(other)
-    __le__ = lambda self, other: self._index.__le__(other)
+    __eq__ = lambda self, other: self._comparison('__eq__', other)
+    __ne__ = lambda self, other: self._comparison('__ne__', other)
+    __gt__ = lambda self, other: self._comparison('__gt__', other)
+    __ge__ = lambda self, other: self._comparison('__ge__', other)
+    __lt__ = lambda self, other: self._comparison('__lt__', other)
+    __le__ = lambda self, other: self._comparison('__le__', other)
+
+    def _comparison(self, op, other):
+        # TODO add gt, ge, lt, le comparisons that output IndexSlice.
+        index_op = getattr(self._index, op)
+        result = index_op(other)
+        return result
 
     def __repr__(self):
         return repr(self._index)
@@ -709,6 +715,16 @@ class CachingIndex(object):
     def refresh(self):
         self._index = get_table_index(self.obj.table)
 
+    def between(self, start, end):
+        """
+            Between dates, inclusive
+        """
+        if isinstance(self._index, pd.DatetimeIndex):
+            start = pd.Timestamp(start)
+            end = pd.Timestamp(end)
+        first = self.searchsorted(start)
+        last = self.searchsorted(end, side="right")
+        return IndexSlice(first, last)
 
 class SimpleIndexer(object):
     def __init__(self, obj):
@@ -716,7 +732,21 @@ class SimpleIndexer(object):
 
     def __getitem__(self, key):
         # TODO, get fancier slicing later on
+        if isinstance(key, IndexSlice):
+            key = slice(key.start, key.end, key.step)
         return self.obj[key]
+
+class IndexSlice(object):
+    def __init__(self, start=None, end=None, step=None):
+        self.start = start
+        self.end = end
+        self.step = step
+
+    def __and__(self, other):
+        if self.start is None:
+            self.start = other.start
+        if self.end is None:
+            self.end = other.end
 
 # IPYTYHON
 def install_ipython_completers():  # pragma: no cover
