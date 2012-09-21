@@ -51,7 +51,19 @@ class OneBigTable(object):
         return self.table.index
 
     def __getitem__(self, key):
-        return self.table[key]
+        if isinstance(key, basestring):
+            return self._getitem_framekey(key)
+        if isinstance(key, int):
+            return self._getitem_framekey(key)
+        df = self.table[key]
+        df.set_index(self.frame_key, append=True, inplace=True)
+        return df
+
+    def _getitem_framekey(self, key):
+        query = getattr(self.table.sql, self.frame_key) == key
+        df = self.table[query]
+        del df[self.frame_key]
+        return df
 
     def index_default(self):
         table_meta = _meta(self.table)
@@ -60,7 +72,7 @@ class OneBigTable(object):
         self.table.add_index(self.frame_key)
 
     def sort_index(self):
-        df = self[:]
+        df = self.table[:] # getitem returns MultiIndex
         df = df.sort_index()
         table = copy_table_def(self.group, 'indexed_table', self.table)
         table.append(df)
@@ -79,7 +91,7 @@ def create_obt(parent, name, df, frame_key, frame_key_sample=None, expectedrows=
     group = parent.create_group(name, meta=meta) 
     columns=list(template.columns)
 
-    table = group.frame_to_table('obt', template, expectedrows=expectedrows)
+    table = group.frame_to_table('obt', template, expectedrows=expectedrows, create_only=True)
 
     OBT = OneBigTable(group, frame_key)
     return OBT

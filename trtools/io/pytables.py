@@ -100,8 +100,29 @@ def _convert_obj(obj):
         converted = np.asarray(values, dtype=np.float64)
         return converted, inferred_type, tb.Float64Atom()
     raise Exception("Unsupported inferred_type {0} {1}".format(inferred_type, str(values[-5:])))
+
+def _handle(obj):
+    if isinstance(obj, tb.file.File):
+        handle = obj
+    else:
+        handle = obj._v_file
+
+    return _wrap(handle)
+
     
 def _meta(obj, meta=None):
+    if isinstance(obj, tb.file.File):
+        obj = obj.root
+        return _meta_file(obj, meta)
+
+    handle = _handle(obj)
+    type = handle.type
+    if type == 'directory':
+        return _meta_dir(obj, meta)
+
+    return _meta_file(obj, meta)
+
+def _meta_file(obj, meta):
     if meta:
         obj._v_attrs.pd_meta = meta
         return
@@ -110,6 +131,32 @@ def _meta(obj, meta=None):
         meta = obj._v_attrs.pd_meta
         if isinstance(meta, basestring):
             meta = pickle.loads(meta)
+        return meta
+    except:
+        return {}
+
+def _meta_path(obj):
+    import os.path
+
+    dir = os.path.dirname(obj._v_file.filename)
+    filename = obj._v_pathname[1:]
+    bits = filename.split('/')
+    bits.append('meta')
+    filename = ".".join(bits)
+    filepath = os.path.join(dir, filename)
+    return filepath
+
+
+def _meta_dir(obj, meta=None):
+    filepath = _meta_path(obj)
+    if meta:
+        with open(filepath, 'wb') as f:
+            pickle.dump(meta, f)
+        return
+
+    try:
+        with open(filepath, 'rb') as f:
+            meta = pickle.load(f)
         return meta
     except:
         return {}
@@ -129,13 +176,23 @@ def _columns(table):
         columns = table.colnames[1:]
     return columns
 
-def _index_name(table):
+def _index_name(obj):
+    if isinstance(obj, pd.DataFrame):
+        return _index_name_frame(obj)
+    return _index_name_table(obj)
+
+def _index_name_table(table):
     try:
         index_name = _meta(table)['index_name']
     except:
         # assume first is index
         index_name = table.colnames[0]
     return index_name
+
+def _index_name_frame(df):
+    #TODO support multiindex
+    index = df.index
+
 
 def unconvert_obj(values, type):
     if type == 'datetime64':
@@ -185,7 +242,6 @@ def frame_to_table(name, df, group, filters=None, expectedrows=None, create_only
     desc, recs, types = convert_frame(df)
     columns = list(df.columns)
     index_name = df.index.name or 'pd_index'
-    print filters
     table = create_table(group, name, desc, types, filters=filters, columns=columns,
                          expectedrows=expectedrows, index_name=index_name,*args, **kwargs)
     if not create_only:
@@ -384,17 +440,45 @@ def _wrap(obj, parent=None):
         return HDF5Group(obj, parent)
     if isinstance(obj, tb.Table):
         return HDF5Table(obj)
+    if isinstance(obj, tb.file.File):
+        return HDF5Handle(obj)
     return obj
 
 class HDF5Handle(HDF5Wrapper):
     """
         This wraps around the handle object
     """
-    def __init__(self, filepath, mode='a'):
+    def __init__(self, filepath, mode='a', type=None):
+        if isinstance(filepath, tb.file.File):
+            return self._init_from_handle(filepath)
+
         self.filepath = filepath
         self.mode = mode
         self.obj = None
         self.obj = self.open(self.mode)
+
+        meta = _meta(self.obj)
+        if 'type' in meta:
+            assert type is None or meta['type'] == type # these should never mismatch
+            type = meta['type']
+
+        if type is None:
+            type = 'file' # default
+
+        if self.mode != 'r':
+            meta['type'] = type
+            _meta(self.obj, meta)
+
+
+    def _init_from_handle(self, handle):
+        self.filepath = handle.filename
+        self.mode = handle.mode
+        self.obj = handle
+        meta = _meta(handle)
+        type = meta.setdefault('type', 'file')
+        if self.mode != 'r':
+            _meta(handle, meta)
+        self.type = type
 
     @property
     def handle(self):
@@ -407,13 +491,12 @@ class HDF5Handle(HDF5Wrapper):
         self.obj = self.open(self.mode)
 
     def open(self, mode="a", warn=True):
-        self.close()
-        return tb.openFile(self.filepath, mode)
+        handle = tb.openFile(self.filepath, mode)
+        return handle
 
     def close(self):
         if self.obj is not None and self.obj.isopen:
             self.obj.close()
-
 
     def create_group(self, group_name, filters=None, meta=None, root=None):
         """

@@ -1,4 +1,5 @@
 import os
+import shutil
 
 from trtools.io.pytables import HDF5Handle, convert_frame, frame_to_table
 from trtools.io.panda_hdf import OneBigTable, create_obt
@@ -21,20 +22,51 @@ class HDFFile(object):
     """
     HDF that stored a single DataFrame
     """
-    def __init__(self, filename, mode='a'):
-        self.filename = filename
-        self.handle = HDF5Handle(filename, mode)
+    def __init__(self, filename, mode='a', expectedrows=None):
+        self.dir = filename
+        if os.path.isdir(self.dir) and mode == 'w':
+            shutil.rmtree(self.dir)
+        if not os.path.isdir(self.dir):
+            os.makedirs(self.dir)
+        fn = os.path.basename(filename)
+        self.filename = os.path.join(filename, fn)
+        self.handle = HDF5Handle(self.filename, mode, type='directory')
+        self.expectedrows = expectedrows
+
+    _table = None
+    @property
+    def table(self):
+        if self._table is None and hasattr(self.handle, 'data'):
+            if hasattr(self.handle.data, 'data_table'):
+                self._table = self.handle.data.data_table
+        return self._table
+
+    def create_table(self, df, expectedrows=None, create_only=False):
+        expectedrows = expectedrows or self.expectedrows
+        group = self.handle.create_group('data')
+        group.frame_to_table('data_table', df, expectedrows=expectedrows, 
+                             create_only=create_only)
 
     def save(self, obj):
-        group = self.handle.create_group('data')
         expectedrows = len(obj)
-        group.frame_to_table('data_table', obj, expectedrows=expectedrows)
+        self.create_table(obj, expectedrows=expectedrows)
 
     def load(self):
         return self.handle.data['data_table'][:]
 
     def __repr__(self):
         return repr(self.handle)
+
+    def __setitem__(self, key, value):
+        self.append(value)
+
+    def append(self, value, flush=True):
+        if self.table is None:
+            self.create_table(value, create_only=True)
+        self.table.append(value, flush=flush)
+
+    def close(self):
+        self.handle.close()
 
 class OBTFile(object):
     def __init__(self, filename, mode='a', frame_key=None, expectedrows=None):
@@ -80,7 +112,11 @@ class OBTFile(object):
     def __setitem__(self, key, value):
         if self.obt is None:
             self.create_table(value, key=key)
-        self.obt[key] = value
+        # setitem creates the frame_key column, which isnt always needed
+        if self.frame_key in value.columns:
+            self.obt.append(value)
+        else:
+            self.obt[key] = value
 
     def append(self, value):
         if self.obt is None:
