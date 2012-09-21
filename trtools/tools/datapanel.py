@@ -33,7 +33,7 @@ class DataPanel(object):
 
     store_key is if the job needs translation
     """
-    def __init__(self, jobs, store, mgr=None, job_trans=None, store_key=None):
+    def __init__(self, jobs, store=None, mgr=None, job_trans=None, store_key=None, handler=None):
         if job_trans is None:
             job_trans = lambda x: x
 
@@ -42,9 +42,9 @@ class DataPanel(object):
         self.mgr = mgr
         self.store = store
 
-        self.handler = StoreResultHandler(store, store_key)
+        self.handler = handler or StoreResultHandler(store, store_key)
 
-    def process(self, func, refresh=False, num=None, *args, **kwargs):
+    def process(self, func, refresh=False, num=None, parallel=True, *args, **kwargs):
         if refresh:  
             self.store.delete_all()
 
@@ -52,16 +52,22 @@ class DataPanel(object):
         if num > 0:
             jobs = jobs[:num]
 
-        processor = self.get_processor(jobs)
+        processor = self.get_processor(jobs, parallel=parallel)
         processor.process(func, *args, **kwargs)
 
-    def get_processor(self, jobs):
-        processor = ParallelDataProcessor(jobs, result_handler=self.handler, 
+    def get_processor(self, jobs, parallel=True):
+        if parallel:
+            processor = ParallelDataProcessor(jobs, result_handler=self.handler, 
+                                          mgr=self.mgr)
+        else:
+            processor = DataProcessor(jobs, result_handler=self.handler, 
                                           mgr=self.mgr)
         return processor
 
     def remaining_jobs(self):
-        done = self.job_trans(self.store.keys()) # most stores will enforce int/str
+        done = None
+        if hasattr(self.store, 'keys'):
+            done = self.job_trans(self.store.keys()) # most stores will enforce int/str
         if not done:
             return self.jobs
 

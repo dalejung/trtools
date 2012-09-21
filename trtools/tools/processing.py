@@ -113,3 +113,5 @@ class ParallelDataProcessor(DataProcessor):
 def process_jobs(jobs, func, mgr, result_handler=missing):
     dp = ParallelDataProcessor(jobs, mgr=mgr, result_handler=result_handler)
     return dp.process(func)
+
+
