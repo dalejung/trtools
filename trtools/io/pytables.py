@@ -300,12 +300,19 @@ def get_table_index(table, index_name=None, types=None):
     index = unconvert_index(index_values, types[index_name])
     return index
 
-def table_data_to_frame(data, table):
+def _data_names(data):
+    if hasattr(data, 'keys'):
+        return data.keys()
+
+    if hasattr(data, 'dtype'):
+        return data.dtype.names
+
+def table_data_to_frame(data, table, columns=None):
     """
         Given the pytables.recarray data and the metadata taken from table, 
         create a DataFrame
     """
-    columns = _columns(table)
+    columns = columns or _columns(table)
     index_name = _index_name(table)
     name = _name(table)
 
@@ -314,7 +321,10 @@ def table_data_to_frame(data, table):
 
     index = None
     if index_name:
-        index_values = data[index_name]
+        if index_name not in _data_names(data): # handle case where we dont send index with data
+            index_values = table.col(index_name)
+        else:
+            index_values = data[index_name]
         index = unconvert_index(index_values, types[index_name])
 
     try:
@@ -732,9 +742,32 @@ class SimpleIndexer(object):
 
     def __getitem__(self, key):
         # TODO, get fancier slicing later on
+        if isinstance(key, tuple):
+            return self._getitem_tuple(key)
         if isinstance(key, IndexSlice):
             key = slice(key.start, key.end, key.step)
         return self.obj[key]
+
+    def _getitem_tuple(self, key):
+        # TODO check if this is faster than just grabbing the whole
+        rows = key[0]
+        if isinstance(rows, IndexSlice):
+            rows = slice(rows.start, rows.end, rows.step)
+
+        cols = key[1]
+        if isinstance(cols, basestring):
+            cols = [cols]
+
+        # grabbing the straight data. obj is an HDF5Table. obj.obj is table.Table
+        if len(cols) > 1:
+            data = self.obj.obj[rows]
+        else:
+            # this doesn't seem to be all that much faster, keeping in anyways
+            data = {}
+            col = cols[0]
+            data[col] = self.obj.obj.col(col)
+
+        return table_data_to_frame(data, self.obj, columns=cols)
 
 class IndexSlice(object):
     def __init__(self, start=None, end=None, step=None):
