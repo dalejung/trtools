@@ -50,6 +50,11 @@ class OneBigTable(object):
     def index(self):
         return self.table.index
 
+    def __getattr__(self, key):
+        if hasattr(self.table, key):
+            return getattr(self.table, key)
+        raise AttributeError()
+
     def __getitem__(self, key):
         if isinstance(key, basestring):
             return self._getitem_framekey(key)

@@ -716,8 +716,14 @@ class CachingIndex(object):
     def _comparison(self, op, other):
         # TODO add gt, ge, lt, le comparisons that output IndexSlice.
         index_op = getattr(self._index, op)
+        if isinstance(self._index, pd.DatetimeIndex):
+            return self._datetime_comparison(index_op, other)
         result = index_op(other)
         return result
+
+    def _datetime_comparison(self, op, other):
+        other = pd.Timestamp(other)
+        return op(other)
 
     def __repr__(self):
         return repr(self._index)
