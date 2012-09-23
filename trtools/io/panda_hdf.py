@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from trtools.io.pytables import convert_frame, _meta, copy_table_def
+from trtools.io.pytables import convert_frame, _meta, copy_table_def, SimpleIndexer
 
 class OneBigTable(object):
     """
@@ -49,6 +49,13 @@ class OneBigTable(object):
     @property
     def index(self):
         return self.table.index
+
+    _ix = None
+    @property
+    def ix(self):
+        if self._ix is None:
+            self._ix = SimpleIndexer(self)
+        return self._ix
 
     def __getattr__(self, key):
         if hasattr(self.table, key):
