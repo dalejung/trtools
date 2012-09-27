@@ -1,6 +1,7 @@
 import operator
 
 import pandas as pd
+import numpy as np
 
 def combine_filters(filters, df=None, op=operator.and_):
     """
@@ -132,17 +133,53 @@ class PandasColumn(object):
         filter = ~filter
         return self.db.execute(filters=[filter])
 
-    def __imod__(self, other):
-        #TODO replace with a like or re matching func
-        return self.startswith(other)
-
-    def startswith(self, other):
-        func = lambda x: x.startswith(other)
-        return self.column_filter(func, pd.Series.apply)
+    def __mod__(self, other):
+        # uses pandas contains
+        filter = self.db.df[self.column].str.contains(other)
+        res = self.db.execute(filters=[filter])
+        return res
 
     def __call__(self, other, op=operator.eq):
         return self.column_filter(other, op)
 
+    def __getattr__(self, key):
+
+        # TODO this behavior of wrapping objects recursively happens a lot. Should find
+        # a sane way to standardize this. 
+
+        column = self.db.df[self.column]
+        if hasattr(column, key):
+            attr = getattr(column, key)
+            if callable(attr):
+                attr = self._wrap(attr)
+            return attr
+
+        # str methods
+        if hasattr(column.str, key):
+            attr = getattr(column.str, key)
+            if callable(attr):
+                attr = self._wrap(attr)
+            return attr
+
+        raise AttributeError()
+
+    def _wrap(self, func):
+        def wrapped(*args, **kwargs):
+            res = func(*args, **kwargs)
+            if isinstance(res, np.ndarray) and probably_bool(res):
+                return self.db.execute(filters=[res.astype(bool)])
+            return res
+        return wrapped
+
+def probably_bool(arr):
+    """ dumb test for bool arrays that ahve nans """
+    s = pd.Series(arr)
+    counts = s.value_counts()
+    keys = counts.keys()
+    for key in keys:
+        if not isinstance(key, bool):
+            return False
+    return True
 
 class Query(object):
     """
