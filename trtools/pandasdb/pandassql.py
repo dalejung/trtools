@@ -167,7 +167,7 @@ class PandasColumn(object):
         def wrapped(*args, **kwargs):
             res = func(*args, **kwargs)
             if isinstance(res, np.ndarray) and probably_bool(res):
-                return self.db.execute(filters=[res.astype(bool)])
+                return self.db.execute(filters=[res.fillna(False)])
             return res
         return wrapped
 
