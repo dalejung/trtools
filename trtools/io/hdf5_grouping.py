@@ -138,9 +138,8 @@ class HDFPanelGroup(object):
         return self.group._v_children.keys()
 
     def create_table(self, df, name=None, *args, **kwargs):
-        handle = self.panel.handle
         filters = self.filters
-        table = frame_to_table(df, handle, self.group, name=name, filters=filters, 
+        table = frame_to_table(name, df, self.group, filters=filters, 
                                *args, **kwargs)
         return table
 
