@@ -177,7 +177,7 @@ def probably_bool(arr):
     counts = s.value_counts()
     keys = counts.keys()
     for key in keys:
-        if not isinstance(key, bool):
+        if not isinstance(key, bool) and not isinstance(key, np.bool_):
             return False
     return True
 
