@@ -34,7 +34,7 @@ class DataPanel(object):
 
     store_key is if the job needs translation
     """
-    def __init__(self, jobs, store=None, mgr=None, job_trans=None, store_key=None, handler=missing):
+    def __init__(self, jobs, store=None, mgr=None, job_trans=None, store_key=None, result_handler=missing):
         if job_trans is None:
             job_trans = lambda x: x
 
@@ -43,9 +43,9 @@ class DataPanel(object):
         self.mgr = mgr
         self.store = store
 
-        if handler == missing:
-            handler = StoreResultHandler(store, store_key)
-        self.handler = handler
+        if result_handler == missing:
+            result_handler = StoreResultHandler(store, store_key)
+        self.handler = result_handler
 
     def process(self, func, refresh=False, num=None, parallel=True, *args, **kwargs):
         if refresh:  
