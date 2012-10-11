@@ -208,7 +208,6 @@ def create_table(group, name, desc, types, filters=None, expectedrows=None, titl
         title = name
 
     with warnings.catch_warnings(): # ignore the name warnings
-        print 'expectedrows: ', expectedrows
         table = group._v_file.createTable(group, name, desc, title,
                                   expectedrows=expectedrows, filters=filters)
 
