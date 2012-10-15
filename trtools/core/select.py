@@ -127,3 +127,15 @@ def peek(self, num_rows=5, max_col=None):
     max_col = max_col or 5
     max_col = self.columns.values[max_col]
     return self.ix[:num_rows, :max_col]
+
+@patch([DataFrame], 'barf')
+def barf(self, num_rows=5, max_col=None):
+    """
+        Keep on running into issues where in notebook, I want to just show everything.
+    """
+    from IPython.core.display import HTML
+    import pandas.core.format as fmt 
+    fmt.print_config.max_columns = 1000
+    h = HTML(self.to_html())
+    fmt.print_config.max_columns = None
+    return h
