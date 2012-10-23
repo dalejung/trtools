@@ -59,8 +59,7 @@ class PosIndexer(object):
         return self.obj.major_xs(label)
 
     def _getitem_dataframe(self, key):
-        label = self.obj.index[key]
-        return self.obj.xs(label)
+        return self.obj.irow(key)
 
     def _getitem_series(self, key):
         label = self.obj.index[key]
