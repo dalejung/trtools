@@ -64,6 +64,8 @@ class ColumnPanel(object):
         if isinstance(obj, DataFrame):
             self._init_dataframe(obj, name)
 
+        self._cache = {}
+
     def _init_dict(self, data):
         first = next(data.itervalues())
         self.columns = list(first.columns)
@@ -90,6 +92,9 @@ class ColumnPanel(object):
         for name, df in self.frames.iteritems():
             df[key] = value[name]
 
+        if key in self._cache:
+            del self._cache[key]
+
     def __getattr__(self, key):
         return self[key]
 
@@ -110,11 +115,15 @@ class ColumnPanel(object):
 
 
     def _gather_column(self, key):
+        if key in self._cache:
+            return self._cache[key]
+
         results = {}
         for name, df in self.frames.iteritems():
             results[name] = df[key]
 
         df = DataFrame(results, name=key)
+        self._cache[key] = df
         return df
         return TRDataFrame(df)
 
