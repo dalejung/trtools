@@ -139,6 +139,12 @@ class PandasColumn(object):
         res = self.db.execute(filters=[filter])
         return res
 
+    def between(self, left, right):
+        col = self.db.df[self.column]
+        filter = (col >= left) & (col <= right)
+        res = self.db.execute(filters=[filter])
+        return res
+
     def __call__(self, other, op=operator.eq):
         return self.column_filter(other, op)
 
