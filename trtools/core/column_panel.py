@@ -13,6 +13,9 @@ class ColumnPanelItems(object):
         self.obj = obj
 
     def __getattr__(self, key):
+        return self[key]
+
+    def __getitem__(self, key):
         for k in self.obj.frames:
             if k == key:
                 return self.obj.frames[k]
@@ -139,6 +142,16 @@ class ColumnPanel(object):
         columns = 'Columns axis: %s to %s' % (self.columns[0], self.columns[-1])
         output = 'ColumnPanel: \n%s\n%s' % (items, columns)
         return output
+
+    def __getstate__(self): 
+        d = {}
+        d['frames'] = self.frames
+        d['columns'] = self.columns
+        return d
+
+    def __setstate__(self, d): 
+        self.__dict__.update(d)
+        self.__dict__['im'] = ColumnPanelItems(self)
 
 # IPYTYHON
 def install_ipython_completers():  # pragma: no cover
