@@ -3,7 +3,7 @@
 """
 import numpy as np
 
-from pandas import Panel, DataFrame, MultiIndex, Series
+from pandas import Panel, DataFrame, MultiIndex, Series, Timestamp
 
 from trtools.monkey import patch, patch_prop
 
@@ -77,17 +77,33 @@ def rx(self):
     return self._rx
 
 @patch([DataFrame, Series])
-def pluck(df, index, buffer=2):
-    if not isinstance(index, int):
+def pluck(df, target, buffer=2):
+    if not isinstance(target, int):
         try:
-            index = df.index.get_loc(index)
+            target = df.index.get_loc(target)
         except:
-            raise Exception("%s not in index" % index)
-    lower = max(0, index-buffer)
-    higher = min(len(df), index+buffer+1)
+            raise Exception("%s not in index" % target)
+    lower = max(0, target - buffer)
+    higher = min(len(df), target + buffer+1)
     return df.ix[lower:higher]
 
+def time_pluck(df, target, buffer=2, index=None):
+    from pandas.tseries.frequencies import to_offset
+    """
+        Instead of an pos-int pluck, we create a datetime-span 
+    """
+    if isinstance(buffer, int):
+        buffer = "{0}D".format(buffer)
 
+    offset = to_offset(buffer)
+
+    start = Timestamp(target) - offset
+    end = Timestamp(target) + offset
+    if index is None:
+        index = df.index
+
+    filter = (index >= start) & (index <= end)
+    return df.ix[filter]
 
 # These patches are for supporting keys that are more meta objects than straight ints or strings
 @patch([DataFrame], '__getitem__')
