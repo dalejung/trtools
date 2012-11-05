@@ -1,8 +1,18 @@
 import sys
+import collections
 
 import numpy as np
 from pandas import Series, Panel, DataFrame
 from pandas.util import py3compat
+
+def _iter_or_slice(key):
+    if isinstance(key, slice):
+        return key
+    if isinstance(key, basestring):
+        return [key]
+    if not isinstance(key, collections.Iterable): 
+        return [key]
+    return key
 
 class PanelDict(dict):
     def __repr__(self):
@@ -90,6 +100,10 @@ class ColumnPanel(object):
             frame = DataFrame({name:series}, name=col)
             self.frames[col] = frame
 
+    @property
+    def items(self):
+        return self.frames.keys()
+
     def __setitem__(self, key, value):
         self.columns.append(key)
         for name, df in self.frames.iteritems():
@@ -110,12 +124,29 @@ class ColumnPanel(object):
         return self._gather_column(key)
 
     def _getitem_tuple(self, keys):
-        items = {}
-        for key in keys:
-            items[key] = self[key]
+        """
+            panel[cols, items]
 
-        return Panel.from_dict(items)
+            returns ColumnPanel
+        """
+        cols, items = keys
+        cols = _iter_or_slice(cols)
+        items = _iter_or_slice(items)
+        if isinstance(items, slice):
+            items = self.items
+        data = {}
+        for key in items:
+            df = self.frames[key]
+            data[key] = df.ix[:, cols]
 
+        return ColumnPanel(data)
+
+    def _getitem_items(self, items):
+        data = {}
+        for key in items:
+            data[key] = self.frames[key]
+
+        return ColumnPanel(data)
 
     def _gather_column(self, key):
         if key in self._cache:
@@ -138,9 +169,11 @@ class ColumnPanel(object):
 
     def __repr__(self):
         item_keys = self.frames.keys()
+        lengths = len(self.columns), len(self.items)
+        dims = "Dimensions: {0} Columns x {1} Items".format(*lengths)
         items = 'Items: %s to %s' % (item_keys[0], item_keys[-1])
         columns = 'Columns axis: %s to %s' % (self.columns[0], self.columns[-1])
-        output = 'ColumnPanel: \n%s\n%s' % (items, columns)
+        output = 'ColumnPanel: \n%s\n%s\n%s' % (dims, items, columns)
         return output
 
     def __getstate__(self): 
