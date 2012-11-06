@@ -4,6 +4,7 @@
 import numpy as np
 
 from pandas import Panel, DataFrame, MultiIndex, Series, Timestamp
+from pandas.core.indexing import _NDFrameIndexer
 
 from trtools.monkey import patch, patch_prop
 
@@ -75,6 +76,62 @@ def rx(self):
         self._rx = PosIndexer(self)
 
     return self._rx
+
+class TRFrameIndexer(object):
+    """
+        Taking over .ix
+    """
+    def __init__(self, obj):
+        self.obj = obj
+
+    def __getitem__(self, key):
+        ix = self.obj._ix
+        if type(key) is tuple:
+            try:
+                return self.obj.get_value(*key)
+            except Exception:
+                pass
+
+            key = process_cols(self.obj, key)
+            return ix._getitem_tuple(key)
+        else:
+            return ix._getitem_axis(key, axis=0)
+
+    def __setitem__(self, key, value):
+        self.obj._ix[key] = value
+
+def process_cols(obj, key):
+    """
+        This is to support columns that are objects where the selection 
+        shouldn't be done by hash but by eq(). 
+
+        This allows something like a Stock object to be used as a column
+        and match both the ticker and an internal int id
+    """
+    if len(key) < 2:
+        return key
+
+    # pass through slice
+    if isinstance(key[1], slice):
+        return key
+
+    new_key = [key[0]]
+    cols = [col for col in obj.columns if col in key[1]]
+    new_key.append(cols)
+    new_key.extend(key[2:])
+    return tuple(new_key)
+
+@patch_prop([DataFrame], 'ix')
+def ix(self):
+    """
+    """
+    if not hasattr(self, '_ix') or self._ix is None:
+        self._ix = _NDFrameIndexer(self)
+
+    if not hasattr(self, '_trx') or self._trx is None:
+        self._trx = TRFrameIndexer(self)
+
+    return self._trx
 
 @patch([DataFrame, Series])
 def pluck(df, target, buffer=2):
