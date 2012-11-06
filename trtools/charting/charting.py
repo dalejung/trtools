@@ -13,12 +13,14 @@ from matplotlib.finance import candlestick,\
              plot_day_summary 
 
 import trtools.core.column_grep
-reload(trtools.core.column_grep)
 from trtools.core.column_grep import *
 
 import IPython
 
 IPython.core.pylabtools.figsize(15, 10)
+
+def figsize(width, height):
+    IPython.core.pylabtools.figsize(width, height)
 
 CURRENT_FIGURE = None
 
