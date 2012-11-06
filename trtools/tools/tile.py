@@ -97,7 +97,7 @@ def inf_bins_to_cuts(x, bins, right=True, retbins=True,
 
     return fac, bins
 
-@patch(Series)
+@patch(Series, 'tile')
 def tile_series(self, bins, series=None):
     return tile(self, bins)
 
