@@ -100,6 +100,9 @@ class TRFrameIndexer(object):
     def __setitem__(self, key, value):
         self.obj._ix[key] = value
 
+    def __getattr__(self, key):
+        return getattr(self.obj._ix, key)
+
 def process_cols(obj, key):
     """
         This is to support columns that are objects where the selection 
