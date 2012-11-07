@@ -135,9 +135,13 @@ class ColumnPanel(object):
         if isinstance(items, slice):
             items = self.items
         data = {}
-        for key in items:
-            df = self.frames[key]
-            data[key] = df.ix[:, cols]
+
+        # Need to match on eq() and not hash
+        keys = self.frames.keys()
+        for key in keys:
+            if key in items:
+                df = self.frames[key]
+                data[key] = df.ix[:, cols]
 
         return ColumnPanel(data)
 
