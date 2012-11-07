@@ -1,11 +1,15 @@
 import collections
 
 import pandas as pd
+import numpy as np
 
 def convert_item(obj):
     if not isinstance(obj, collections.Iterable):
         return obj
     if isinstance(obj, basestring):
+        return obj
+
+    if isinstance(obj, (np.ndarray, pd.Series, pd.DataFrame, pd.Panel)):
         return obj
 
     try:
@@ -17,7 +21,7 @@ def convert_item(obj):
 
 class DataDict(object):
     def __init__(self, items=None):
-        self.data = {}
+        self._data = {}
 
         if items is None:
             items = {}
@@ -26,12 +30,12 @@ class DataDict(object):
     def update(self, items):
         for k,v in items.iteritems():
             v = convert_item(v)
-            self.data[k] = v
+            self._data[k] = v
 
     def __getattr__(self, key):
-        if key in self.data:
-            return self.data[key]
+        if key in self._data:
+            return self._data[key]
         raise AttributeError()
 
     def __repr__(self):
-        return "Keys :" + repr(self.data.keys())
+        return "Keys :" + repr(self._data.keys())
