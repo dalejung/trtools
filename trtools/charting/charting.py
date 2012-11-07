@@ -115,6 +115,9 @@ class DateFormatter(object):
         ax.xaxis.grid(True)
 
 def gcf():
+    global CURRENT_FIGURE
+    if CURRENT_FIGURE is None:
+        CURRENT_FIGURE = Figure(1)
     return CURRENT_FIGURE
 
 def scf(figure):
