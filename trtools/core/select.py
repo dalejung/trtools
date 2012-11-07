@@ -8,8 +8,8 @@ from pandas.core.indexing import _NDFrameIndexer
 
 from trtools.monkey import patch, patch_prop
 
-@patch(DataFrame)
-def cols(self, *args):
+@patch(DataFrame, 'cols')
+def _cols(self, *args):
     return self.xs(list(args), axis=1)
 
 @patch([DataFrame, Series])
@@ -119,7 +119,15 @@ def process_cols(obj, key):
         return key
 
     new_key = [key[0]]
-    cols = [col for col in obj.columns if col in key[1]]
+    cols = []
+    # keep ordering
+    columns = key[1]
+    for col in columns:
+        for c in obj.columns:
+            if c == col:
+                cols.append(c)
+                break
+
     new_key.append(cols)
     new_key.extend(key[2:])
     return tuple(new_key)
