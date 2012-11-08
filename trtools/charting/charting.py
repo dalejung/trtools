@@ -160,7 +160,7 @@ class Figure(object):
 
     def set_ax(self, axnum, sharex=None, skip_na=None):
         if self.get_ax(axnum) is None:
-            self.init_ax(axnum ,sharex, skip_na)
+            self.init_ax(axnum, sharex, skip_na)
         self._set_ax(axnum)
 
     def plot(self, name, series, index=None, fillna=None, **kwargs):
@@ -234,6 +234,9 @@ class Grapher(object):
             plot_series = plot_series.fillna(method=fillna)
         self.ax.plot(xax, plot_series, **kwargs)
         plt.legend(loc=0)
+
+        if is_datetime: # plot empty space for leading NaN 
+            plt.xlim(0)
 
     def setup_datetime(self, index):
         """
