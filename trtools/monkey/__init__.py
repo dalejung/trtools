@@ -58,20 +58,38 @@ class AttrNameSpace(object):
     def __init__(self, obj, endpoint):
         self.obj = obj
         self.endpoint = endpoint
+        self.wrap = True
+        if hasattr(self.endpoint, '__getattr__'):
+            # don't wrap, assume endpoint is wrapping
+            self.wrap = False
+            self.endpoint.obj = obj
 
     def __getattr__(self, name):
         func = getattr(self.endpoint, name)
-        return functools.partial(func, self.obj)
+        if self.wrap:
+            func = functools.partial(func, self.obj)
+        return func
 
-    def attrs(self):
+    def method_attrs(self):
         import inspect
         attrs = inspect.getmembers(self.endpoint, predicate=inspect.ismethod)
         attrs = [attr for attr, type in attrs]
         return attrs
 
+    def attrs(self):
+        attrs = []
+        if self.wrap:
+            attrs = self.method_attrs()
+        if not self.wrap and hasattr(self.endpoint, 'attrs'):
+            attrs = self.endpoint.attrs()
+        return attrs
+
     def __repr__(self):
         out = "AttrNameSpace:\n"
-        out += "\n".join(self.attrs())
+
+        attrs = self.attrs()
+        if attrs:
+            out += "\n".join(attrs)
         return out
 
 def attr_namespace(target, name):
@@ -107,7 +125,7 @@ def install_ipython_completers():  # pragma: no cover
 
     @complete_object.when_type(AttrNameSpace)
     def complete_column_panel(self, prev_completions):
-        return prev_completions + [c for c in self.attrs() \
+        return [c for c in self.attrs() \
                     if isinstance(c, basestring) and py3compat.isidentifier(c)]                                          
 # Importing IPython brings in about 200 modules, so we want to avoid it unless
 # we're in IPython (when those modules are loaded anyway).
