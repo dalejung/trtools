@@ -1,4 +1,5 @@
 import warnings
+import functools 
 
 def patch(classes, name=None):
     if not isinstance(classes, list):
@@ -50,3 +51,69 @@ def patcher(classes, func, name=None):
             setattr(cls, old_func_name, old_func)
         setattr(cls, func_name, func)
     return func
+
+class AttrNameSpace(object):
+    """
+    """
+    def __init__(self, obj, endpoint):
+        self.obj = obj
+        self.endpoint = endpoint
+
+    def __getattr__(self, name):
+        func = getattr(self.endpoint, name)
+        return functools.partial(func, self.obj)
+
+    def attrs(self):
+        import inspect
+        attrs = inspect.getmembers(self.endpoint, predicate=inspect.ismethod)
+        attrs = [attr for attr, type in attrs]
+        return attrs
+
+    def __repr__(self):
+        out = "AttrNameSpace:\n"
+        out += "\n".join(self.attrs())
+        return out
+
+def attr_namespace(target, name):
+    """
+        Use to create Attribute Namespace. 
+
+        @attr_namespace(pd.DataFrame, 'ret')
+        class Returns(object):
+            def log_returns(df):
+                return np.log(df.close / df.close.shift(1))
+
+        You could access via df.ret.log_returns
+    """
+
+    def func(cls):
+        def attr_get(self):
+            attr_name = '_attr_ns_'+name
+            if not hasattr(self, attr_name):
+                setattr(self, attr_name, AttrNameSpace(self, cls()))
+
+            return getattr(self, attr_name)
+
+        patch_prop(target, name)(attr_get)
+        return cls
+
+    return func
+
+# IPYTYHON
+# Autocomplete the target endpoint
+def install_ipython_completers():  # pragma: no cover
+    from pandas.util import py3compat
+    from IPython.utils.generics import complete_object
+
+    @complete_object.when_type(AttrNameSpace)
+    def complete_column_panel(self, prev_completions):
+        return prev_completions + [c for c in self.attrs() \
+                    if isinstance(c, basestring) and py3compat.isidentifier(c)]                                          
+# Importing IPython brings in about 200 modules, so we want to avoid it unless
+# we're in IPython (when those modules are loaded anyway).
+import sys
+if "IPython" in sys.modules:  # pragma: no cover
+    try: 
+        install_ipython_completers()
+    except Exception:
+        pass 
