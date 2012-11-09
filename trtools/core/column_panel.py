@@ -65,9 +65,51 @@ class TRDataFrame(object):
     def __array__(self):
         return self.df.__array__()
 
+class ColumnPanelIndexer(object):
+    def __init__(self, obj):
+        self.obj = obj
+
+    def __getitem__(self, key):
+        """
+            Trying to replicate df.ix for Column Panel. 
+            ix[index, col, items]
+        """
+        if isinstance(key, tuple):
+            raise NotImplementedError("Only index axis")
+
+        if np.all(key.dtypes == bool):
+            return mask(self.obj, key)
+
+        raise NotImplementedError("Only supports bool array")
+
+    def __setitem__(self, key, val):
+        self.obj[key] = val
+
+def mask(self, wh):
+    """
+    """
+    data = collections.OrderedDict()
+
+    m = wh   
+    for key, val in self.frames.iteritems():
+        if wh.ndim > 1:
+            m = wh[key]
+        val = na_promote(val.copy())
+        val.ix[m] = None
+        data[key] = val
+    return ColumnPanel(data) 
+
+def na_promote(df):
+    """ Make dataframe na promotable. Convert ints to float dtypes """
+    for k, dtype in df.dtypes.iteritems():
+        if dtype == int:
+            df[k] = df[k].astype(float)
+
+    return df
+
 class ColumnPanel(object):
     def __init__(self, obj=None, name=None):
-        self.frames = {}
+        self.frames = collections.OrderedDict() 
         self.columns = []
         self.im = ColumnPanelItems(self)
         if isinstance(obj, dict):
@@ -99,6 +141,38 @@ class ColumnPanel(object):
         for col, series in df.iteritems():
             frame = DataFrame({name:series}, name=col)
             self.frames[col] = frame
+
+    def dataset(self):
+        data = collections.OrderedDict()
+        for key, val in self.frames.iteritems():
+            data[key] = DataFrame(index=val.index)
+        return ColumnPanel(data)
+
+    _ix = None
+    @property
+    def ix(self):
+        if self._ix is None:
+            self._ix = ColumnPanelIndexer(self)
+        return self._ix
+
+    @property
+    def index(self):
+        """
+            Optimally, all frames should share same index. 
+            Test a couple and then return if same. Not sure how to handle
+            non equal indexes.
+        """
+        import random
+        tests = random.sample(self.items, 3)
+        indexes = [self.frames[key].index for key in tests]
+        index = indexes[0]
+        for ind in indexes[1:]:
+            if not np.all(index == ind):
+                raise Exception("Indexes are not equal")
+
+        return index
+
+
 
     @property
     def items(self):
@@ -176,7 +250,10 @@ class ColumnPanel(object):
         lengths = len(self.columns), len(self.items)
         dims = "Dimensions: {0} Columns x {1} Items".format(*lengths)
         items = 'Items: %s to %s' % (item_keys[0], item_keys[-1])
-        columns = 'Columns axis: %s to %s' % (self.columns[0], self.columns[-1])
+        if len(self.columns) > 0:
+            columns = 'Columns axis: %s to %s' % (self.columns[0], self.columns[-1])
+        else:
+            columns = "Columns axis: 0 cols"
         output = 'ColumnPanel: \n%s\n%s\n%s' % (dims, items, columns)
         return output
 
