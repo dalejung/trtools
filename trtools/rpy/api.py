@@ -6,9 +6,6 @@ from rpy2.robjects.vectors import SexpVector, ListVector, StrSexpVector
 
 import trtools.rpy.conversion as rconv 
 import trtools.rpy.tools as rtools
-reload(rtools)
-reload(rconv)
-
 
 robjects.conversion.ri2py = robjects.default_ri2py
 
@@ -31,3 +28,8 @@ def pd_py2ri(o):
     return res
 
 robjects.conversion.py2ri = pd_py2ri
+
+r = robjects.r
+
+def assign(name, obj):
+    robjects.r.assign(name, obj)

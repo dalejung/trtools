@@ -92,6 +92,3 @@ def simple_string_vector_repr(self):
     if len(self) == 1:
         return self[0]
     return SexpVector.__old_repr__(self)
-    
-#SexpVector.__old_repr__ = SexpVector.__repr__
-#SexpVector.__repr__ = simple_string_vector_repr
