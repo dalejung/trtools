@@ -55,7 +55,8 @@ def convert_posixct_to_index(o):
     tz = o.do_slot('tzone')[0]
     dates = np.array(o, dtype=np.dtype("M8[s]"))
     index = pd.DatetimeIndex(dates, tz='UTC')
-    index = index.tz_convert(tz)
+    if tz:
+        index = index.tz_convert(tz)
     return index
 
 
