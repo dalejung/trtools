@@ -143,6 +143,10 @@ class ColumnPanel(object):
             self.frames[col] = frame
 
     def dataset(self):
+        """
+            Create an empty ColumnPanel with the same items
+            and index
+        """
         data = collections.OrderedDict()
         for key, val in self.frames.iteritems():
             data[key] = DataFrame(index=val.index)
