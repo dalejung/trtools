@@ -71,3 +71,8 @@ def foreach_dataframe(self, func, force_dict=False, *args, **kwargs):
 
     res = res.sort()
     return res
+
+
+@patch(DataFrame, 'dataset')
+def dataset(self):
+    return DataFrame(index=self.index)
