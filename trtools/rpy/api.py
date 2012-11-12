@@ -13,6 +13,9 @@ def pd_py2ri(o):
     """ 
     """
     res = None
+    if isinstance(o, pd.Series): 
+        o = pd.DataFrame(o, index=o.index)
+
     if isinstance(o, pd.DataFrame): 
         if isinstance(o.index, pd.DatetimeIndex):
             res = rconv.convert_df_to_xts(o)
