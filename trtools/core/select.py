@@ -1,6 +1,8 @@
 """
     Collections of tools to quickly select rows/items
 """
+import collections
+
 import numpy as np
 
 from pandas import Panel, DataFrame, MultiIndex, Series, Timestamp
@@ -118,15 +120,28 @@ def process_cols(obj, key):
     if isinstance(key[1], slice):
         return key
 
+
     new_key = [key[0]]
     cols = []
     # keep ordering
     columns = key[1]
+    if not isinstance(columns, collections.Iterable) \
+       or isinstance(columns, basestring):
+        columns = [columns]
+
     for col in columns:
         for c in obj.columns:
-            if c == col:
-                cols.append(c)
-                break
+            try:
+                if c == col:
+                    cols.append(c)
+                    break
+            except:
+                pass
+
+    # This means we did not match all cols. So we abort and run through regular
+    # matching
+    if len(cols) != len(columns):
+        return key
 
     new_key.append(cols)
     new_key.extend(key[2:])
