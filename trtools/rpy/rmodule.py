@@ -25,6 +25,8 @@ class RFunction(object):
 
     def _set_doc(self):
         help = self._help()
+        if help is None:
+            return
         lines = [line.strip() for line in help.to_docstring().splitlines()]
         doc = "\n".join(lines)
         doc = doc.replace("\n\n", "\n")
@@ -35,7 +37,7 @@ class RFunction(object):
     def _help(self):
         pages = rh.pages(self.name)
         if len(pages) == 0:
-            return
+            return None
 
         help = pages[0]
         return help
@@ -57,12 +59,15 @@ class RFunction(object):
             env_name = env.do_slot('name')[0]
         except:
             pass
-        name = self.name
-        title = "Title:\n\n{0}".format(self.title)
-        desc = "Description:\n\n{0}".format(self.description)
-        envs = "<{0}>".format(env_name)
-        vars = [name, title, desc]
+        vars = [self.name]
+        if self.title:
+            title = "Title:\n\n{0}".format(self.title)
+            vars.append(title)
+        if self.description:
+            desc = "Description:\n\n{0}".format(self.description)
+            vars.append(desc)
         if env_name:
+            envs = "<{0}>".format(env_name)
             vars.append(envs)
         return "\n\n".join(vars)
 
@@ -87,7 +92,8 @@ class DotWrapper(object):
         self._name = name
         self._pkg = pkg
         self._subgroup = self._pkg.subgroup(name)
-        self._init_funcs()
+        self._funcs = self._subgroup.func_name.unique()
+        #self._init_funcs()
 
     def _init_funcs(self):
         for i, row in self._subgroup.iterrows():
@@ -141,13 +147,12 @@ class RPackage(object):
         don't appear from a require() call. I think it ignores the explicit namespace
         exporting
     """
-    def __init__(self, name):
+    def __init__(self, name, translations=None):
         self.name = name
-        self.pkg = importr(name)
-        self.table = pd.DataFrame(self.pkg._rpy2r.items(), columns=['rpy', 'r'])
-        # split out sub namespaces
-        words = self.table.r.str.split('.')
-        self.table['subgroup'] = words.apply(lambda x: x[0])
+        if translations is None:
+            translations = {}
+        self.pkg = importr(name, robject_translations=translations)
+        self._create_table(self.pkg._rpy2r.items())
         self._cache = {}
 
     def __getattr__(self, key):
@@ -159,6 +164,24 @@ class RPackage(object):
             cache[key] = DotWrapper(self, key)
             return cache[key]
         raise AttributeError("No name in package")
+
+    def _create_table(self, rpy2r):
+        self.table = pd.DataFrame(rpy2r, columns=['rpy', 'r'])
+        # split out sub namespaces
+        words = self.table.r.str.split('.')
+        self.table['subgroup'] = words.apply(lambda x: x[0])
+        self.table['func_name'] = words.apply(lambda x: len(x) > 1 and x[1] or None)
+
+        is_func = self.table.rpy.apply(self._is_func)
+        self.table['is_func'] = is_func
+
+        # only subgroupping funcs
+        subgroups = self.table[self.table.is_func].subgroup
+        self._subgroups = subgroups[subgroups != '']
+
+    def _is_func(self, name):
+        func = getattr(self.pkg, name)
+        return isinstance(func, func_class)
 
     def subgroup(self, name):
         return self.table[self.table.subgroup == name]
@@ -173,4 +196,27 @@ class RPackage(object):
         rpy_name = row.irow(0)['rpy']
         return getattr(self.pkg, rpy_name)
 
-pkg = RPackage("PerformanceAnalytics")
+# IPYTYHON
+def install_ipython_completers():  # pragma: no cover
+    """Register the DataFrame type with IPython's tab completion machinery, so
+    that it knows about accessing column names as attributes."""
+    from IPython.utils.generics import complete_object
+    from pandas.util import py3compat
+
+    @complete_object.when_type(RPackage)
+    def complete_rpackage(obj, prev_completions):
+        return prev_completions + [c for c in obj._subgroups \
+                    if isinstance(c, basestring) and py3compat.isidentifier(c)]                                          
+    @complete_object.when_type(DotWrapper)
+    def complete_dot_wrapper(obj, prev_completions):
+        return prev_completions + [c for c in obj._funcs \
+                    if isinstance(c, basestring) and py3compat.isidentifier(c)]                                          
+
+# Importing IPython brings in about 200 modules, so we want to avoid it unless
+# we're in IPython (when those modules are loaded anyway).
+import sys
+if "IPython" in sys.modules:  # pragma: no cover
+    try: 
+        install_ipython_completers()
+    except Exception:
+        pass 
