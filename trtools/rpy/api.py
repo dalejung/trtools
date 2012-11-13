@@ -6,7 +6,7 @@ from rpy2.robjects.vectors import SexpVector, ListVector, StrSexpVector
 
 import trtools.rpy.conversion as rconv 
 import trtools.rpy.tools as rtools
-from trtools.rpy.functions import get_func
+from trtools.rpy.rmodule import get_func, RPackage
 
 robjects.conversion.ri2py = robjects.default_ri2py
 

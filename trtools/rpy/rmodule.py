@@ -1,3 +1,8 @@
+"""
+    Make R packages act more like modules. 
+    
+    This includes making functions easier to use and wrapping R packages.
+"""
 import rpy2.robjects as robjects
 import rpy2.robjects.help as rh
 from rpy2.robjects.packages import importr
