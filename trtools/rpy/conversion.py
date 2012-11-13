@@ -4,7 +4,7 @@ import time
 
 import rpy2.robjects as robjects
 import rpy2.rinterface as rinterface
-from rpy2.robjects.vectors import SexpVector, ListVector, StrSexpVector, Vector
+from rpy2.robjects.vectors import SexpVector, ListVector, StrSexpVector, Vector, StrVector
 from rpy2.robjects.robject import RObjectMixin, RObject
 import numpy as np
 import pandas.rpy.common as rcom

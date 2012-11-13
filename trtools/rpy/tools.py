@@ -1,7 +1,7 @@
 from collections import OrderedDict
 
 from rpy2.rinterface import SexpVector, RNULLType
-from rpy2.robjects.vectors import Vector, Matrix
+from rpy2.robjects.vectors import Vector, Matrix, DataFrame
 import rpy2.robjects as robjects
 
 import pandas.rpy.common as rcommon
@@ -84,8 +84,8 @@ def to_py(o):
         elif 'POSIXct' in rcls:
             res = rconv.convert_posixct_to_index(o)
 
-    if res is None and isinstance(o, Matrix):
-        res = rcommon._convert_Matrix(o)
+    if res is None:
+        res = rcommon.convert_robj(o) # fallback to pandas
         
     if res is None and isinstance(o, SexpVector):
         res = RObjectWrapper(o)
