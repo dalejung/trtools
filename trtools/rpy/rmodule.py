@@ -44,7 +44,7 @@ class RFunction(object):
 
     def __call__(self, *args, **kwargs):
         res = self.func(*args, **kwargs)
-        return res.to_py()
+        return res
 
     def _code(self):
         return self.func.r_repr()

@@ -85,7 +85,10 @@ def to_py(o):
             res = rconv.convert_posixct_to_index(o)
 
     if res is None:
-        res = rcommon.convert_robj(o) # fallback to pandas
+        try:
+            res = rcommon.convert_robj(o) # fallback to pandas
+        except:
+            pass
         
     if res is None and isinstance(o, SexpVector):
         res = RObjectWrapper(o)
