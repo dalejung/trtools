@@ -20,6 +20,19 @@ globalenv_ri = rinterface.globalenv
 # Probably need better logic to detect if xts was imported
 robjects.r('require(xts)')
 
+def tz_warning():
+    """
+        This keeps on catching me
+    """
+    r_tz = robjects.r('Sys.getenv("TZ")')[0]
+    if r_tz == "":
+        print "=============WARNING==================="
+        print "R Sys TZ is not set. This can get hazardous for your sanity."
+        print "Set to your data's TZ or GMT for pandas tz-naive data"
+        print "=============WARNING==================="
+
+tz_warning()
+
 def _convert_Matrix(mat):
     columns = mat.colnames
     rows = mat.rownames
@@ -52,11 +65,14 @@ def convert_posixct_to_index(o):
     """
         Convert a POSIXct object to a DatetimeIndex.
     """
-    tz = o.do_slot('tzone')[0]
     dates = np.array(o, dtype=np.dtype("M8[s]"))
     index = pd.DatetimeIndex(dates, tz='UTC')
-    if tz:
-        index = index.tz_convert(tz)
+    try:
+        tz = o.do_slot('tzone')[0]
+        if tz:
+            index = index.tz_convert(tz)
+    except:
+        pass
     return index
 
 

@@ -196,6 +196,10 @@ class RPackage(object):
         rpy_name = row.irow(0)['rpy']
         return getattr(self.pkg, rpy_name)
 
+    def __iter__(self):
+        return iter(self._subgroups)
+
+
 # IPYTYHON
 def install_ipython_completers():  # pragma: no cover
     """Register the DataFrame type with IPython's tab completion machinery, so
