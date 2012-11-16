@@ -19,7 +19,7 @@ def rinfo(obj):
         info['classes'] = list(obj.rclass)
         if hasattr(obj, 'names') and not is_null(obj.names):
             info['names'] = list(obj.names)
-        if hasattr(obj, 'list_attrs') and not is_null(obj.names):
+        if hasattr(obj, 'list_attrs'):
             info['list_attrs'] = list(obj.list_attrs())
     except:
         pass
@@ -66,9 +66,16 @@ class RObjectWrapper(object):
 
         # wrap attribute. 
         if obj is not None: 
-            return obj.to_py()
+            if hasattr(obj, 'to_py'):
+                return obj.to_py()
+            else:
+                return list(obj)
     
         raise AttributeError()
+
+    def __getitem__(self, key):
+        # R can have . in name. 
+        return getattr(self, key)
 
 def _repr(obj):
     if isinstance(obj, ListVector):
@@ -93,7 +100,7 @@ def _repr(obj):
     return type(obj)
 
 
-class RList(object):
+class RList(RObjectWrapper):
     def __init__(self, data, robj):
         self.data = data
         self.robj = robj
@@ -101,9 +108,23 @@ class RList(object):
     def __repr__(self):
         if isinstance(self.data, list):
             return self._repr_list()
+
+        # named r list == OrderedDict
+        out = "Named Items:\n==============\n"
         s = "{0}:\n{1}"
         lines = [s.format(name, _repr(val)) for name, val in self.data.items()]
-        return "\n\n".join(lines)
+        out += "\n\n".join(lines)
+
+        obj = self.robj
+        attrs = []
+        if hasattr(obj, 'list_attrs'):
+            attrs = list(obj.list_attrs())
+
+        if attrs:
+            out += "\n\nAttrs:\n==============\n"
+            out += "\n".join(attrs)
+
+        return out
 
     def _repr_list(self):
         lines = [_repr(val) for val in self.data]
@@ -112,7 +133,7 @@ class RList(object):
     def __getattr__(self, key):
         if key in self.data:
             return self.data[key].to_py()
-        raise AttributeError()
+        return super(RList, self).__getattr__(key)
 
     def __getitem__(self, key):
         if key in self.data:
