@@ -143,7 +143,6 @@ def to_py(o, skip_list=False):
         Converts to python object if possible. 
         Otherwise wraps in ROBjectWrapper
     """
-    print repr(o)
     res = None
     try:
         rcls = o.do_slot("class")
