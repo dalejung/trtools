@@ -187,7 +187,10 @@ def to_py(o, skip_list=False):
         elif 'logical' in classes:
             res = rcommon._convert_vector(o)
 
-    if isinstance(o, ListVector) and not skip_list:
+    if res is None and isinstance(o, DataFrame):
+        res = rcommon.convert_robj(o) 
+
+    if res is None and isinstance(o, ListVector) and not skip_list:
         res = convert_ListVector(o)
 
     if res is None:
