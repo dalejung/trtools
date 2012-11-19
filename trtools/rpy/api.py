@@ -7,8 +7,12 @@ from rpy2.robjects.vectors import SexpVector, ListVector, StrSexpVector
 import trtools.rpy.conversion as rconv 
 import trtools.rpy.tools as rtools
 from trtools.rpy.rmodule import get_func, RPackage
+import trtools.rpy.rplot as rplot
+
+rplot.patch_call()
 
 robjects.conversion.ri2py = robjects.default_ri2py
+
 
 def pd_py2ri(o):
     """ 
@@ -38,3 +42,4 @@ r = robjects.r
 
 def assign(name, obj):
     robjects.r.assign(name, obj)
+

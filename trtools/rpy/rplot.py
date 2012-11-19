@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import rpy2.robjects as robjects
 r = robjects.r
 
-from trtools.rpy.rmodule import get_func
+RPLOT_CONTEXT = None
 
 def get_figsize():
     return matplotlib.rcParams['figure.figsize']
@@ -31,6 +31,8 @@ class RPlot(object):
 
     def end(self):
         process_plots(self.temp_dir)
+
+png = r['png']
 
 def start(width=None, height=None, dpi=None):
     """
@@ -58,8 +60,6 @@ def process_plots(temp_dir):
 
     rmtree(temp_dir)
 
-png = get_func('png')
-
 def plot_image(image):
     """
         plot image data without a frame or axis
@@ -69,3 +69,35 @@ def plot_image(image):
     ax.set_axis_off()
     fig.add_axes(ax)
     plt.imshow(image)
+
+def wrapped_call(self, *args, **kwargs):
+    """
+        Wraps around Function.__call__ to enable
+        RPlotting. 
+        #TODO There has to be a better way to do this.
+    """
+    global RPLOT_CONTEXT
+    # within context short-circuit
+    if RPLOT_CONTEXT is not None:
+        res = self.__base_call__(*args, **kwargs)
+        return res
+
+    if RPLOT_CONTEXT is None:
+        RPLOT_CONTEXT = RPlot()
+        RPLOT_CONTEXT.start()
+
+    res = self.__base_call__(*args, **kwargs)
+
+    if RPLOT_CONTEXT is not None:
+        RPLOT_CONTEXT.end()
+        RPLOT_CONTEXT = None
+    return res
+
+def patch_call():
+    """
+        Wrap around the Function call to enable rplot -> matplotlib
+    """
+    if hasattr(robjects.Function, '__base_call__'):
+        return
+    robjects.Function.__base_call__ = robjects.Function.__call__
+    robjects.Function.__call__ = wrapped_call
