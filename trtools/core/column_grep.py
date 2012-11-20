@@ -27,7 +27,10 @@ def normalize_ohlc(df, copy=True):
     # might want make a wrapper version where copy = False
     if not copy:
         raise Exception("Haven't built non copy version")
+    data = {'open': Op(df), 'high': Hi(df), 'low': Lo(df), 
+                            'close': Cl(df), 'volume': Vo(df)}
+    if len(data['volume'].columns) == 0:
+        del data['volume']
 
-    ohlc_df = pd.DataFrame({'open': Op(df), 'high': Hi(df), 'low': Lo(df), 
-                            'close': Cl(df), 'volume': Vo(df)}, index=df.index)
+    ohlc_df = pd.DataFrame(data, index=df.index)
     return ohlc_df
