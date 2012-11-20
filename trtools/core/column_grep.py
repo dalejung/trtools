@@ -2,6 +2,7 @@
     Just tools to help with R and quantmod. 
 """
 import pandas as pd
+import numpy as np
 
 def col_grep(df, name, single=True):
     """
@@ -29,7 +30,7 @@ def normalize_ohlc(df, copy=True):
         raise Exception("Haven't built non copy version")
     data = {'open': Op(df), 'high': Hi(df), 'low': Lo(df), 
                             'close': Cl(df), 'volume': Vo(df)}
-    if len(data['volume'].columns) == 0:
+    if np.size(data['volume']) == 0:
         del data['volume']
 
     ohlc_df = pd.DataFrame(data, index=df.index)
