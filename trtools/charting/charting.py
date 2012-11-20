@@ -177,6 +177,13 @@ class Figure(object):
         self.figure.autofmt_xdate()
         self.grapher.candlestick(*args, **kwargs)
 
+    def ohlc(self, *args, **kwargs):
+        if self.ax is None:
+            print('NO AX set')
+            return
+        self.figure.autofmt_xdate()
+        self.grapher.ohlc(*args, **kwargs)
+
     def plot_markers(self, name, series, yvalues=None, xindex=None, **kwargs):
         if self.ax is None:
             print('NO AX set')
@@ -250,11 +257,25 @@ class Grapher(object):
             self.formatter = DateFormatter(index)
             self.formatter.set_formatter(self.ax)
 
-    def candlestick(self, df, width=0.3):
+    def candlestick(self, index, open, high, low, close, width=0.3):
         """
             Takes a df and plots a candlestick. 
             Will auto search for proper columns
         """
+        xax = np.arange(len(index))
+        quotes = izip(xax, open, close, high, low)
+        ax = self.ax
+        data = {}
+        data['open'] = open
+        data['high'] = high
+        data['low'] = low
+        data['close'] = close
+        df = pd.DataFrame(data, index=index)
+        self.df = df
+        self.setup_datetime(index)
+        candlestick(ax, quotes, width=width, colorup='g')
+
+    def _ohlc(self, df, width=0.3):
         xax = np.arange(len(df.index))
         ohlc_df = normalize_ohlc(df)
         quotes = izip(xax, ohlc_df.open, ohlc_df.close, ohlc_df.high, ohlc_df.low)
@@ -262,6 +283,10 @@ class Grapher(object):
         self.df = ohlc_df
         self.setup_datetime(ohlc_df.index)
         candlestick(ax, quotes, width=width, colorup='g')
+
+    def ohlc(self, df, width=0.3):
+        ohlc_df = normalize_ohlc(df)
+        self.candlestick(df.index, ohlc_df.open, ohlc_df.high, ohlc_df.low, ohlc_df.close)
 
     def plot_markers(self, name, series, yvalues=None, xindex=None, **kwargs):
         if yvalues is not None:
@@ -334,7 +359,7 @@ def series_plot(self, label=None, *args, **kwargs):
     except:
         pass
     fig = gcf()
-    fig.plot(label, self, *args, **kwargs)
+    fig.plot(str(label), self, *args, **kwargs)
 
 Series.fplot = series_plot
 TimeSeries.fplot = series_plot
@@ -351,6 +376,6 @@ DataFrame.fplot = df_plot
 
 def ohlc_plot(self, width=0.3, *args, **kwargs):
     fig = gcf()
-    fig.candlestick(self)
+    fig.ohlc(self)
 
 DataFrame.ohlc_plot = ohlc_plot
