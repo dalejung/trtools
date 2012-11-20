@@ -262,27 +262,29 @@ class Grapher(object):
             Takes a df and plots a candlestick. 
             Will auto search for proper columns
         """
-        xax = np.arange(len(index))
-        quotes = izip(xax, open, close, high, low)
-        ax = self.ax
         data = {}
         data['open'] = open
         data['high'] = high
         data['low'] = low
         data['close'] = close
         df = pd.DataFrame(data, index=index)
-        self.df = df
+        self.add_data(df)
+
+        # grab merged data
+        xax = np.arange(len(self.df.index))
+        quotes = izip(xax, self.df['open'], self.df['close'], self.df['high'], self.df['low'])
+        ax = self.ax
+
         self.setup_datetime(index)
         candlestick(ax, quotes, width=width, colorup='g')
 
-    def _ohlc(self, df, width=0.3):
-        xax = np.arange(len(df.index))
-        ohlc_df = normalize_ohlc(df)
-        quotes = izip(xax, ohlc_df.open, ohlc_df.close, ohlc_df.high, ohlc_df.low)
-        ax = self.ax
-        self.df = ohlc_df
-        self.setup_datetime(ohlc_df.index)
-        candlestick(ax, quotes, width=width, colorup='g')
+    def add_data(self, data):
+        if self.df is None:
+            self.df = data
+        else: 
+            # merge ohlc data
+            for k,v in data.iterkv():
+                self.df[k] = v
 
     def ohlc(self, df, width=0.3):
         ohlc_df = normalize_ohlc(df)
