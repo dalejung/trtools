@@ -77,13 +77,28 @@ class ColumnPanelIndexer(object):
         if isinstance(key, tuple):
             raise NotImplementedError("Only index axis")
 
-        if np.all(key.dtypes == bool):
+        if hasattr(key, 'dtypes') and np.all(key.dtypes == bool):
             return mask(self.obj, key)
 
-        raise NotImplementedError("Only supports bool array")
+        if isinstance(key, slice):
+            return dispatch_ix(self.obj, key)
+
+        raise NotImplementedError("Unsupported operand")
 
     def __setitem__(self, key, val):
         self.obj[key] = val
+
+def dispatch_ix(self, key):
+    """
+        Essentially call ix[key] for each dataframe and return new
+        ColumnPanel
+    """
+    data = collections.OrderedDict()
+
+    for k, df in self.frames.iteritems():
+        data[k] = df.ix[key]
+
+    return ColumnPanel(data) 
 
 def mask(self, wh):
     """
