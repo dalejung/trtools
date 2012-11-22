@@ -1,5 +1,10 @@
+import collections
+
+import numpy as np
+import pandas as pd
+
 from pandas import Panel, MultiIndex, Series
-from pandas.core.groupby import DataFrameGroupBy, PanelGroupBy
+from pandas.core.groupby import DataFrameGroupBy, PanelGroupBy, BinGrouper
 
 from trtools.monkey import patch, patch_prop
 from trtools.core.column_panel import PanelDict
@@ -79,3 +84,57 @@ def foreach_panelgroupby(self, func, *args, **kwargs):
     if len(results) == 1:
         return results.values()[0]
     return results
+
+def filter_by_grouped(grouped, by, obj=None):
+    if obj is None:
+        obj = grouped.obj
+
+    index = by
+    if isinstance(by, np.ndarray) and by.dtype == bool:
+        index = by[by].index
+
+    if isinstance(grouped.grouper, BinGrouper):
+        return filter_bingroup_index(grouped, index, obj)
+    return filter_grouper_index(grouped, index, obj)
+
+def filter_grouper_index(grouped, index, obj):
+    groups = grouped.groups
+    raise NotImplementedError()
+
+def filter_bingroup_index(grouped, index, obj):
+    groups = list(_bingroup_groups(grouped))
+    groups = collections.OrderedDict(groups)
+
+    filtered_groups = [(i, groups[i]) for i in index]
+    parts = []
+    for i, slc in filtered_groups:
+        # TODO: concat blocks instead of DataFrames, faster
+        #bit = obj._data.get_slice(slice(slc[0], slc[1]), 1)
+        bit = obj[slc[0]:slc[1]]
+        parts.append(bit)
+
+    res = pd.concat(parts)
+    return res
+
+def _bingroup_groups(grouped):
+    grouper = grouped.grouper
+    data = grouped.obj
+
+    start = 0
+    for edge, label in zip(grouper.bins, grouper.binlabels):
+        yield label, (start, edge)
+        start = edge
+
+    if edge < len(data):
+        yield grouper.binlabels[-1], (edge, len(data))
+
+@patch([PanelGroupBy, DataFrameGroupBy], 'filter_grouped')
+def filter_grouped_monkey(self, by):
+    return filter_by_grouped(self, by)
+
+if __name__ == '__main__':
+    ind =  pd.date_range(start="1990-01-01", freq="H", periods=10000)
+    df = pd.DataFrame({'high': range(len(ind)), 'open': np.random.randn(len(ind))}, index=ind)
+    grouped = df.downsample('D', closed="left")
+    pos = grouped['open'].mean() > 0
+    res = filter_by_grouped(grouped, pos)

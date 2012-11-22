@@ -119,12 +119,13 @@ def apply_put_monkey(self, func, *args, **kwargs):
     obj = self.obj
     return apply_put(obj, grouper, func, *args, **kwargs)
 
-def s(df):
-    h = pd.stats.moments.expanding_count(df.high)
-    l = df.low.cumsum()
-    return {'high':h, 'low':l}
 
 if __name__ == '__main__':
+    def s(df):
+        h = pd.stats.moments.expanding_count(df.high)
+        l = df.low.cumsum()
+        return {'high':h, 'low':l}
+
     ind = pd.date_range(start="2000-01-01", freq="h", periods=1000000)
     df = pd.DataFrame({'high': 1.9, 'low':range(len(ind))}, index=ind)
     grouped = df.downsample('W')
