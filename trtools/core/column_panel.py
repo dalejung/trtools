@@ -18,7 +18,45 @@ class PanelDict(dict):
     def __repr__(self):
         return repr(Series(self.keys()))
 
+def apply_cp(self, func, *args, **kwargs):
+    data = {}
+    for key, df in self.iteritems():
+        data[key] = func(df, *args, **kwargs)
+
+    if len(data) == 0:
+        return 
+
+    test = data[data.keys()[0]]
+    if isinstance(test, DataFrame):
+        return ColumnPanel(data)
+    return ColumnPanelMapper(data)
+
+class ColumnPanelMapper(object):
+    def __init__(self, obj):
+        self.obj = obj
+
+    def __getattr__(self, key):
+        return self[key]
+
+    def __getitem__(self, key):
+        _, test = next(self.obj.iteritems())
+        func = getattr(test, key, None)
+        if not callable(func):
+            raise AttributeError("{0} not a method".format(key))
+        return self._wrap(key)
+
+    def _wrap(self, key):
+        obj = self.obj
+        def wrapped(*args, **kwargs):
+            return apply_cp(obj, lambda df: getattr(df, key)(*args, **kwargs))
+        return wrapped
+
 class ColumnPanelItems(object):
+    """
+        Class for .im item access
+
+        cp.im.AAPL 
+    """
     def __init__(self, obj):
         self.obj = obj
 
@@ -75,7 +113,7 @@ class ColumnPanelIndexer(object):
             ix[index, col, items]
         """
         if isinstance(key, tuple):
-            raise NotImplementedError("Only index axis")
+            return dispatch_ix(self.obj, key)
 
         if hasattr(key, 'dtypes') and np.all(key.dtypes == bool):
             return mask(self.obj, key)
@@ -100,17 +138,25 @@ def dispatch_ix(self, key):
 
     return ColumnPanel(data) 
 
-def mask(self, wh):
+def mask(self, index):
     """
+        Take a bool index and return a column panel
+        with False rows set to None. 
+
+        This is to replicate df.ix[df.col > 0]
+
+        If index is a series, it will apply to all frames. 
+        If index is a DataFrame, it's assumed that each col
+        will correspond to a ColumnPanel.frames item. 
     """
     data = collections.OrderedDict()
 
-    m = wh   
+    m = index   
     for key, val in self.frames.iteritems():
-        if wh.ndim > 1:
-            m = wh[key]
+        if index.ndim > 1:
+            m = index[key]
         val = na_promote(val.copy())
-        val.ix[m] = None
+        val.ix[~m] = None
         data[key] = val
     return ColumnPanel(data) 
 
@@ -127,6 +173,8 @@ class ColumnPanel(object):
         self.frames = collections.OrderedDict() 
         self.columns = []
         self.im = ColumnPanelItems(self)
+        self.df_map = ColumnPanelMapper(self)
+
         if isinstance(obj, dict):
             self._init_dict(obj)
         if isinstance(obj, Panel):
@@ -191,11 +239,12 @@ class ColumnPanel(object):
 
         return index
 
-
-
     @property
     def items(self):
         return self.frames.keys()
+
+    def foreach(self, func, *args, **kwargs):
+        return apply_cp(self, func, *args, **kwargs)
 
     def __setitem__(self, key, value):
         self.columns.append(key)
@@ -212,10 +261,14 @@ class ColumnPanel(object):
         if isinstance(key, tuple):
             return self._getitem_tuple(key)
 
-        if key not in self.columns:
-            raise Exception('%s :Column does not exist'% key)
-        return self._gather_column(key)
+        if key in self.columns:
+            return self._gather_column(key)
+        try:
+            return self.df_map[key]
+        except:
+            pass
 
+        raise Exception('%s :Column does not exist'% key)
     def _getitem_tuple(self, keys):
         """
             panel[cols, items]
@@ -275,6 +328,13 @@ class ColumnPanel(object):
             columns = "Columns axis: 0 cols"
         output = 'ColumnPanel: \n%s\n%s\n%s' % (dims, items, columns)
         return output
+
+    def __iter__(self):
+        return self.iteritems()
+
+    def iteritems(self):
+        return self.frames.iteritems()
+
 
     def __getstate__(self): 
         d = {}

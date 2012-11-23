@@ -88,6 +88,7 @@ def apply_put_frame(data, grouper, func, *args, **kwargs):
             continue
         # HACK. Reuse the group dataframe and just replace it's block manager
         # must faster without creating new dataframes
+        #group = data[start:bin]
         ds = data._data.get_slice(slice(start,bin), 1)
         group._data = ds
         group._clear_item_cache()
