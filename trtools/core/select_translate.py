@@ -62,13 +62,16 @@ def process_cols(obj, key):
 
     cols = []
     columns = key[1]
+
+    # single key
     if not isinstance(columns, collections.Iterable) \
        or isinstance(columns, basestring):
-        columns = [columns]
-
-    columns = [KEY_TRANS.get(c, c) for c in columns]
-    mask = obj.columns.isin(columns).nonzero()[0]
-    cols = obj.columns[mask]
+        ind = obj.columns.get_loc(columns)
+        cols = obj.columns[ind]
+    else:
+        columns = [KEY_TRANS.get(c, c) for c in columns]
+        mask = obj.columns.isin(columns).nonzero()[0]
+        cols = obj.columns[mask]
 
     new_key = [key[0]]
     new_key.append(cols)
