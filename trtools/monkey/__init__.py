@@ -1,7 +1,7 @@
 import warnings
 import functools 
 
-def patch(classes, name=None):
+def patch(classes, name=None, override=False):
     if not isinstance(classes, list):
         classes = [classes]
 
@@ -9,13 +9,19 @@ def patch(classes, name=None):
         for cls in classes:
             func_name = name and name or func.__name__
             old_func_name = '_old_'+func_name
-            if hasattr(cls, old_func_name):
+
+
+            old_func = getattr(cls, old_func_name, None)
+            if old_func is not None and not override:
                 warnings.warn("{0} was already monkey patched. Detected _old_ func".format(func_name))
                 continue
 
-            if hasattr(cls, func_name):
+            # do not override old_func_name, which should always point to original
+            if old_func is None and hasattr(cls, func_name):
                 old_func = getattr(cls, func_name)
                 setattr(cls, old_func_name, old_func)
+
+            func.old = old_func
             setattr(cls, func_name, func)
         return func
     return decorator
