@@ -2,12 +2,13 @@ from line_profiler import LineProfiler
 
 class Profiler(object):
 
-    def __init__(self, funcs=None):
+    def __init__(self, *args):
         self.profile = LineProfiler()
 
-        if funcs:
-            for func in funcs:
-                self.add_function(func)
+        if len(args) > 0:
+            for func in args:
+                if callable(func):
+                    self.add_function(func)
 
     def add_function(self, func):
         self.profile.add_function(func)
