@@ -59,13 +59,20 @@ class ColumnPanelItems(object):
     """
     def __init__(self, obj):
         self.obj = obj
+        self.lookup_cache = {}
 
     def __getattr__(self, key):
         return self[key]
 
     def __getitem__(self, key):
+        # shortcircuit lookupcache
+        k = self.lookup_cache.get(key)
+        if k:
+            return self.obj.frames[k]
+
         for k in self.obj.frames:
             if k == key:
+                self.lookup_cache[key] = k
                 return self.obj.frames[k]
         raise AttributeError("{0} is not an item in ColumnPanel".format(key))
 
