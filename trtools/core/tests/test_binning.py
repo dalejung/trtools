@@ -5,6 +5,7 @@ import pandas.util.testing as tm
 import numpy as np
 
 import trtools.core.binning as binning
+reload(binning)
 
 zscore = lambda x: (x - x.mean()) / x.std()
 
