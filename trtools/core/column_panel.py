@@ -240,9 +240,12 @@ class ColumnPanel(object):
         tests = random.sample(self.items, 3)
         indexes = [self.frames[key].index for key in tests]
         index = indexes[0]
-        for ind in indexes[1:]:
-            if not np.all(index == ind):
-                raise Exception("Indexes are not equal")
+        try:
+            for ind in indexes[1:]:
+                if not np.all(index == ind):
+                    raise
+        except:
+            raise Exception("Indexes are not equal")
 
         return index
 
