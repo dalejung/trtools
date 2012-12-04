@@ -97,11 +97,27 @@ def filter_by_grouped(grouped, by, obj=None):
         return filter_bingroup_index(grouped, index, obj)
     return filter_grouper_index(grouped, index, obj)
 
+def _reverse_flatten(mapping):
+    rev_map = dict()
+    for k, vals in mapping.iteritems():
+        for v in vals:
+            rev_map[v] = k
+
+    return rev_map
+
+# TODO These are mixed. bingroup returns the original obj sans the bad groups
+# regular groupby returns a filtered groupby object
 def filter_grouper_index(grouped, index, obj):
-    groups = grouped.groups
-    raise NotImplementedError()
+
+    old_groups = grouped.groups
+    groups = {k:v for k, v in old_groups.iteritems() if k in index}
+    rmap = _reverse_flatten(groups)
+
+    return obj.groupby(rmap)
 
 def filter_bingroup_index(grouped, index, obj):
+    # http://stackoverflow.com/questions/13446480/python-pandas-remove-entries-based-on-the-number-of-occurrences
+    # I think that overrides what i was doing...
     groups = list(_bingroup_groups(grouped))
     groups = collections.OrderedDict(groups)
 
