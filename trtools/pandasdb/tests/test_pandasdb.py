@@ -59,13 +59,20 @@ class TestPandasTable(TestCase):
             table = pddb.PandasTable(filepath)
             table._init_df(df)
 
+            # save to string
             data = tm.TestStringIO()
             table.save(data)
 
+            # PandasTable saves as df
             data.seek(0)
             new_table = pickle.loads(data.read())
-            assert tm.assert_almost_equal(new_table._df, df)
+            assert tm.assert_almost_equal(new_table, df)
             data.free()
+
+            # save to disk
+            table.save()
+            pandas_table = pddb.PandasTable(filepath)
+            assert tm.assert_almost_equal(pandas_table._df, df)
 
 
 if __name__ == '__main__':                                                                                          
