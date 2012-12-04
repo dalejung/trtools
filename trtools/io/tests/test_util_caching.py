@@ -3,12 +3,15 @@ import os.path
 from unittest import TestCase
 
 from trtools.io.cacher import cacher
+from trtools.util.tempdir import TemporaryDirectory
+
+td = TemporaryDirectory()
 
 class TestClass(object):
     def __init__(self):
         self.count = 0
 
-    @cacher('test/test_meth', method=True)
+    @cacher(td.name + '/test/test_meth', method=True)
     def test_meth(self):
         self.count += 1
         return self.count
@@ -67,6 +70,8 @@ class TestCaching(TestCase):
         assert tc.count == 1
         tc.test_meth2()
         assert tc.count == 2
+
+td.cleanup()
 
 if __name__ == '__main__':                                                                                          
     import nose                                                                      
