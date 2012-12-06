@@ -45,6 +45,21 @@ class FilterGroup(object):
     def add_filter(self, filter):
         self.filters.append(filter)
 
+def execute_query(data, cols=None, filters=[], order_by=[], joins=[]):
+    ret = data
+    if len(filters) > 0:
+        combined_filter = combine_filters(filters, data)
+        ret = data[combined_filter]
+
+    if cols is not None and len(cols) > 0:
+        ret = ret.xs(cols, axis=1)
+
+    if len(joins) > 0:
+        for target, on in joins:
+            ret = pd.merge(ret, target, on=on)
+
+    return ret
+
 class PandasSQL(object):
     def __init__(self, df):
         self.df = df
@@ -63,21 +78,16 @@ class PandasSQL(object):
         return self.execute(cols, filters, order_by, joins)
 
     def execute(self, cols=None, filters=[], order_by=[], joins=[]):
-        ret = self.df
-        if len(filters) > 0:
-            combined_filter = combine_filters(filters, self.df)
-            ret = self.df[combined_filter]
+        return execute_query(self.df, cols, filters, order_by, joins)
 
-        if cols is not None and len(cols) > 0:
-            ret = ret.xs(cols, axis=1)
-
-        if len(joins) > 0:
-            for target, on in joins:
-                ret = pd.merge(ret, target, on=on)
-
-        return ret
-
+    # hackish support for wrapping around a Series
+    _pd_column = None
     def __getattr__(self, name):
+        if isinstance(self.df, pd.Series):
+            if self._pd_column is None:
+                self._pd_column = PandasColumn(self, None)
+            return getattr(self._pd_column, name)
+
         if name in self.df.columns:
             return PandasColumn(self, name)
         raise AttributeError(name)
@@ -100,10 +110,16 @@ class PandasColumn(object):
     """
     def __init__(self, db, column):
         self.db = db
-        self.column = column
+        self.col_name = column
+
+    @property
+    def col(self):
+        if isinstance(self.db.df, pd.Series):
+            return self.db.df
+        return self.db.df[self.col_name]
 
     def column_filter(self, other, op):
-        filter = op(self.db.df[self.column],other)
+        filter = op(self.col,other)
         return self.db.execute(filters=[filter])
 
     def __eq__(self, other):
@@ -125,22 +141,22 @@ class PandasColumn(object):
         return self.column_filter(other, operator.le)
 
     def isin(self, other):
-        filter = self.db.df[self.column].isin(other)
+        filter = self.col.isin(other)
         return self.db.execute(filters=[filter])
 
     def notin(self, other):
-        filter = self.db.df[self.column].isin(other) # same as isin
+        filter = self.col.isin(other) # same as isin
         filter = ~filter
         return self.db.execute(filters=[filter])
 
     def __mod__(self, other):
         # uses pandas contains
-        filter = self.db.df[self.column].str.contains(other)
+        filter = self.col.str.contains(other)
         res = self.db.execute(filters=[filter])
         return res
 
     def between(self, left, right):
-        col = self.db.df[self.column]
+        col = self.col
         filter = (col >= left) & (col <= right)
         res = self.db.execute(filters=[filter])
         return res
@@ -153,7 +169,7 @@ class PandasColumn(object):
         # TODO this behavior of wrapping objects recursively happens a lot. Should find
         # a sane way to standardize this. 
 
-        column = self.db.df[self.column]
+        column = self.col
         if hasattr(column, key):
             attr = getattr(column, key)
             if callable(attr):
@@ -253,3 +269,4 @@ class Query(object):
 
 # monkey patch
 pd.DataFrame.sql = property(lambda x: PandasSQL(x))
+pd.Series.sql = property(lambda x: PandasSQL(x))

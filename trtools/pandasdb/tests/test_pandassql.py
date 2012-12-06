@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+import numpy as np
 import pandas as pd
 import pandas.util.testing as tm
 import trtools.pandasdb.api as pandassql
@@ -206,8 +207,22 @@ class TestFilterGroup(TestCase):
 
         assert tm.assert_almost_equal(res, pd.Series([1,1,0,1,1]))
 
-        
-        
+class TestPandasSQL(TestCase):
+
+    def __init__(self, *args, **kwargs):
+        TestCase.__init__(self, *args, **kwargs)
+
+    def runTest(self):
+        pass
+
+    def setUp(self):
+        pass
+
+    def test_series_sql(self):
+        s = pd.Series(range(10)).astype(float)
+        s[3] = np.nan
+        assert pd.isnull(s[3])
+        assert s.sql.isnull().index[0] == 3
 
 if __name__ == '__main__':                                                                                          
     import nose                                                                      
