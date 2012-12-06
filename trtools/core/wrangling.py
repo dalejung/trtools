@@ -79,6 +79,24 @@ def foreach_dataframe(self, func, force_dict=False, *args, **kwargs):
 def dataset(self):
     return DataFrame(index=self.index)
 
+def _func_name(func):
+    if isinstance(func, basestring):
+        return func
+    if callable(func):
+        return func.func_name
+
+def func_translate(name, obj):
+    if hasattr(obj, name):
+        func = lambda df: getattr(df, name)()
+        return func
+
+    bits = name.split('_')
+    name = bits[0]
+    if name == 'quantile':
+        q = int(bits[1])
+        q = q / 100.0
+        return lambda df: getattr(df, name)(q)
+
 @patch([Series, DataFrame], 'table')
 def table_agg(self, funcs):
     """
@@ -92,14 +110,26 @@ def table_agg(self, funcs):
        col2   3        300
     """
     # list of func names
+    fdict = OrderedDict()
     if isinstance(funcs, list):
-        funcs = OrderedDict([(x,x) for x in funcs])
+        for f in funcs:
+            if isinstance(f, tuple):
+                name, func = f
+            else:
+                name = _func_name(f)
+                func = f
+            fdict[name] = func
 
     data = OrderedDict()
-    for k, f in funcs.items():
+    for k, f in fdict.items():
         func = f
         if isinstance(f, basestring):
-            func = lambda df: getattr(df, f)()
-        data[k] = func(self)
-        
-    return pd.DataFrame(data, columns=data.keys())
+            func = func_translate(f, self)
+        else:
+            func = lambda df: df.apply(f)
+
+        res = func(self)
+        data[k] = res
+
+    res = pd.DataFrame(data, columns=data.keys()).T
+    return res
