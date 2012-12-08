@@ -2,5 +2,5 @@ from caching_dict import CachingDict
 from filecache import FileCache, LeveledFileCache
 from cacher import cacher
 from hdf5_filecache import HDF5FileCache, HDF5LeveledFileCache, OBTFileCache
-from pytables import HDF5Handle, convert_frame
+from pytables import HDF5Handle, convert_frame, MismatchColumnsError
 from hdf5_store import HDFFile, OBTFile

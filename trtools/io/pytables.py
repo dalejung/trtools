@@ -15,6 +15,9 @@ from trtools.io.table_indexing import create_slices
 
 MIN_ITEMSIZE = 10
 
+class MismatchColumnsError(Exception):
+    pass
+
 def convert_frame(df):
     """
         Input: DataFrame
@@ -585,6 +588,13 @@ class HDF5Table(HDF5Wrapper):
         self._index = None
         self._ix = None
 
+    _columns = None
+    @property
+    def columns(self):
+        if self._columns is None:
+            self._columns = _meta(self.table)['columns']
+        return self._columns
+
     @property
     def table(self):
         return self.obj
@@ -602,6 +612,10 @@ class HDF5Table(HDF5Wrapper):
 
     def _append_frame(self, df, flush=False):
         desc, recs, types = convert_frame(df)
+
+        if not np.all(df.columns == self.columns):
+            raise MismatchColumnsError("HDFTable and DataFrame columns are not the same {0} vs {1}".format(
+                df.columns, self.columns))
         self.table.append(recs)
         if flush:
             self.table.flush()

@@ -16,6 +16,7 @@ class OneBigTable(object):
     @property
     def table(self):
         if self._table is None:
+            # have we sorted by index?
             if hasattr(self.group, 'indexed_table'):
                 self._table = getattr(self.group, 'indexed_table')
             else:
