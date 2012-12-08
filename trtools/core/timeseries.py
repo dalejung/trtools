@@ -280,6 +280,8 @@ def ohlc_grouped_cython(grouped):
         ohlc version
     """
     hldf = grouped.agg(cython_ohlc)
+    # set column order back
+    hldf = hldf.reindex(columns=['open', 'high', 'low', 'close', 'vol'])
     return hldf
 
 # monkey patches
