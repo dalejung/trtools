@@ -121,8 +121,8 @@ def barf(self, num_rows=5, max_col=None):
         Keep on running into issues where in notebook, I want to just show everything.
     """
     from IPython.core.display import HTML
-    import pandas.core.format as fmt 
-    fmt.print_config.max_columns = 1000
+    import pandas.core.config as config 
+    config.set_option("print.max_columns", 1000)
     h = HTML(self.to_html())
-    fmt.print_config.max_columns = None
+    config.reset_option("print.max_columns")
     return h
