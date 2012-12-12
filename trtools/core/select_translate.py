@@ -16,6 +16,13 @@ def df__getitem__(self, key):
         Some keys might match both a basestring and int. The `in` keyword
         will match by hash so can only match one type.
     """
+    # Logic is to keep supporting strings even if they have an 
+    # entry in translate table
+    # Not sure if supporting ints is worthwhile since
+    # int columns can exist automatically
+    if isinstance(key, basestring) and key in self.columns:
+        return self._old___getitem__(key) 
+
     try:
         key = KEY_TRANS.get(key, key)
         col = self._old___getitem__(key) 
@@ -70,8 +77,7 @@ def process_cols(obj, key):
         cols = obj.columns[ind]
     else:
         columns = [KEY_TRANS.get(c, c) for c in columns]
-        mask = obj.columns.isin(columns).nonzero()[0]
-        cols = obj.columns[mask]
+        cols = [obj.columns[obj.columns.get_loc(c)] for c in columns]
 
     new_key = [key[0]]
     new_key.append(cols)
