@@ -16,6 +16,12 @@ def mush(left, right, columns=None, suffix="_right"):
 
     left = left.ix[:, columns]
     right = right.ix[:, columns]
+
+    merge_columns = []
+    for col in columns:
+        merge_columns.append(str(col))
+        merge_columns.append(str(col)+suffix)
+
     df = pd.merge(left, right, right_index=True, left_index=True, suffixes=('', suffix))
-    df = df.sort(axis=1)
+    df = df.reindex(columns=merge_columns)
     return df
