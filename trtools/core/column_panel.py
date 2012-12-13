@@ -29,9 +29,14 @@ def apply_cp(self, func, *args, **kwargs):
     test = data[data.keys()[0]]
     if isinstance(test, DataFrame):
         return ColumnPanel(data)
-    return ColumnPanelMapper(data)
+    if isinstance(test, Series):
+        return DataFrame(data)
+    return data
 
 class ColumnPanelMapper(object):
+    """
+        Exposes methods on ColumnPanel.frames items.
+    """
     def __init__(self, obj):
         self.obj = obj
 
@@ -278,7 +283,8 @@ class ColumnPanel(object):
         except:
             pass
 
-        raise Exception('%s :Column does not exist'% key)
+        raise Exception('%s: Column does not exist'% key)
+
     def _getitem_tuple(self, keys):
         """
             panel[cols, items]
@@ -319,7 +325,6 @@ class ColumnPanel(object):
         df = DataFrame(results, name=key)
         self._cache[key] = df
         return df
-        return TRDataFrame(df)
 
     def to_panel(self):
         copies = {}
@@ -345,6 +350,9 @@ class ColumnPanel(object):
     def iteritems(self):
         return self.frames.iteritems()
 
+    def downsample(self, freq, closed='right', label='right', axis=1):
+        panel = self.to_panel()
+        return panel.downsample(freq=freq, closed=closed, label=label, axis=axis)
 
     def __getstate__(self): 
         d = {}
