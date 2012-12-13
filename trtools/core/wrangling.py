@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
 import pandas as pd
+import numpy as np
 from pandas import Panel, DataFrame, MultiIndex, Series
 
 from trtools.monkey import patch
@@ -133,3 +134,34 @@ def table_agg(self, funcs):
 
     res = pd.DataFrame(data, columns=data.keys()).T
     return res
+
+@patch([DataFrame], 'pairwise')
+def pairwise(self, func, force_values=False):
+    """
+        Basically a rip of DataFrame.corr
+
+        force_values:
+            will skip the autoboxing of Series and just send in
+            the np.ndarray. Much faster.
+    """
+    numeric_df = self._get_numeric_data()
+    cols = numeric_df.columns
+    K = len(cols)
+    if force_values:
+        # speed up. values sent to func will be np.ndarray
+        numeric_df = numeric_df.values.T
+    else:
+        numeric_df.columns = range(K)
+
+    matrix = np.empty((K,K), dtype=float)
+
+    for i in range(K):
+        A = numeric_df[i]
+        for j in range(i,K):
+            B = numeric_df[j]
+
+            val = func(A, B)
+            matrix[i, j] = val
+            matrix[j, i] = val
+
+    return self._constructor(matrix, index=cols, columns=cols)
