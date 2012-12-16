@@ -38,7 +38,7 @@ class TestPandas(TestCase):
     def test_panelgroupby(self):
         def agg_func(pan):
             assert isinstance(pan, pd.Panel)
-            return 1
+            return pan.mean()
 
         ind = pd.date_range('1/1/2000', periods=100)
         data = np.random.randn(2,len(ind),4)
