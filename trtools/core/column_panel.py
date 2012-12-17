@@ -197,10 +197,9 @@ class ColumnPanel(object):
         self._cache = {}
 
     def _init_dict(self, data):
-        first = next(data.itervalues())
-        self.columns = list(first.columns)
-        for name, df in data.iteritems():
-            self.frames[name] = df
+        # just aligning indexes
+        panel = Panel(data)
+        self._init_panel(panel)
 
     def _init_panel(self, panel):
         self.columns = list(panel._get_axis('minor'))
@@ -214,7 +213,8 @@ class ColumnPanel(object):
             raise Exception('need a name for df')
 
         for col, series in df.iteritems():
-            frame = DataFrame({name:series}, name=col)
+            frame = DataFrame({name:series})
+            frame.name = col
             self.frames[col] = frame
 
     def dataset(self):
@@ -322,7 +322,8 @@ class ColumnPanel(object):
         for name, df in self.frames.iteritems():
             results[name] = df[key]
 
-        df = DataFrame(results, name=key)
+        df = DataFrame(results)
+        df.name = key
         self._cache[key] = df
         return df
 
