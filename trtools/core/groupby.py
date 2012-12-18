@@ -69,7 +69,7 @@ def foreach_panelgroupby(self, func, *args, **kwargs):
     if isinstance(self.obj, Panel):
         items = self.obj.iteritems()
     else:
-        items = [(self.obj.name, self.obj)]
+        items = [(None, self.obj)]
 
     results = PanelDict()
     for key, df in items:
@@ -148,7 +148,7 @@ def _bingroup_groups(grouped):
 def filter_grouped_monkey(self, by):
     return filter_by_grouped(self, by)
 
-@patch([PanelGroupBy], 'process')
+@patch([PanelGroupBy, DataFrameGroupBy], 'process')
 def panel_process(self, func):
     """
         Essentially just subsets the dataframe, runs func, and aggregates them back
@@ -159,10 +159,11 @@ def panel_process(self, func):
     grouped = self
     bins = grouped.grouper.bins
     binlabels = grouped.grouper.binlabels
+    axis = self.axis
     start = 0
     for i, x in enumerate(bins):
         label = binlabels[i]
-        sub = grouped.obj.ix[:, start:x]
+        sub = self.obj.ix._getitem_axis(slice(start, x), axis=axis)
         res = func(sub)
         parts[label] = res
         start = x
@@ -190,7 +191,7 @@ def _wrap_parts(parts):
     return parts
 
 
-@patch([PanelGroupBy], 'subset')
+@patch([PanelGroupBy, DataFrameGroupBy], 'subset')
 def subset(self, key):
     """
         Return the sub dataset that would have been sent to 
@@ -213,7 +214,8 @@ def subset(self, key):
         start = bins[loc - 1]
 
     end = bins[loc]
-    return self.obj.ix[:, start:end]
+    axis = self.axis
+    return self.obj.ix._getitem_axis(slice(start, end), axis=axis)
 
 if __name__ == '__main__':
     ind =  pd.date_range(start="1990-01-01", freq="H", periods=10000)

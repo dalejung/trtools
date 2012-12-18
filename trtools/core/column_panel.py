@@ -1,9 +1,12 @@
 import sys
 import collections
+import operator
 
 import numpy as np
 from pandas import Series, Panel, DataFrame
 from pandas.util import py3compat
+
+from trtools.monkey import AttrProxy
 
 def _iter_or_slice(key):
     if isinstance(key, slice):
@@ -19,6 +22,10 @@ class PanelDict(dict):
         return repr(Series(self.keys()))
 
 def apply_cp(self, func, *args, **kwargs):
+    """
+        apply func to each frame and wrap
+        based on return
+    """
     data = {}
     for key, df in self.iteritems():
         data[key] = func(df, *args, **kwargs)
@@ -46,14 +53,18 @@ class ColumnPanelMapper(object):
     def __getitem__(self, key):
         _, test = next(self.obj.iteritems())
         func = getattr(test, key, None)
-        if not callable(func):
+        if func is None:
             raise AttributeError("{0} not a method".format(key))
-        return self._wrap(key)
+        if callable(func):
+            return self._wrap(key)
+        else: 
+            return AttrProxy(key, test, lambda _, key: self._wrap(key))
 
     def _wrap(self, key):
         obj = self.obj
+        getter = operator.attrgetter(key) # supports nested attrs
         def wrapped(*args, **kwargs):
-            return apply_cp(obj, lambda df: getattr(df, key)(*args, **kwargs))
+            return apply_cp(obj, lambda df: getter(df)(*args, **kwargs))
         return wrapped
 
 class ColumnPanelItems(object):

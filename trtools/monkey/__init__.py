@@ -123,6 +123,33 @@ def attr_namespace(target, name):
 
     return func
 
+class AttrProxy(object):
+    """
+       Wraps an object and exposes its attribute which are 
+       run through a callback. 
+
+       This is a utility class for wrapping other objects. Usually
+       one would override the __getattr__ and delegate to the wrapped
+       class. However, that breaks down when the attribute is an object,
+       and you want to wrap that attribute's methods. 
+
+        The use case is for ColumnPanel which allows things like
+        cp.tail(10) which calls tail(10) for each frame. Currently, 
+        this does not work for nested objects. cp.ret.log_returns() 
+        would not work
+    """
+    def __init__(self, name, obj, callback):
+        self.name = name
+        self.obj = obj
+        self.attr = getattr(obj, name)
+        self.callback = callback
+
+    def __getattr__(self, key):
+        if hasattr(self.attr, key):
+            fullattr = '.'.join([self.name, key])
+            return self.callback(self.obj, fullattr)
+        raise AttributeError()
+
 # IPYTYHON
 # Autocomplete the target endpoint
 def install_ipython_completers():  # pragma: no cover
