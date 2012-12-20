@@ -8,10 +8,15 @@ from pandas.tseries.index import DatetimeIndex
 from pandas.tseries.resample import _get_range_edges
 from pandas.core.groupby import DataFrameGroupBy, PanelGroupBy, BinGrouper
 from pandas.tseries.resample import TimeGrouper
+from pandas.tseries.offsets import Tick
+from pandas.tseries.frequencies import _offset_map, to_offset
 import pandas.lib as lib
 import numpy as np
 
 from trtools.monkey import patch, patch_prop
+
+def _is_tick(offset):
+    return isinstance(offset, Tick)
 
 ## TODO See if I still need this. All this stuff was pre resample
 
@@ -290,11 +295,69 @@ def ohlc_grouped_cython(grouped):
 def ohlc(self):
     return ohlc_grouped_cython(self)
 
-@patch([DataFrame, Series], 'downsample')
-def downsample(self, freq, closed='right', label='right', axis=0):
+LEFT_OFFSETS = [
+    'B', 
+    'W', 
+    'MS', 
+    'BMS', 
+    'AS', 
+    'BAS', 
+    'QS',
+    'BQS',
+]
+
+def _offset_defaults(freq):
+    offset = to_offset(freq)
+    base = offset.rule_code.split('-')[0]
+    if base in LEFT_OFFSETS:
+        return {'closed':'left', 'label': 'left'}
+
+    return {'closed':'right', 'label': 'right'}
+
+class Downsample(object):
+    def __init__(self, obj, axis=0):
+        self.obj = obj
+        self.axis = axis
+
+    def __call__(self, freq, closed=None, label=None, axis=None):
+        if axis is None:
+            axis = self.axis
+        return downsample(self.obj, freq=freq, closed=closed, label=label, axis=axis)
+
+    def __getattr__(self, key):
+        key = key.replace('_', '-')
+        def wrap(stride=None, closed=None, label=None, axis=None):
+            offset = to_offset(key)
+            if stride is not None:
+                offset = offset * stride
+            return self(offset, closed, label, axis) 
+        return wrap
+
+    def _completers(self):
+        return [k.replace('-', '_') for k in _offset_map.keys() if k]
+
+
+@patch_prop([DataFrame, Series], 'downsample')
+def downsample_prop(self):
+    return Downsample(self)
+
+@patch_prop([Panel], 'downsample')
+def downsample_prop_panel(self):
+    return Downsample(self, axis=1)
+
+#@patch([DataFrame, Series], 'downsample')
+def downsample(self, freq, closed=None, label=None, axis=0):
     """
         Essentially use resample logic but reutrning the groupby object
     """
+        
+    # default closed/label on offset
+    defaults = _offset_defaults(freq)
+    if closed is None:
+        closed = defaults['closed']
+
+    if label is None:
+        label = defaults['label']
     tg = TimeGrouper(freq, closed=closed, label=label, axis=axis)
     grouper = tg.get_grouper(self)
 
@@ -304,12 +367,6 @@ def downsample(self, freq, closed='right', label='right', axis=0):
     #periods_in_bin = np.diff(bins)
 
     return self.groupby(grouper, axis=axis)
-
-@patch([Panel], 'downsample')
-def downsample_panel(self, freq, closed='right', label='right', axis=1):
-    # default axis to 1
-    return downsample(self, freq=freq, closed=closed, label=label, axis=axis)
-
 
 # Quick groupbys. _rs stands for resample, though they really use TimeGrouper.
 # Eventuall take out the old groupbys once everything is verified to be equal
@@ -341,3 +398,22 @@ def fillforward(df):
         business days that vacations.
     """
     return df.asfreq(datetools.BDay(), method='pad')
+
+# IPYTYHON
+# Autocomplete the target endpoint
+def install_ipython_completers():  # pragma: no cover
+    from pandas.util import py3compat
+    from IPython.utils.generics import complete_object
+
+    @complete_object.when_type(Downsample)
+    def complete_column_panel(self, prev_completions):
+        return [c for c in self._completers() \
+                    if isinstance(c, basestring) and py3compat.isidentifier(c)]                                          
+# Importing IPython brings in about 200 modules, so we want to avoid it unless
+# we're in IPython (when those modules are loaded anyway).
+import sys
+if "IPython" in sys.modules:  # pragma: no cover
+    try: 
+        install_ipython_completers()
+    except Exception:
+        pass 
