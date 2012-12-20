@@ -1,44 +1,88 @@
 import sys
-import collections
+from collections import OrderedDict, Iterable
 import operator
 
 import numpy as np
-from pandas import Series, Panel, DataFrame
+from pandas import Series, Panel, DataFrame, Panel4D
 from pandas.util import py3compat
 
-from trtools.monkey import AttrProxy
+import trtools.monkey as monkey
 
 def _iter_or_slice(key):
     if isinstance(key, slice):
         return key
     if isinstance(key, basestring):
         return [key]
-    if not isinstance(key, collections.Iterable): 
+    if not isinstance(key, Iterable): 
         return [key]
     return key
 
-class PanelDict(dict):
+class PanelDict(OrderedDict):
+    """
+        This started off as a quick way to have dict.__repr__ not spit 
+        out a ton of stuff
+    """
+    def __init__(self):
+        super(PanelDict, self).__init__()
+
     def __repr__(self):
         return repr(Series(self.keys()))
+
+    def __getattr__(self, key):
+        try:
+            return super(PanelDict, self).__getattr__(key)
+        except:
+            # not sure what the best way to handle this is.
+            # OrderedDict.__init__ use try/catch to initialize self..__root
+            # removing this results in recursion error
+            if key == '_OrderedDict__root':
+                raise
+
+        test = next(self.itervalues())
+        func = getattr(test, key, None)
+        if func is None:
+            return super(PanelDict, self).__getattr__(key)
+        if callable(func):
+            return _wrap(self, key)
+        else: 
+            return monkey.AttrProxy(key, test, lambda _, key: _wrap(self, key))
 
 def apply_cp(self, func, *args, **kwargs):
     """
         apply func to each frame and wrap
         based on return
     """
-    data = {}
+    data = PanelDict() 
     for key, df in self.iteritems():
         data[key] = func(df, *args, **kwargs)
 
     if len(data) == 0:
         return 
 
+    data = _box_items(data)
+    return data
+
+def _box_items(data):
     test = data[data.keys()[0]]
+    if isinstance(test, ColumnPanel):
+        data = OrderedDict([(k, v.to_panel()) for k, v  in data.iteritems()])
+        return Panel4D(data)
+    if isinstance(test, Panel):
+        return Panel4D(data)
     if isinstance(test, DataFrame):
         return ColumnPanel(data)
     if isinstance(test, Series):
         return DataFrame(data)
     return data
+
+def _wrap(obj, key):
+    """
+        Wraps a attr-key into an apply_cp call
+    """
+    getter = operator.attrgetter(key) # supports nested attrs
+    def wrapped(*args, **kwargs):
+        return apply_cp(obj, lambda df: getter(df)(*args, **kwargs))
+    return wrapped
 
 class ColumnPanelMapper(object):
     """
@@ -58,14 +102,25 @@ class ColumnPanelMapper(object):
         if callable(func):
             return self._wrap(key)
         else: 
-            return AttrProxy(key, test, lambda _, key: self._wrap(key))
+            return monkey.AttrProxy(key, test, lambda _, key: self._wrap(key))
 
     def _wrap(self, key):
         obj = self.obj
-        getter = operator.attrgetter(key) # supports nested attrs
-        def wrapped(*args, **kwargs):
-            return apply_cp(obj, lambda df: getter(df)(*args, **kwargs))
-        return wrapped
+        return _wrap(obj, key)
+
+class ColumnPanelGroupBy(object):
+    def __init__(self, grouped):
+        self.grouped = grouped
+
+    def __getattr__(self, key):
+        if hasattr(self.grouped, key):
+            return getattr(self.grouped, key)
+
+    def process(self, func, *args, **kwargs):
+        # wrap each subset with a PanelMapper
+        wrapped = lambda df: func(ColumnPanelMapper(df))
+        res = self.grouped.process(wrapped, *args, **kwargs)
+        return res
 
 class ColumnPanelItems(object):
     """
@@ -154,7 +209,7 @@ def dispatch_ix(self, key):
         Essentially call ix[key] for each dataframe and return new
         ColumnPanel
     """
-    data = collections.OrderedDict()
+    data = OrderedDict()
 
     for k, df in self.frames.iteritems():
         data[k] = df.ix[key]
@@ -172,7 +227,7 @@ def mask(self, index):
         If index is a DataFrame, it's assumed that each col
         will correspond to a ColumnPanel.frames item. 
     """
-    data = collections.OrderedDict()
+    data = OrderedDict()
 
     m = index   
     for key, val in self.frames.iteritems():
@@ -193,7 +248,6 @@ def na_promote(df):
 
 class ColumnPanel(object):
     def __init__(self, obj=None, name=None):
-        self.frames = collections.OrderedDict() 
         self.columns = []
         self.im = ColumnPanelItems(self)
         self.df_map = ColumnPanelMapper(self)
@@ -207,6 +261,24 @@ class ColumnPanel(object):
 
         self._cache = {}
 
+    _frames = None
+    _panel = None
+    @property
+    def frames(self):
+        """
+            Until the frames is accessed. The ColumnPanel
+            acts like a quasi Panel, keeping the Panel instance around. 
+            This is to save processing when we're just using ColumnPanel as an
+            intermediatry step
+        """
+        if self._frames is None:
+            self._frames = OrderedDict()
+            if self._panel is not None:
+                for name, df in self._panel.iteritems():
+                    self._frames[name] = df
+                    self._panel = None
+        return self._frames
+
     def _init_dict(self, data):
         # just aligning indexes
         panel = Panel(data)
@@ -214,8 +286,7 @@ class ColumnPanel(object):
 
     def _init_panel(self, panel):
         self.columns = list(panel._get_axis('minor'))
-        for name, df in panel.iteritems():
-            self.frames[name] = df
+        self._panel = panel
 
     def _init_dataframe(self, df, name=None):
         name = name or df.name
@@ -233,7 +304,7 @@ class ColumnPanel(object):
             Create an empty ColumnPanel with the same items
             and index
         """
-        data = collections.OrderedDict()
+        data = OrderedDict()
         for key, val in self.frames.iteritems():
             data[key] = DataFrame(index=val.index)
         return ColumnPanel(data)
@@ -339,6 +410,9 @@ class ColumnPanel(object):
         return df
 
     def to_panel(self):
+        if self._panel is not None:
+            return self._panel
+
         copies = {}
         for k,v in self.frames.iteritems():
             copies[k] = v.copy()
@@ -364,7 +438,9 @@ class ColumnPanel(object):
 
     def downsample(self, freq, closed='right', label='right', axis=1):
         panel = self.to_panel()
-        return panel.downsample(freq=freq, closed=closed, label=label, axis=axis)
+        grouped = panel.downsample(freq=freq, closed=closed, label=label, axis=axis)
+        grouped = ColumnPanelGroupBy(grouped)
+        return grouped
 
     def __getstate__(self): 
         d = {}

@@ -1,13 +1,15 @@
 import collections
+from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
+from pandas import Panel4D
 
 from pandas import Panel, MultiIndex, Series
 from pandas.core.groupby import DataFrameGroupBy, PanelGroupBy, BinGrouper
 
 from trtools.monkey import patch, patch_prop
-from trtools.core.column_panel import PanelDict
+from trtools.core.column_panel import PanelDict, ColumnPanel
 
 class PanelGroupByMap(object):
     """
@@ -149,7 +151,7 @@ def filter_grouped_monkey(self, by):
     return filter_by_grouped(self, by)
 
 @patch([PanelGroupBy, DataFrameGroupBy], 'process')
-def panel_process(self, func):
+def panel_process(self, func, *args, **kwargs):
     """
         Essentially just subsets the dataframe, runs func, and aggregates them back
     """
@@ -187,6 +189,11 @@ def _wrap_parts(parts):
         return res
     if isinstance(test, pd.DataFrame):
         return pd.Panel(parts).transpose(2, 0, 1)
+    if isinstance(test, ColumnPanel):
+        data = OrderedDict([(k, v.to_panel()) for k, v  in parts.iteritems()])
+        return Panel4D(data)
+    if isinstance(test, Panel):
+        return Panel4D(data)
 
     return parts
 

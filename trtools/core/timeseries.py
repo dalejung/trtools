@@ -290,7 +290,7 @@ def ohlc_grouped_cython(grouped):
 def ohlc(self):
     return ohlc_grouped_cython(self)
 
-@patch([Panel, DataFrame, Series])
+@patch([DataFrame, Series], 'downsample')
 def downsample(self, freq, closed='right', label='right', axis=0):
     """
         Essentially use resample logic but reutrning the groupby object
@@ -304,6 +304,12 @@ def downsample(self, freq, closed='right', label='right', axis=0):
     #periods_in_bin = np.diff(bins)
 
     return self.groupby(grouper, axis=axis)
+
+@patch([Panel], 'downsample')
+def downsample_panel(self, freq, closed='right', label='right', axis=1):
+    # default axis to 1
+    return downsample(self, freq=freq, closed=closed, label=label, axis=axis)
+
 
 # Quick groupbys. _rs stands for resample, though they really use TimeGrouper.
 # Eventuall take out the old groupbys once everything is verified to be equal
