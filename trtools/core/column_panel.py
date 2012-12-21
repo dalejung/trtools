@@ -445,15 +445,22 @@ class ColumnPanel(object):
     def sample(self, N=10, axis='items'):
         """
             Grab a random sample
+
+            Example usage:
+                cp.ix["2000"].sample(3)
+                Grabs 3 non empty frames from the year 2000
+
         """
         import random
         if axis == 'items':
-            keys = self.items.copy()
+            keys = self.items[:]
 
         random.shuffle(keys)
         data = {}
         for k in keys:
             df = self.frames[k]
+            if df.count().sum() == 0:
+                continue
             data[k] = df
             if len(data) >= N:
                 break
