@@ -436,7 +436,7 @@ class ColumnPanel(object):
     def iteritems(self):
         return self.frames.iteritems()
 
-    def downsample(self, freq, closed='right', label='right', axis=1):
+    def downsample(self, freq, closed=None, label=None, axis=None):
         panel = self.to_panel()
         grouped = panel.downsample(freq=freq, closed=closed, label=label, axis=axis)
         grouped = ColumnPanelGroupBy(grouped)
