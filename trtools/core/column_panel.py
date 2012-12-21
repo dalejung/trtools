@@ -199,7 +199,7 @@ class ColumnPanelIndexer(object):
         if isinstance(key, slice):
             return dispatch_ix(self.obj, key)
 
-        raise NotImplementedError("Unsupported operand")
+        return dispatch_ix(self.obj, key)
 
     def __setitem__(self, key, val):
         self.obj[key] = val
@@ -441,6 +441,24 @@ class ColumnPanel(object):
         grouped = panel.downsample(freq=freq, closed=closed, label=label, axis=axis)
         grouped = ColumnPanelGroupBy(grouped)
         return grouped
+
+    def sample(self, N=10, axis='items'):
+        """
+            Grab a random sample
+        """
+        import random
+        if axis == 'items':
+            keys = self.items.copy()
+
+        random.shuffle(keys)
+        data = {}
+        for k in keys:
+            df = self.frames[k]
+            data[k] = df
+            if len(data) >= N:
+                break
+
+        return ColumnPanel(data)
 
     def __getstate__(self): 
         d = {}
