@@ -54,6 +54,7 @@ class UserPandasObject(object):
         elif isinstance(attr, AttrNameSpace):
             # Not sure when to call this other than check AttrNameSpace
             # note this won't catch the .str namepsace yet
+            # also doesn't catch .ix
             return AttrProxy(name, self.pobj, lambda obj, full: self._wrap(full))
         else:
             return self._delegate(name)
