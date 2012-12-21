@@ -115,9 +115,16 @@ class ColumnPanelGroupBy(object):
     def __getattr__(self, key):
         if hasattr(self.grouped, key):
             return getattr(self.grouped, key)
+        # TODO 
+        # Add a wrap func for Panel and DataFrame method
+        raise AttributeError()
 
     def process(self, func, *args, **kwargs):
         # wrap each subset with a PanelMapper
+
+        # TODO
+        # here's the thing, What if I dont' want ColumnPanelMapper?
+        # what if I want a Panel specific thing?
         wrapped = lambda df: func(ColumnPanelMapper(df))
         res = self.grouped.process(wrapped, *args, **kwargs)
         return res
