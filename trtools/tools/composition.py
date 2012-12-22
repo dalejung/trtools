@@ -23,9 +23,9 @@ class UserPandasObject(object):
     
     def __getattribute__(self, name):
         # so far these are the only base attribute I need
-        if name in ['_pget', 'pobj', '_delegate', '_wrap', '_get', '__array_finalize__', '__class__']:
+        if name in ['pget', 'pobj', '_delegate', '_wrap', '_get', '__class__', '__array_finalize__', 'view']:
             return object.__getattribute__(self, name)
-        
+
         if hasattr(self.pobj, name):
             return self._wrap(name) 
         
@@ -40,7 +40,7 @@ class UserPandasObject(object):
 
     def __getattr__(self, name):
         # unset the inherited logic here. 
-        raise AttributeError()
+        raise AttributeError(name)
 
     def pget(self, name):
         """
@@ -133,8 +133,10 @@ class UserSeries(pd.Series):
     pobj = None
     def __new__(cls, *args, **kwargs):
         pobj = cls._pandas_type(*args, **kwargs)
-        instance = pd.Series.__new__(cls)
-        instance = instance.view(cls)
+        instance = pobj.view(cls)
+        # meh, since there is no __array__ for direct subclasses
+        # the Series should be done differently. But i figured
+        # that out later
         instance.pobj = pobj
         return instance
 
@@ -144,5 +146,3 @@ class UserSeries(pd.Series):
 # setup the function
 wrap_methods(UserSeries, pd.Series)
 wrap_methods(UserFrame, pd.DataFrame)
-class SubFrame(UserFrame):
-    pass
