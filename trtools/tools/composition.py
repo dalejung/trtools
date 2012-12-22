@@ -23,7 +23,7 @@ class UserPandasObject(object):
     
     def __getattribute__(self, name):
         # so far these are the only base attribute I need
-        if name in ['pobj', '_delegate', '_wrap', '_get', '__array_finalize__']:
+        if name in ['_pget', 'pobj', '_delegate', '_wrap', '_get', '__array_finalize__', '__class__']:
             return object.__getattribute__(self, name)
         
         if hasattr(self.pobj, name):
@@ -40,13 +40,21 @@ class UserPandasObject(object):
 
     def __getattr__(self, name):
         # unset the inherited logic here. 
-        raise AttributeError(name)
+        raise AttributeError()
+
+    def pget(self, name):
+        """
+            Shortcut to grab from pandas object
+            Really just here to override
+        """
+        getter = attrgetter(name)
+        attr = getter(self.pobj)
+        return attr
     
     def _wrap(self, name):
         """
         """
-        getter = attrgetter(name)
-        attr = getter(self.pobj)
+        attr = self.pget(name)
         if callable(attr):
             def _wrapped(*args, **kwargs):
                 return self._delegate(name, *args, **kwargs)
@@ -63,8 +71,7 @@ class UserPandasObject(object):
         """
             Delegate to Pandas Object and wrap output.
         """
-        getter = attrgetter(name)
-        attr = getter(self.pobj)
+        attr = self.pget(name)
         res = attr
         if callable(attr):
             res = attr(*args, **kwargs) 
@@ -82,6 +89,36 @@ class UserPandasObject(object):
                 new_dict[k] = d[k]
         return res
 
+def wrap_methods(cls, pandas_cls):
+    """
+        Take methods from pandas_cls and wrap so they return the proper class
+        and metadata
+
+        Wrap magic methods and grabs common methods from UserPandasObject
+    """
+    # not sure how to ignore __class__ since it's callable. So explicitly ignoring it here
+    ignore_list = ['__class__', '__metaclass__']
+    user_methods = [(name, meth) for name, meth in UserPandasObject.__dict__.iteritems() \
+                     if isinstance(meth, collections.Callable) and name not in ignore_list]
+
+    for name, meth in user_methods:
+        setattr(cls, name, meth)
+
+    magic_methods = [(name, meth) for name, meth in pandas_cls.__dict__.iteritems() \
+                     if name.startswith('_') and isinstance(meth, collections.Callable) \
+                    and name not in ignore_list]
+    for name, meth in magic_methods:
+        if name in cls.__dict__:
+            continue
+        setattr(cls, name, _wrap_method(name))
+
+    return magic_methods
+
+def _wrap_method(name):
+    def _meth(self, *args, **kwargs):
+        return self._delegate(name, *args, **kwargs)
+    return _meth
+
 class UserFrame(pd.DataFrame):
     _pandas_type = pd.DataFrame
     pobj = None
@@ -97,47 +134,15 @@ class UserSeries(pd.Series):
     def __new__(cls, *args, **kwargs):
         pobj = cls._pandas_type(*args, **kwargs)
         instance = pd.Series.__new__(cls)
-        instance = instance.view(UserSeries)
+        instance = instance.view(cls)
         instance.pobj = pobj
         return instance
 
     def __array_finalize__(self, obj):
         pass
 
-def wrap_methods(cls, pandas_cls):
-    """
-        Take methods from pandas_cls and wrap so they return the proper class
-        and metadata
-
-        Wrap magic methods and grabs common methods from UserPandasObject
-    """
-    user_methods = [(name, meth) for name, meth in UserPandasObject.__dict__.iteritems() \
-                     if isinstance(meth, collections.Callable)]
-
-    for name, meth in user_methods:
-        setattr(cls, name, meth)
-
-    magic_methods = [(name, meth) for name, meth in pandas_cls.__dict__.iteritems() \
-                     if name.startswith('__') and isinstance(meth, collections.Callable)]
-    for name, meth in magic_methods:
-        if name in cls.__dict__:
-            continue
-        setattr(cls, name, _wrap_method(name))
-
-    return magic_methods
-
-def _wrap_method(name):
-    def _meth(self, *args, **kwargs):
-        return self._delegate(name, *args, **kwargs)
-    return _meth
-
-if __name__ == '__main__':
-    wrap_methods(UserSeries, pd.Series)
-    wrap_methods(UserFrame, pd.DataFrame)
-
-    ind = pd.date_range(start="2000/1/1", freq="D", periods=1000)
-    df = pd.DataFrame({'test': np.random.randn(len(ind)), 'bob': range(len(ind))}, index=ind)
-    tf = UserFrame(df)
-    s = UserSeries(df.test)
-    tf + 1
-    s + 1
+# setup the function
+wrap_methods(UserSeries, pd.Series)
+wrap_methods(UserFrame, pd.DataFrame)
+class SubFrame(UserFrame):
+    pass
