@@ -370,26 +370,6 @@ def downsample(self, freq, closed=None, label=None, axis=0):
 
 # Quick groupbys. _rs stands for resample, though they really use TimeGrouper.
 # Eventuall take out the old groupbys once everything is verified to be equal
-@patch([Panel, DataFrame, Series], 'daily')
-def daily(self):
-    return daily_group(self)
-
-@patch([Panel, DataFrame, Series])
-def daily_rs(self):
-    return self.downsample('D', closed='left', label='left')
-
-@patch([Panel, DataFrame, Series], 'weekly')
-def weekly(self):
-    return weekly_group(self)
-
-@patch([Panel, DataFrame, Series], 'weekly_rs')
-def weekly_rs(self):
-    return self.downsample('W-MON', closed='left', label='left')
-
-@patch([Panel, DataFrame, Series], 'monthly')
-def monthly(self):
-    return monthly_group(self)
-
 @patch([DataFrame, Series], 'fillforward')
 def fillforward(df):
     """
