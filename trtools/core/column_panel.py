@@ -1,10 +1,8 @@
-import sys
 from collections import OrderedDict, Iterable
 import operator
 
 import numpy as np
 from pandas import Series, Panel, DataFrame, Panel4D
-from pandas.util import py3compat
 
 import trtools.monkey as monkey
 
@@ -489,6 +487,7 @@ def install_ipython_completers():  # pragma: no cover
     """Register the DataFrame type with IPython's tab completion machinery, so
     that it knows about accessing column names as attributes."""
     from IPython.utils.generics import complete_object
+    from pandas.util import py3compat
 
     @complete_object.when_type(ColumnPanel)
     def complete_column_panel(obj, prev_completions):
@@ -501,6 +500,7 @@ def install_ipython_completers():  # pragma: no cover
 
 # Importing IPython brings in about 200 modules, so we want to avoid it unless
 # we're in IPython (when those modules are loaded anyway).
+import sys
 if "IPython" in sys.modules:  # pragma: no cover
     try: 
         install_ipython_completers()
