@@ -26,6 +26,7 @@ class UserPandasObject(object):
         if name in ['pget', 'pobj', '_delegate', '_wrap', '_get', '__class__', '__array_finalize__', 'view']:
             return object.__getattribute__(self, name)
 
+
         if hasattr(self.pobj, name):
             return self._wrap(name) 
         
@@ -75,9 +76,9 @@ class UserPandasObject(object):
         res = attr
         if callable(attr):
             res = attr(*args, **kwargs) 
-            
+
         # maybe need better way to tell when to wrap?    
-        if isinstance(res, self._pandas_type):
+        if isinstance(res, type(self)._pandas_type):
             res = type(self)(res)
             # transfer metadata
             d = self._get('__dict__')
@@ -132,16 +133,31 @@ class UserSeries(pd.Series):
     _pandas_type = pd.Series
     pobj = None
     def __new__(cls, *args, **kwargs):
+        # since i am not calling npndarray.__new__, UserSeries.__array_finalize__ 
+        # does not get called.
         pobj = cls._pandas_type(*args, **kwargs)
         instance = pobj.view(cls)
-        # meh, since there is no __array__ for direct subclasses
-        # the Series should be done differently. But i figured
-        # that out later
-        instance.pobj = pobj
         return instance
 
     def __array_finalize__(self, obj):
-        pass
+        if isinstance(obj, UserSeries):
+            # self.values will be correct, but we don't have the index
+            # TODO go over this logic again. it works but uh
+            # not too happy about it
+            object.__setattr__(self, 'index', obj.index)
+            self.pobj = self.view(pd.Series)
+            return
+
+        if isinstance(obj, pd.Series):
+            self.pobj = obj
+            return
+
+        if isinstance(obj, np.ndarray):
+            obj = pd.Series(obj)
+            self.pobj = obj
+            return
+
+        assert False
 
 # setup the function
 wrap_methods(UserSeries, pd.Series)
