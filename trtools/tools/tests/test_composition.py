@@ -53,6 +53,7 @@ class TestComposition(TestCase):
         fvals = np.repeat(0, len(us))
         wh = np.where(bools, tvals, fvals)
         assert wh.pobj is not None
+        assert wh.dtype == int
         tm.assert_series_equal(wh, bools.astype(int))
 
     def test_us_view(self):    
@@ -64,6 +65,20 @@ class TestComposition(TestCase):
         arrs = pd.Series(arr)
         arrus = arr.view(UserSeries)
         tm.assert_series_equal(arrs, arrus)
+
+    def test_datetime_us_view(self):    
+        data = range(0, 10)
+        ind = pd.date_range(start="1/1/2000", freq="D", periods=len(data))
+        s = pd.Series(data, index=ind)
+        us = s.view(UserSeries)
+        tm.assert_series_equal(s, us)
+
+        arr = np.array(range(10))
+        arrs = pd.Series(arr)
+        arrus = arr.view(UserSeries)
+        tm.assert_series_equal(arrs, arrus)
+
+        us.view(UserSeries)
 
 if __name__ == '__main__':                                                                                          
     import nose                                                                      

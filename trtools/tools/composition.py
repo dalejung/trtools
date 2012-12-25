@@ -144,7 +144,7 @@ class UserSeries(pd.Series):
             # self.values will be correct, but we don't have the index
             # TODO go over this logic again. it works but uh
             # not too happy about it
-            object.__setattr__(self, 'index', obj.index)
+            object.__setattr__(self, '_index', obj._index)
             self.pobj = self.view(pd.Series)
             return
 
