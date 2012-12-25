@@ -242,8 +242,10 @@ class Grapher(object):
         self.ax.plot(xax, plot_series, **kwargs)
         plt.legend(loc=0)
 
-        if is_datetime: # plot empty space for leading NaN 
-            plt.xlim(0)
+        if is_datetime: 
+            # plot empty space for leading NaN and trailing NaN
+            # not sure if I should only call this for is_datetime
+            plt.xlim(0, len(self.df.index)-1)
 
     def setup_datetime(self, index):
         """
