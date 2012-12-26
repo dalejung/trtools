@@ -46,7 +46,7 @@ class UserPandasObject(object):
     def pget(self, name):
         """
             Shortcut to grab from pandas object
-            Really just here to override
+            Really just here to override on custom classes.
         """
         getter = attrgetter(name)
         attr = getter(self.pobj)
