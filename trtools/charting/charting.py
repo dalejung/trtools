@@ -140,8 +140,6 @@ class Figure(object):
             self.set_ax(1)
         scf(self)
 
-        self.figure.subplots_adjust(hspace=0.05)
-
     def get_ax(self, axnum):
         if axnum not in self.graphers:
             return None
@@ -233,13 +231,15 @@ class Grapher(object):
         self.df = None
         self.formatter = None
         self.ax = ax
+        self.right_ax = None
         self.skip_na = skip_na
         self.sharex = sharex
 
     def is_datetime(self):
         return self.df.index.inferred_type in ('datetime', 'date', 'datetime64')
 
-    def plot(self, name, series, index=None, fillna=None, **kwargs):
+    def plot(self, name, series, index=None, fillna=None, secondary_y=False, 
+             **kwargs):
         if self.sharex is not None:
             series = series.reindex(self.sharex.index, method=fillna)
 
@@ -266,13 +266,24 @@ class Grapher(object):
         plot_series = self.df[name]
         if fillna:
             plot_series = plot_series.fillna(method=fillna)
-        self.ax.plot(xax, plot_series, **kwargs)
+        ax = self.ax
+        if secondary_y: 
+            ax = self.get_right_ax()
+        ax.plot(xax, plot_series, **kwargs)
+
         plt.legend(loc=0)
 
         if is_datetime: 
             # plot empty space for leading NaN and trailing NaN
             # not sure if I should only call this for is_datetime
             plt.xlim(0, len(self.df.index)-1)
+
+    def get_right_ax(self):
+        if self.right_ax is None:
+            self.right_ax = self.ax.twinx()
+            # making a new ax seems to unset locator, rest here
+            self.set_formatter()
+        return self.right_ax
 
     def setup_datetime(self, index):
         """
@@ -292,24 +303,29 @@ class Grapher(object):
         df = pd.DataFrame(index=index)
         self.df = df
 
-    def boxplot(self, df, axis=0):
+    def boxplot(self, df, axis=0, secondary_y=False, *args, **kwargs):
         if axis == 1:
             df = df.T
         index = df.columns 
         self.set_index(index)
         clean_values = [remove_na(x) for x in df.values.T]
+
+        ax = self.ax
+        if secondary_y: 
+            ax = self.get_right_ax()
+
         # positions need to start at 0 to align with DateLocator
-        self.ax.boxplot(clean_values, positions=np.arange(len(index)))
+        ax.boxplot(clean_values, positions=np.arange(len(index)))
         self.setup_datetime(index)
         self.set_formatter()
-        #self.ax.set_xlim(-0.5, len(index))
 
     def set_formatter(self):
         """ quick call to reset locator/formatter when lost. i.e. boxplot """
         if self.formatter:
             self.formatter.set_formatter(self.ax)
 
-    def candlestick(self, index, open, high, low, close, width=0.3):
+    def candlestick(self, index, open, high, low, close, width=0.3, secondary_y=False,
+                   *args, **kwargs):
         """
             Takes a df and plots a candlestick. 
             Will auto search for proper columns
@@ -325,7 +341,10 @@ class Grapher(object):
         # grab merged data
         xax = np.arange(len(self.df.index))
         quotes = izip(xax, self.df['open'], self.df['close'], self.df['high'], self.df['low'])
+
         ax = self.ax
+        if secondary_y: 
+            ax = self.get_right_ax()
 
         self.setup_datetime(index)
         candlestick(ax, quotes, width=width, colorup='g')
@@ -338,9 +357,9 @@ class Grapher(object):
             for k,v in data.iterkv():
                 self.df[k] = v
 
-    def ohlc(self, df, width=0.3):
+    def ohlc(self, df, width=0.3, *args, **kwargs):
         ohlc_df = normalize_ohlc(df)
-        self.candlestick(df.index, ohlc_df.open, ohlc_df.high, ohlc_df.low, ohlc_df.close)
+        self.candlestick(df.index, ohlc_df.open, ohlc_df.high, ohlc_df.low, ohlc_df.close, *args, **kwargs)
 
     def plot_markers(self, name, series, yvalues=None, xindex=None, **kwargs):
         if yvalues is not None:
@@ -430,6 +449,6 @@ DataFrame.fplot = df_plot
 
 def ohlc_plot(self, width=0.3, *args, **kwargs):
     fig = gcf()
-    fig.ohlc(self)
+    fig.ohlc(self, width=width, *args, **kwargs)
 
 DataFrame.ohlc_plot = ohlc_plot
