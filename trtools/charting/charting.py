@@ -6,6 +6,7 @@ import matplotlib.ticker as ticker
 import numpy as np
 
 from pandas import DataFrame, datetools, DatetimeIndex, Series, TimeSeries
+from pandas.core.series import remove_na
 from pandas.tseries.resample import _get_range_edges
 from pandas.tseries.frequencies import to_offset, _is_annual, _is_weekly
 import pandas.lib as lib
@@ -46,6 +47,7 @@ class DateLocator(ticker.Locator):
     def _process(self, vmin, vmax):
         vmin = int(math.ceil(vmin))
         vmax = int(math.floor(vmax)) or len(self.index) - 1
+        vmax = min(vmax, len(self.index) -1)
 
         dmin = self.index[vmin] 
         dmax = self.index[vmax] 
@@ -138,6 +140,8 @@ class Figure(object):
             self.set_ax(1)
         scf(self)
 
+        self.figure.subplots_adjust(hspace=0.05)
+
     def get_ax(self, axnum):
         if axnum not in self.graphers:
             return None
@@ -163,12 +167,35 @@ class Figure(object):
             self.init_ax(axnum, sharex, skip_na)
         self._set_ax(axnum)
 
+    def align_xlim(self, axes=None):
+        """
+            Make sure the axes line up their xlims
+        """
+        # TODO take a param of ax numbers to align
+        left = []
+        right = []
+        for grapher in self.graphers.values():
+            if grapher.df is None:
+                continue
+            l, r = grapher.ax.get_xlim()
+            left.append(l)
+            right.append(r)
+
+        for grapher in self.graphers.values():
+            if grapher.df is None:
+                continue
+            grapher.ax.set_xlim(min(left), max(right)) 
+
     def plot(self, name, series, index=None, fillna=None, **kwargs):
         if self.ax is None:
             print('NO AX set')
             return
         self.figure.autofmt_xdate()
         self.grapher.plot(name, series, index, fillna, **kwargs)
+
+    def boxplot(self, df, axis=0, *args, **kwargs):
+        self.figure.autofmt_xdate()
+        self.grapher.boxplot(df, axis=axis, *args, **kwargs)
 
     def candlestick(self, *args, **kwargs):
         if self.ax is None:
@@ -257,6 +284,29 @@ class Grapher(object):
         is_datetime = self.is_datetime()
         if self.formatter is None and self.skip_na and is_datetime:
             self.formatter = DateFormatter(index)
+            self.formatter.set_formatter(self.ax)
+
+    def set_index(self, index):
+        if self.df is not None:
+            raise Exception("Cannot set index if df already exists")
+        df = pd.DataFrame(index=index)
+        self.df = df
+
+    def boxplot(self, df, axis=0):
+        if axis == 1:
+            df = df.T
+        index = df.columns 
+        self.set_index(index)
+        clean_values = [remove_na(x) for x in df.values.T]
+        # positions need to start at 0 to align with DateLocator
+        self.ax.boxplot(clean_values, positions=np.arange(len(index)))
+        self.setup_datetime(index)
+        self.set_formatter()
+        #self.ax.set_xlim(-0.5, len(index))
+
+    def set_formatter(self):
+        """ quick call to reset locator/formatter when lost. i.e. boxplot """
+        if self.formatter:
             self.formatter.set_formatter(self.ax)
 
     def candlestick(self, index, open, high, low, close, width=0.3):
