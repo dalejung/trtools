@@ -23,9 +23,13 @@ class UserPandasObject(object):
     
     def __getattribute__(self, name):
         # so far these are the only base attribute I need
-        if name in ['pget', 'pobj', '_delegate', '_wrap', '_get', '__class__', '__array_finalize__', 'view']:
+        if name in ['pget', 'pobj', '_delegate', '_wrap', '_get', '__class__', '__array_finalize__', 'view', '__tr_getattr__']:
             return object.__getattribute__(self, name)
 
+        try:
+            return self.__tr_getattr__(name)
+        except:
+            pass
 
         if hasattr(self.pobj, name):
             return self._wrap(name) 
@@ -41,6 +45,16 @@ class UserPandasObject(object):
 
     def __getattr__(self, name):
         # unset the inherited logic here. 
+        raise AttributeError(name)
+
+    def __tr_getattr__(self, name):
+        """
+            Use this function to override getattr for subclasses
+
+            This is necessary since we're subclassing pd.DataFrame as
+            a hack. We can't use getattr since it'll return DataFrame attrs
+            which we only use through the _wrap/delegate
+        """
         raise AttributeError(name)
 
     def pget(self, name):
