@@ -8,6 +8,7 @@ from trtools.monkey import patch
 
 import trtools.core.timeseries as timeseries
 from trtools.core.column_panel import PanelDict
+import trtools.core.dataset as trdataset
 
 @patch(Series, 'dropper')
 def dropper(self, value=None, *args, **kwargs):
@@ -75,10 +76,6 @@ def foreach_dataframe(self, func, force_dict=False, *args, **kwargs):
 
     res = res.sort()
     return res
-
-@patch(DataFrame, 'dataset')
-def dataset(self):
-    return DataFrame(index=self.index)
 
 def _func_name(func):
     if isinstance(func, basestring):
