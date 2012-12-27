@@ -80,6 +80,14 @@ class TestComposition(TestCase):
 
         us.view(UserSeries)
 
+    def test_userframe(self):
+        import trtools.core.dataset as dataset# instlal monkey patch
+        df = pd.DataFrame(np.random.randn(10, 5))
+        df = UserFrame(df)
+        ds = df.dataset()
+        # 12-27-12 FAIL. Really should only rewrap pd.DataFrame
+        assert isinstance(ds, dataset.DataSet)
+
 if __name__ == '__main__':                                                                                          
     import nose                                                                      
     nose.runmodule(argv=[__file__,'-vvs','-x','--pdb', '--pdb-failure'],exit=False)   
