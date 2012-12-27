@@ -29,10 +29,13 @@ class TestDataSet(TestCase):
         s = composition.UserSeries(1, index=ind)
         s.bob = 'hi'
         s.zz = 'zz'
+        s.name = 'bee'
         ds['dale'] = s
         assert isinstance(ds.dale, composition.UserSeries)
         assert ds.dale.bob == 'hi'
         assert ds.dale.zz == 'zz'
+        # 12-27-12 Fail. 'name' exists in the pobj __dict__
+        assert ds.dale.name == 'bee'
 
         s.zz = 'zz2'
         ds['dale'] = s
