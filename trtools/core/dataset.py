@@ -8,9 +8,14 @@ reload(composition)
 def _get_meta(obj):
     # _get grabs from the obj itself and not it's pobj
     getter = getattr(obj, '_get', None)
+    meta = {}
     if callable(getter):
-        return getter('__dict__')
-    return getattr(obj, '__dict__', {})
+        d = getter('__dict__')
+        meta.update(d)
+    meta.update(getattr(obj, '__dict__', {}))
+    meta.pop('_index', None) # don't store index
+    meta.pop('pobj', None) # don't store pobj
+    return meta
 
 class DataSet(composition.UserFrame):
     _col_classes = {}
@@ -20,7 +25,6 @@ class DataSet(composition.UserFrame):
         # just do isinstance(pd.Series) check?
         if hasattr(val, '__dict__'):
             d = _get_meta(val).copy()
-            d.pop('_index', None) # don't store index
             self._col_meta[key] = d
             self._col_classes[key] = type(val) 
         super(DataSet, self).__setitem__(key, val)
