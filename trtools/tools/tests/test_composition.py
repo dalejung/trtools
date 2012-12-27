@@ -6,7 +6,6 @@ import numpy as np
 
 import trtools.util.testing as tm
 import trtools.tools.composition as composition
-reload(composition)
 UserSeries = composition.UserSeries
 UserFrame = composition.UserFrame
 

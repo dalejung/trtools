@@ -92,7 +92,10 @@ class UserPandasObject(object):
             res = attr(*args, **kwargs) 
 
         # maybe need better way to tell when to wrap?    
-        if isinstance(res, type(self)._pandas_type):
+        # do not wrap subclasses of UserFrame/UserSeries
+        if isinstance(res, type(self)._pandas_type) and \
+           not isinstance(res, (UserFrame, UserSeries)):
+            print type(res)
             res = type(self)(res)
             # transfer metadata
             d = self._get('__dict__')
