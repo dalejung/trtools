@@ -426,6 +426,10 @@ def remove_last_plot():
 def series_plot(self, label=None, *args, **kwargs):
     label = label or kwargs.get('label')
     label = label and label or self.name
+    # default to pointed lines
+    if 'marker' not in kwargs:
+        kwargs['marker'] = 'o'
+
     try:
         prefix = kwargs.pop('prefix')
         label = prefix +' '+label
@@ -438,6 +442,10 @@ Series.fplot = series_plot
 TimeSeries.fplot = series_plot
 
 def df_plot(self, *args, **kwargs):
+    # default to pointed lines
+    if 'marker' not in kwargs:
+        kwargs['marker'] = 'o'
+
     if len(self.columns) > 20:
         print 'you crazy? too many columns'
         return;
