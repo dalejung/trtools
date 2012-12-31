@@ -23,7 +23,8 @@ class UserPandasObject(object):
     
     def __getattribute__(self, name):
         # so far these are the only base attribute I need
-        if name in ['pget', 'pobj', '_delegate', '_wrap', '_get', '__class__', '__array_finalize__', 'view', '__tr_getattr__']:
+        if name in ['pget', 'pobj', '_delegate', '_wrap', '_get', 
+                    '__class__', '__array_finalize__', 'view', '__tr_getattr__']:
             return object.__getattribute__(self, name)
 
         try:
