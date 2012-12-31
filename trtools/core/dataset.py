@@ -3,7 +3,6 @@ import pandas as pd
 from trtools.monkey import patch
 
 import trtools.tools.composition as composition
-reload(composition)
 
 def _get_meta(obj):
     # _get grabs from the obj itself and not it's pobj
@@ -18,6 +17,10 @@ def _get_meta(obj):
     return meta
 
 class DataSet(composition.UserFrame):
+    """
+        DataSet is a UserFrame that retains the class
+        and metadata of its series. 
+    """
     _col_classes = {}
     _col_meta = {}
 
