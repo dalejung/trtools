@@ -22,7 +22,15 @@ class UserPandasObject(object):
         return object.__getattribute__(self, name)
     
     def __getattribute__(self, name):
-        # so far these are the only base attribute I need
+        """
+            #NOTE The reason we use __getattribute__ is that we're
+            subclassing pd.DataFrame. Therefore a __getattr__ would not
+            work since it would inherit the DataFrame methods. 
+
+            We will subclass the DataFrame to trick internal pandas machinery
+            into thinking this class quacks like a duck.
+        """
+        # special attribute that need to go straight to this obj
         if name in ['pget', 'pobj', '_delegate', '_wrap', '_get', 
                     '__class__', '__array_finalize__', 'view', '__tr_getattr__']:
             return object.__getattribute__(self, name)
