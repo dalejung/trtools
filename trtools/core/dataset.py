@@ -34,9 +34,11 @@ class DataSet(composition.UserFrame):
 
     def _wrap_series(self, key):
         ret = super(DataSet, self).__getitem__(key)
-        ret = ret.view(self._col_classes[key])
-        meta = self._col_meta[key]
-        ret.__dict__.update(meta)
+        # cases like df['bob'] = 0
+        if key in self._col_classes:
+            ret = ret.view(self._col_classes[key])
+            meta = self._col_meta[key]
+            ret.__dict__.update(meta)
         return ret
 
     def __getitem__(self, key):
