@@ -296,6 +296,7 @@ def ohlc(self):
     return ohlc_grouped_cython(self)
 
 LEFT_OFFSETS = [
+    'D', 
     'B', 
     'W', 
     'MS', 
