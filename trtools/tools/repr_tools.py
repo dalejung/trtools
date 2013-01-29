@@ -15,9 +15,11 @@ def base_repr(obj, attrs, class_name=None):
     string = "{class_name}("+','.join(bits)+")"
     return string.format(**ns)
 
-def process_attr(obj, ns, bits, attr):
+def process_attr(obj, ns, bits, attr, value=None):
     try:
-        ns[attr] = getattr(obj, attr)
+        if value is None:
+            value = getattr(obj, attr)
+        ns[attr] = value
         bits.append('{attr}={{{attr}}}'.format(attr=attr))
     except AttributeError:
         pass
