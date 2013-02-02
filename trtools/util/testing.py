@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 from pandas.util.testing import *
 
+from trtools.core.api import ColumnPanel
+
 class TestStringIO(StringIO):
     def close(self):
         pass
@@ -53,3 +55,21 @@ def fake_ohlc(N=1000, start="2000/01/01", freq="D"):
     df['low'] = low
     df['close'] = close
     return df
+
+def assert_columnpanel_equal(left, right):
+    assert(isinstance(left, ColumnPanel))
+    assert(isinstance(right, ColumnPanel))
+
+    assert left.items == right.items
+    assert left.index.equals(right.index)
+
+    assert len(left.frames) == len(right.frames)
+
+    for key, l_frame in left.frames.iteritems():
+        r_frame = right.frames[key]
+        assert_frame_equal(l_frame, r_frame)
+
+    test_col = left.columns[0]
+    l_colframe = getattr(left, test_col)
+    r_colframe = getattr(right, test_col)
+    assert_frame_equal(l_colframe, r_colframe)

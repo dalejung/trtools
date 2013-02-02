@@ -13,6 +13,8 @@ ColumnPanelGroupBy = column_panel.ColumnPanelGroupBy
 import trtools.monkey as monkey
 import trtools.tools.tile # .tile monkey patch
 
+from trtools.util.tempdir import TemporaryDirectory
+
 
 class TestColumnPanel(TestCase):
 
@@ -77,36 +79,24 @@ class TestColumnPanel(TestCase):
         # this implicitly checks that inputs are panel4d
         tm.assert_panel4d_equal(test_tiled, correct)
 
-N = 10000
-data = {}
-data['AAPL'] = tm.fake_ohlc(N)
-data['AMD'] = tm.fake_ohlc(N)
-data['INTC'] = tm.fake_ohlc(N)
-cp = ColumnPanel(data)
+    def test_bundle_io(self):
+        """
+            Test saving bundle io. 
+        """
+        N = 10000
+        data = {}
+        data['AAPL'] = tm.fake_ohlc(N)
+        data['AMD'] = tm.fake_ohlc(N).tail(100)
+        data['INTC'] = tm.fake_ohlc(N).head(100)
+        cp = ColumnPanel(data)
 
-ds = cp.dataset()
-ds['log_returns'] = np.log(1+cp.close.pct_change())
-ds['close'] = cp.close
+        with TemporaryDirectory() as td:
+            path = td + 'TEST.columnpanel'
+            cp.bundle_save(path)
 
-# make sure to get the panelgroupby
-grouped = ds.to_panel().downsample('MS', label='left', closed='left')
-cpgrouped = ColumnPanelGroupBy(grouped)
-# check if meaned is equal
-cmean = grouped.mean()
-test_mean = cpgrouped.process(lambda df: df.mean())
-tm.assert_panel_equal(cmean, test_mean)
+            loaded = cp.bundle_load(path)
+            tm.assert_columnpanel_equal(cp, loaded)
 
-bins = [-1, 0, 1]
-
-# 12-19-12 errors. 
-# problem is that downsample returns a PanelGroupBy which doesn't have the 
-# delegate and combine logic.
-test_tiled = cpgrouped.process(lambda df: df.tile(bins, 'log_returns').mean())
-correct = grouped.process(
-    lambda df: ColumnPanelMapper(df).tile(bins, 'log_returns').mean())
-
-# this implicitly checks that inputs are panel4d
-tm.assert_panel4d_equal(test_tiled, correct)
 
 if __name__ == '__main__':                                                                                          
     import nose                                                                      

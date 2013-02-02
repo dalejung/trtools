@@ -1,8 +1,11 @@
+import os.path
 from collections import OrderedDict, Iterable
 import operator
 
 import numpy as np
 from pandas import Series, Panel, DataFrame, Panel4D
+
+import trtools.io.api as trio
 
 import trtools.monkey as monkey
 
@@ -481,6 +484,37 @@ class ColumnPanel(object):
     def __setstate__(self, d): 
         self.__dict__.update(d)
         self.__dict__['im'] = ColumnPanelItems(self)
+
+    def bundle_save(self, path, frame_key='frame_key'):
+        """ 
+        """
+        filepath = trio.bundle_filepath(path)
+        store = trio.OBTFile(filepath, 'w', frame_key=frame_key, type='directory')
+        try:
+            for key, frame in self.frames.items():
+                # helpful if key is an object
+                if hasattr(key, frame_key):
+                    key = getattr(key, frame_key)
+                store[key] = frame
+        except:
+            store.close()
+            # delete on error, don't store half complete save
+            self.delete(filepath)
+            raise IOError()
+        else:
+            store.close()
+
+    def bundle_load(self, path):
+        filepath = trio.bundle_filepath(path)
+        store = trio.OBTFile(filepath)
+        try:
+            df = store.obt.ix[:]
+            panel = df.to_panel()
+            panel = panel.swapaxes('minor', 'items')
+            # convert csinums to stock objects
+            return ColumnPanel(panel)
+        finally:
+            store.close()
 
 # IPYTYHON
 def install_ipython_completers():  # pragma: no cover
