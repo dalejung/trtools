@@ -114,6 +114,8 @@ def _handle(obj):
 
     
 def _meta(obj, meta=None):
+    obj = _unwrap(obj)
+
     if isinstance(obj, tb.file.File):
         obj = obj.root
         return _meta_file(obj, meta)
@@ -432,8 +434,18 @@ class HDF5Wrapper(object):
     def keys(self):
         return self.obj._v_children.keys()
 
-    def meta(self):
-        return _meta(self.obj)
+    def meta(self, key=None, value=None):
+        meta = _meta(self)
+        if key and value:
+            meta[key] = value
+            # store meta
+            _meta(self, meta)
+            return meta
+        if key:
+            # single val
+            return meta[key]
+        return meta
+
 
 def _unwrap(obj):
     if isinstance(obj, HDF5Wrapper):

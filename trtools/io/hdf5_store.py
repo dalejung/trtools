@@ -22,7 +22,7 @@ class HDFFile(object):
     """
     HDF that stored a single DataFrame
     """
-    def __init__(self, filename, mode='a', expectedrows=None):
+    def __init__(self, filename, mode='a', expectedrows=None, type=None):
         self.dir = filename
         if os.path.isdir(self.dir) and mode == 'w':
             shutil.rmtree(self.dir)
@@ -30,7 +30,7 @@ class HDFFile(object):
             os.makedirs(self.dir)
         fn = os.path.basename(filename)
         self.filename = os.path.join(filename, fn)
-        self.handle = HDF5Handle(self.filename, mode, type='directory')
+        self.handle = HDF5Handle(self.filename, mode, type=type)
         self.expectedrows = expectedrows
 
     _table = None
@@ -69,14 +69,14 @@ class HDFFile(object):
         self.handle.close()
 
 class OBTFile(object):
-    def __init__(self, filename, mode='a', frame_key=None, expectedrows=None):
+    def __init__(self, filename, mode='a', frame_key=None, expectedrows=None, type=None):
         self.filename = filename
         dir = os.path.dirname(filename)
         if not os.path.isdir(dir):
             os.makedirs(dir)
 
         self.mode = mode
-        self.handle = HDF5Handle(filename, mode)
+        self.handle = HDF5Handle(filename, mode, type=type)
         self.frame_key = self.get_frame_key(frame_key)
 
         self.expectedrows = expectedrows
