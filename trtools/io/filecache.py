@@ -68,6 +68,11 @@ class FileCache(object):
         keys = os.listdir(dir)
         return keys
 
+    def remove(self, name):
+        filename = self.get_filename(name)
+        if os.path.exists(filename):
+            os.unlink(filename)
+
     def __getstate__(self): return self.__dict__
     def __setstate__(self, d): self.__dict__.update(d)
 
