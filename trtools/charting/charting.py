@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
 
+from pandas.util.decorators import Appender
 from pandas import DataFrame, datetools, DatetimeIndex, Series, TimeSeries
 from pandas.core.series import remove_na
 from pandas.tseries.resample import _get_range_edges
@@ -422,7 +423,14 @@ def remove_last_plot():
     lines = plt.axes().lines
     lines.pop(len(lines)-1)
 
+_fplot_doc = """
+    Parameters
+    ----------
+    secondary_y : bool
+        Plot on a secondary y-axis
+"""
 # Monkey Patches
+@Appender(_fplot_doc)
 def series_plot(self, label=None, *args, **kwargs):
     label = label or kwargs.get('label')
     label = label and label or self.name
