@@ -43,3 +43,23 @@ r = robjects.r
 def assign(name, obj):
     robjects.r.assign(name, obj)
 
+# new r object.
+class TrtoolsR(object):
+    def __init__(self):
+        pass
+
+    def __getattr__(self, key):
+        if hasattr(robjects.r, key):
+            return getattr(robjects.r, key)
+        raise AttributeError()
+
+    def __call__(self, *args, **kwargs):
+        return robjects.r(*args, **kwargs)
+
+    def __getitem__(self, key):
+        return robjects.r[key]
+
+    def __setitem__(self, key, val):
+        robjects.r.assign(key, val)
+
+r = TrtoolsR()
