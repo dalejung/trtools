@@ -6,7 +6,7 @@ import pandas as pd
 from pandas import Panel4D
 
 from pandas import Panel, MultiIndex, Series
-from pandas.core.groupby import DataFrameGroupBy, PanelGroupBy, BinGrouper
+from pandas.core.groupby import DataFrameGroupBy, PanelGroupBy, BinGrouper, SeriesGroupBy
 
 from trtools.monkey import patch, patch_prop
 from trtools.core.column_panel import PanelDict, ColumnPanel
@@ -198,7 +198,7 @@ def _wrap_parts(parts):
     return parts
 
 
-@patch([PanelGroupBy, DataFrameGroupBy], 'subset')
+@patch([PanelGroupBy, DataFrameGroupBy, SeriesGroupBy], 'subset')
 def subset(self, key):
     """
         Return the sub dataset that would have been sent to 
