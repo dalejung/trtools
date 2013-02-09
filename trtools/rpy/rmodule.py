@@ -59,7 +59,7 @@ class RFunction(object):
             env_name = env.do_slot('name')[0]
         except:
             pass
-        vars = [self.name]
+        vars = ["RFunction: {0}".format(self.name)]
         if self.title:
             title = "Title:\n\n{0}".format(self.title)
             vars.append(title)
@@ -93,7 +93,13 @@ class DotWrapper(object):
         self._pkg = pkg
         self._subgroup = self._pkg.subgroup(name)
         self._funcs = self._subgroup.func_name.unique()
-        #self._init_funcs()
+
+        # init __doc__ if base func exists
+        r_name = self._name
+        func = self._func(r_name)
+        self.base_func = func
+        if func:
+            self.__doc__ = func.__doc__
 
     def _init_funcs(self):
         for i, row in self._subgroup.iterrows():
@@ -108,8 +114,7 @@ class DotWrapper(object):
                 print "{0} failed to bind".format(r_name)
 
     def __call__(self, *args, **kwargs):
-        r_name = self._name
-        func = self._func(r_name)
+        func = self.base_func
         if func is None:
             raise Exception("RFunction does not exist")
         return func(*args, **kwargs)
@@ -140,6 +145,11 @@ class DotWrapper(object):
             return self._cache[r_name]
 
         return None
+
+    def __repr__(self):
+        if self.base_func:
+            return repr(self.base_func)
+        return self._pkg.name + '.' + self._name
 
 class RPackage(object):
     """
