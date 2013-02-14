@@ -161,6 +161,7 @@ def reset_time(df, hour, minute):
         df.index = set_time(df.index, hour, minute)
     if isinstance(df, Panel):
         df.major_axis = set_time(df.major_axis, hour, minute)
+    return df
 
 def max_groupby(grouped, col=None):
     df = kv_agg(grouped, np.argmax, col)

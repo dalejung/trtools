@@ -23,7 +23,10 @@ def dropna_df(self, value=None, *args, **kwargs):
     return self.ix[self != value].dropna()
 
 @patch([DataFrame, Series], 'reset_time')
-def reset_time(self, *args):
+def reset_time(self, *args, **kwargs):
+    inplace = kwargs.pop('inplace', False)
+    if not inplace:
+        self = self.copy()
     return timeseries.reset_time(self, *args)
 
 @patch(Panel, 'foreach')
