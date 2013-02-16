@@ -44,6 +44,9 @@ def listframe_to_frame(lst, attrs=None, repr_col=False):
     if len(lst) == 0:
         return pd.DataFrame()
 
+    # TODO add better overridable logic here. Needs to split out. Makes more
+    # sense to to override a fuction than to 
+    # add _frame_cols to an object
     # grab first object to get attrs, assumes homogenity
     test = lst[0]
     if attrs is None:
