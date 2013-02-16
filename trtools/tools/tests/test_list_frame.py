@@ -3,16 +3,16 @@ from unittest import TestCase
 import pandas as pd
 import trtools.util.testing as tm
 
-import trtools.tools.event_frame as ef
+import trtools.tools.list_frame as lf
 
-class TestEvent(object):
-    repr_attrs = ('timestamp', 'id', 'data')
+class TestObject(object):
+    _frame_cols = ('timestamp', 'id', 'data')
     def __init__(self, timestamp, id, data, *args, **kwargs):
         self.id = id
         self.data = data
         self.timestamp = timestamp
 
-class TestEventFrame(TestCase):
+class TestObjectFrame(TestCase):
 
     def __init__(self, *args, **kwargs):
         TestCase.__init__(self, *args, **kwargs)
@@ -29,8 +29,8 @@ class TestEventFrame(TestCase):
         """
         ind = pd.date_range(start="2000/1/1", periods=10)
 
-        events = [TestEvent(ind[i], i, len(ind)-i) for i in range(len(ind))]
-        el = ef.EventList()
+        events = [TestObject(ind[i], i, len(ind)-i) for i in range(len(ind))]
+        el = lf.ListFrame()
         for evt in events:
             el.append(evt)
 
@@ -46,8 +46,8 @@ class TestEventFrame(TestCase):
         """
         ind = pd.date_range(start="2000/1/1", periods=10)
 
-        events = [TestEvent(ind[i], i, len(ind)-i) for i in range(len(ind))]
-        el = ef.EventList(events)
+        events = [TestObject(ind[i], i, len(ind)-i) for i in range(len(ind))]
+        el = lf.ListFrame(events)
         df = el.to_frame()
         assert el._cache_df is df
         assert len(df) == len(events)
@@ -71,7 +71,7 @@ class TestEventFrame(TestCase):
         el.pop()
         el.pop()
         el.pop()
-        assert len(el.to_frame()) == 6, "1 del + 3 pops should be 6 left"
+        assert len(el.to_frame()) == 6, "1 del + 3 pops should be 6 llft"
         assert el.to_frame().ix[5]['id'] == 6 # note, we took off last 3 and fourth
 
     def test_attrs(self):
@@ -80,8 +80,8 @@ class TestEventFrame(TestCase):
         """
         ind = pd.date_range(start="2000/1/1", periods=10)
 
-        events = [TestEvent(ind[i], i, len(ind)-i) for i in range(len(ind))]
-        el = ef.EventList(events, attrs=['id'])
+        events = [TestObject(ind[i], i, len(ind)-i) for i in range(len(ind))]
+        el = lf.ListFrame(events, attrs=['id'])
         df = el.to_frame()
         assert len(df.columns) == 1
         assert df.columns[0] == 'id'
@@ -93,8 +93,8 @@ class TestEventFrame(TestCase):
         """
         ind = pd.date_range(start="2000/1/1", periods=10)
 
-        events = [TestEvent(ind[i], i, len(ind)-i) for i in range(len(ind))]
-        el = ef.EventList(events, attrs=['id'], repr_col=True)
+        events = [TestObject(ind[i], i, len(ind)-i) for i in range(len(ind))]
+        el = lf.ListFrame(events, attrs=['id'], repr_col=True)
         df = el.to_frame()
         for i, evt in enumerate(events):
             assert repr(evt) == df.repr[i]
@@ -105,13 +105,13 @@ class TestEventFrame(TestCase):
         """
         ind = pd.date_range(start="2000/1/1", periods=10)
 
-        events = [TestEvent(ind[i], i, len(ind)-i) for i in range(len(ind))]
-        el = ef.EventList(events, attrs=['id'], repr_col=True)
+        events = [TestObject(ind[i], i, len(ind)-i) for i in range(len(ind))]
+        el = lf.ListFrame(events, attrs=['id'], repr_col=True)
         correct = el.to_frame()
 
-        el2 = ef.EventList(events)
+        el2 = lf.ListFrame(events)
         bad = el2.to_frame() # regular ole to_frame
-        assert set(bad.columns) == set(TestEvent.repr_attrs)
+        assert set(bad.columns) == set(TestObject._frame_cols)
         test = el2.to_frame(attrs=['id'], repr_col=True)
         tm.assert_frame_equal(test, correct)
 
@@ -122,8 +122,8 @@ class TestEventFrame(TestCase):
         """
         ind = pd.date_range(start="2000/1/1", periods=10)
 
-        events = [TestEvent(ind[i], i, len(ind)-i) for i in range(len(ind))]
-        el = ef.EventList(events, attrs=['timestamp', 'id', 
+        events = [TestObject(ind[i], i, len(ind)-i) for i in range(len(ind))]
+        el = lf.ListFrame(events, attrs=['timestamp', 'id', 
                                          # note the lambda for bob
                                           ('bob', lambda x: id(x))])
         df = el.to_frame()

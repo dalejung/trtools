@@ -1,25 +1,25 @@
 """
-    Set of tools to translate between a list of events and DataFrames
+    Set of tools to translate between a list of objects and DataFrames
 """
 from collections import OrderedDict
 from operator import attrgetter
 import pandas as pd
 import functools
 
-def _getter(evt, attr):
+def _getter(obj, attr):
     """ essentially attrgetter that returns None when attr does not exist """
     _get = attrgetter(attr)
     try:
-        return _get(evt)
+        return _get(obj)
     except:
         return None
 
-def _column_picker(attr, events):
+def _column_picker(attr, objects):
     """ Grab an attr for every Event in list """
     getter = attr
     if not callable(getter):
         getter = functools.partial(_getter, attr=attr)
-    data = map(getter, events)
+    data = map(getter, objects)
     return data
 
 def _process_attrs(attrs):
@@ -40,18 +40,18 @@ def _process_attrs(attrs):
 
     return new_attrs
 
-def eventlist_to_frame(lst, attrs=None, repr_col=False):
+def listframe_to_frame(lst, attrs=None, repr_col=False):
     if len(lst) == 0:
         return pd.DataFrame()
 
-    # grab first event to get attrs, assumes homogenity
+    # grab first object to get attrs, assumes homogenity
     test = lst[0]
     if attrs is None:
-        attrs = test.repr_attrs
+        attrs = test._frame_cols
 
     # TODO: Make it so we remove the attrs that we've already outputed.
     # if we assume non-homogenity, we have to remove diferent attrs per
-    # event type
+    # object type
     if repr_col:
         attrs.append('repr')
     attrs = _process_attrs(attrs)
@@ -64,7 +64,7 @@ def eventlist_to_frame(lst, attrs=None, repr_col=False):
 
     return pd.DataFrame(sdict)
 
-class EventList(list):
+class ListFrame(list):
     _cache_df = None
 
     def __init__(self, data=None, attrs=None, repr_col=False):
@@ -72,7 +72,7 @@ class EventList(list):
             data = [] # meh
         self.attrs = attrs
         self.repr_col = repr_col
-        super(EventList, self).__init__(data)
+        super(ListFrame, self).__init__(data)
 
     def to_frame(self, attrs=None, repr_col=None):
         if attrs is None:
@@ -82,7 +82,7 @@ class EventList(list):
 
         # turned off caching for now. Need to cache key by attrs and repr_col
         #if self._cache_df is None:
-        self._cache_df = eventlist_to_frame(self, attrs, repr_col)
+        self._cache_df = listframe_to_frame(self, attrs, repr_col)
         return self._cache_df
 
     mutation_methods = [
@@ -101,9 +101,9 @@ class EventList(list):
 def _binder(method):
     def _method(self, *args, **kwargs):
         self._cache_df = None
-        sup = super(EventList, self)
+        sup = super(ListFrame, self)
         getattr(sup, method)(*args, **kwargs)
     return _method
 
-for method in EventList.mutation_methods:
-    setattr(EventList, method, _binder(method))
+for method in ListFrame.mutation_methods:
+    setattr(ListFrame, method, _binder(method))
