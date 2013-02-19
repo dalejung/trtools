@@ -26,7 +26,7 @@ def figsize(width, height):
 
 CURRENT_FIGURE = None
 
-class DateLocator(ticker.Locator):
+class TimestampLocator(ticker.Locator):
     """  
     Place a tick on every multiple of some base number of points
     plotted, eg on every 5th point.  It is assumed that you are doing
@@ -92,7 +92,7 @@ class DateLocator(ticker.Locator):
         bins = np.unique(bins)
         return bins
 
-class DateFormatter(object):
+class TimestampFormatter(object):
     def __init__(self, index):
         self.index = index
         self._locator = None
@@ -112,7 +112,7 @@ class DateFormatter(object):
         return date.strftime('%m/%d/%Y %H:%M')
 
     def set_formatter(self, ax):
-        self._locator = DateLocator(self.index)
+        self._locator = TimestampLocator(self.index)
         ax.xaxis.set_major_locator(self._locator)
         ax.xaxis.set_major_formatter(ticker.FuncFormatter(self.format_date))
         ax.xaxis.grid(True)
@@ -295,7 +295,7 @@ class Grapher(object):
         """
         is_datetime = self.is_datetime()
         if self.formatter is None and self.skip_na and is_datetime:
-            self.formatter = DateFormatter(index)
+            self.formatter = TimestampFormatter(index)
             self.formatter.set_formatter(self.ax)
 
     def set_index(self, index):
@@ -315,7 +315,7 @@ class Grapher(object):
         if secondary_y: 
             ax = self.get_right_ax()
 
-        # positions need to start at 0 to align with DateLocator
+        # positions need to start at 0 to align with TimestampLocator
         ax.boxplot(clean_values, positions=np.arange(len(index)))
         self.setup_datetime(index)
         self.set_formatter()
