@@ -20,3 +20,15 @@ class attrdict(dict):
     def __init__(self, *args, **kwargs):
         dict.__init__(self, *args, **kwargs)
         self.__dict__ = self
+
+    def __getattr__(self, name):
+        """
+            A regular key in dict will match on hash. 
+
+            This version matches on __eq__ if the hash doesn't match
+        """
+        keys = self.keys()
+        if name in keys:
+            ind = keys.index(name)
+            return self[keys[ind]]
+        raise AttributeError()
