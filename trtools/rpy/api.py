@@ -29,6 +29,9 @@ def pd_py2ri(o):
 
     if isinstance(o, pd.DatetimeIndex): 
         res = rconv.convert_datetime_index(o)
+
+    if isinstance(o, pd.Timestamp): 
+        res = rconv.convert_timestamp(o)
         
     if res is None:
         res = robjects.default_py2ri(o)

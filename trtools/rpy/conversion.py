@@ -138,6 +138,14 @@ def convert_datetime_index_string(ind):
     asposix = robjects.r.get('as.POSIXct')
     return asposix(rownames, origin="1970-01-01", tz=tz)
 
+def convert_timestamp(ts):
+    """
+    Convert Timestamp object to POSIXct
+    """
+    string = str(ts)
+    asposix = robjects.r.get('as.POSIXct')
+    return asposix(string)
+
 def convert_datetime_index_num(ind):
     """
         Convert to POSIXct using m8[s] format
