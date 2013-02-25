@@ -29,6 +29,7 @@ def tz_warning():
         print "=============WARNING==================="
         print "R Sys TZ is not set. This can get hazardous for your sanity."
         print "Set to your data's TZ or GMT for pandas tz-naive data"
+        print "Sys.setenv(TZ='GMT')"
         print "=============WARNING==================="
 
 tz_warning()
