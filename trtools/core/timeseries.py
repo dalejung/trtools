@@ -381,6 +381,11 @@ def fillforward(df):
     """
     return df.asfreq(datetools.BDay(), method='pad')
 
+@patch([DatetimeIndex, Series])
+def date(self):
+    dt = DatetimeIndex(self).normalize()
+    return dt
+
 # IPYTYHON
 # Autocomplete the target endpoint
 def install_ipython_completers():  # pragma: no cover
