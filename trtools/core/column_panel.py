@@ -191,6 +191,10 @@ class TRDataFrame(object):
         return self.df.__array__()
 
 class ColumnPanelIndexer(object):
+    """
+        Remember, this is REPLICATING the DataFrame.ix
+        So that means it can't restrict the items
+    """
     def __init__(self, obj):
         self.obj = obj
 
@@ -337,7 +341,8 @@ class ColumnPanel(object):
             non equal indexes.
         """
         import random
-        tests = random.sample(self.items, 3)
+        sample_size = min(len(self.frames), 3)
+        tests = random.sample(self.items, sample_size)
         indexes = [self.frames[key].index for key in tests]
         index = indexes[0]
         try:
