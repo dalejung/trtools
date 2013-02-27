@@ -4,6 +4,7 @@ import operator
 
 import numpy as np
 from pandas import Series, Panel, DataFrame, Panel4D
+import pandas as pd
 
 import trtools.io.api as trio
 
@@ -222,7 +223,11 @@ def dispatch_ix(self, key):
     for k, df in self.frames.iteritems():
         data[k] = df.ix[key]
 
-    return ColumnPanel(data) 
+    test = data[self.frames.keys()[0]]
+    if isinstance(test, pd.DataFrame):
+        return ColumnPanel(data) 
+    if isinstance(test, pd.Series):
+        return pd.DataFrame(data)
 
 def mask(self, index):
     """

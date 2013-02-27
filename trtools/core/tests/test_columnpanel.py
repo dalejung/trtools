@@ -97,6 +97,28 @@ class TestColumnPanel(TestCase):
             loaded = cp.bundle_load(path)
             tm.assert_columnpanel_equal(cp, loaded)
 
+    def test_df_ix_single(self):
+        """
+        Test single row ix. Shoudl return a dataframe
+        """
+        ind = pd.date_range(start="2000-01-01", freq="D", periods=5)
+        df = pd.DataFrame({'test':range(5), 
+                           'strings':['bob', 'dale', 't', '123', 'frank']}, index=ind)
+        data = {'df1':df, 'df2':df}
+        cp = column_panel.ColumnPanel(data)
+        test = cp.ix[0]
+        assert test.df1['strings'] == 'bob'
+        assert test.df2['strings'] == 'bob'
+        assert test.df1['test'] == 0
+        assert test.df2['test'] == 0
+
+        test = cp.ix[ind[0]]
+        assert test.df1['strings'] == 'bob'
+        assert test.df2['strings'] == 'bob'
+        assert test.df1['test'] == 0
+        assert test.df2['test'] == 0
+    
+
 
 if __name__ == '__main__':                                                                                          
     import nose                                                                      
