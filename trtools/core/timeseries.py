@@ -386,6 +386,17 @@ def date(self):
     dt = DatetimeIndex(self).normalize()
     return dt
 
+@patch([DataFrame, Series])
+def normalize(self, inplace=False):
+    """
+    Return DataFrame with index normalized (we call date)
+    """
+    if not inplace:
+        self = self.copy()
+    index = self.index.date()
+    self.index = index
+    return self
+
 # IPYTYHON
 # Autocomplete the target endpoint
 def install_ipython_completers():  # pragma: no cover
