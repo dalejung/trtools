@@ -265,7 +265,7 @@ def na_promote(df):
 
 class ColumnPanel(object):
     def __init__(self, obj=None, name=None):
-        self.columns = []
+        self._columns = []
         self.im = ColumnPanelItems(self)
         self.df_map = ColumnPanelMapper(self)
 
@@ -296,18 +296,27 @@ class ColumnPanel(object):
                     self._panel = None
         return self._frames
 
+    _col_cache = None
+    @property
+    def columns(self):
+        if self._col_cache is None:
+            self._col_cache = pd.Index(self._columns)
+        return self._col_cache
+
     def _init_dict(self, data):
         # just aligning indexes
         panel = Panel(data)
         self._init_panel(panel)
 
     def _init_panel(self, panel):
-        self.columns = list(panel._get_axis('minor'))
+        self._columns = list(panel._get_axis('minor'))
+        self._col_cache = None
         self._panel = panel
 
     def _init_dataframe(self, df, name=None):
         name = name or df.name
-        self.columns = [name]
+        self._columns = [name]
+        self._col_cache = None
         if name is None:
             raise Exception('need a name for df')
 
@@ -362,7 +371,8 @@ class ColumnPanel(object):
         return apply_cp(self, func, *args, **kwargs)
 
     def __setitem__(self, key, value):
-        self.columns.append(key)
+        self._columns.append(key)
+        self._col_cache = None
         for name, df in self.frames.iteritems():
             df[key] = value[name]
 
@@ -376,7 +386,7 @@ class ColumnPanel(object):
         if isinstance(key, tuple):
             return self._getitem_tuple(key)
 
-        if key in self.columns:
+        if key in self._columns:
             return self._gather_column(key)
         try:
             return self.df_map[key]
@@ -488,7 +498,7 @@ class ColumnPanel(object):
     def __getstate__(self): 
         d = {}
         d['frames'] = self.frames
-        d['columns'] = self.columns
+        d['columns'] = self._columns
         return d
 
     def __setstate__(self, d): 

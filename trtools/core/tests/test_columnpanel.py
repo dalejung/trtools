@@ -118,6 +118,24 @@ class TestColumnPanel(TestCase):
         assert test.df1['test'] == 0
         assert test.df2['test'] == 0
     
+    def test_column_index(self):
+        """
+        Test that the column is returned as a pandas Index
+        """
+        ind = pd.date_range(start="2000-01-01", freq="D", periods=5)
+        df = pd.DataFrame({'test':range(5), 
+                           'strings':['bob', 'dale', 't', '123', 'frank']}, index=ind)
+        data = {'df1':df, 'df2':df}
+        cp = column_panel.ColumnPanel(data)
+        assert isinstance(cp.columns, pd.Index)
+        assert cp.columns.equals(pd.Index(['strings', 'test']))
+        # test column cache
+        old_id = id(cp.columns)
+        assert old_id == id(cp.columns), "Should returned cached columns"
+        # create new col from old col
+        cp['test_col'] = cp.test
+        assert isinstance(cp.columns, pd.Index)
+        assert cp.columns.equals(pd.Index(['strings', 'test', 'test_col'])) # did cache update?
 
 
 if __name__ == '__main__':                                                                                          
