@@ -24,8 +24,13 @@ class UserPandasObject(object):
     def __getattribute__(self, name):
         """
             #NOTE The reason we use __getattribute__ is that we're
-            subclassing pd.DataFrame. Therefore a __getattr__ would not
-            work since it would inherit the DataFrame methods. 
+            subclassing pd.DataFrame. That means that our SubClass instance
+            will have DataFrame methods that will be called on itself and 
+            *not* the self.pobj. 
+
+            This is confusing but in essense, UserFrame's self is an empty DataFrame.
+            So calling its methods would operate on an empty DataFrame. We want
+            to call the methods on pobj, which is where the data lives. 
 
             We will subclass the DataFrame to trick internal pandas machinery
             into thinking this class quacks like a duck.
@@ -115,30 +120,42 @@ class UserPandasObject(object):
                 new_dict[k] = d[k]
         return res
 
-def wrap_methods(cls, pandas_cls):
-    """
-        Take methods from pandas_cls and wrap so they return the proper class
-        and metadata
+class PandasMeta(type):
+    def __new__(cls, name, bases, dct):
+        new_attrs = dct
+        # override the UserFrame/UserSeries
+        if '_pandas_type' in dct:
+            pandas_cls = dct['_pandas_type']
+            new_attrs = get_methods(pandas_cls)
+            new_attrs.update(dct)
+        else: # should be subclass of UserFrame/UserSeries
+            pass
 
-        Wrap magic methods and grabs common methods from UserPandasObject
+        return super(PandasMeta, cls).__new__(cls, name, bases, new_attrs)
+
+def get_methods(pandas_cls):
     """
-    # not sure how to ignore __class__ since it's callable. So explicitly ignoring it here
+        Get a combination of PandasObject methods and wrapped DataFrame/Series magic
+        methods to use in MetaClass
+    """
     ignore_list = ['__class__', '__metaclass__']
+    methods = {}
     user_methods = [(name, meth) for name, meth in UserPandasObject.__dict__.iteritems() \
                      if isinstance(meth, collections.Callable) and name not in ignore_list]
 
     for name, meth in user_methods:
-        setattr(cls, name, meth)
+        methods[name] = meth
 
+    # Wrap the magic_methods which won't be called via __getattribute__
     magic_methods = [(name, meth) for name, meth in pandas_cls.__dict__.iteritems() \
                      if name.startswith('_') and isinstance(meth, collections.Callable) \
                     and name not in ignore_list]
-    for name, meth in magic_methods:
-        if name in cls.__dict__:
-            continue
-        setattr(cls, name, _wrap_method(name))
 
-    return magic_methods
+    for name, meth in magic_methods:
+        if name not in methods: # don't override PandasObject methods
+            methods[name] = _wrap_method(name)
+
+    return methods
 
 def _wrap_method(name):
     def _meth(self, *args, **kwargs):
@@ -148,6 +165,7 @@ def _wrap_method(name):
 class UserFrame(pd.DataFrame):
     _pandas_type = pd.DataFrame
     pobj = None
+    __metaclass__ = PandasMeta
     def __new__(cls, *args, **kwargs):
         pobj = cls._pandas_type(*args, **kwargs)
         instance = object.__new__(cls)
@@ -157,6 +175,7 @@ class UserFrame(pd.DataFrame):
 class UserSeries(pd.Series):
     _pandas_type = pd.Series
     pobj = None
+    __metaclass__ = PandasMeta
     def __new__(cls, *args, **kwargs):
         # since i am not calling npndarray.__new__, UserSeries.__array_finalize__ 
         # does not get called.
@@ -183,7 +202,3 @@ class UserSeries(pd.Series):
             return
 
         assert False
-
-# setup the function
-wrap_methods(UserSeries, pd.Series)
-wrap_methods(UserFrame, pd.DataFrame)

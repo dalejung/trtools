@@ -13,6 +13,10 @@ def curpath():
     pth, _ = os.path.split(os.path.abspath(__file__))
     return pth
 
+class SubFrame(UserFrame):
+    def resample(self):
+        return 'test'
+
 class TestComposition(TestCase):
 
     def __init__(self, *args, **kwargs):
@@ -86,6 +90,12 @@ class TestComposition(TestCase):
         ds = df.dataset()
         # 12-27-12 FAIL. Really should only rewrap pd.DataFrame
         assert isinstance(ds, dataset.DataSet)
+
+    def test_subframe(self):
+        pass
+df = pd.DataFrame(np.random.randn(10, 5))
+sub = SubFrame(df)
+
 
 if __name__ == '__main__':                                                                                          
     import nose                                                                      
