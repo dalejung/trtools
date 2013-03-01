@@ -13,9 +13,6 @@ def curpath():
     pth, _ = os.path.split(os.path.abspath(__file__))
     return pth
 
-class SubFrame(UserFrame):
-    def resample(self):
-        return 'test'
 
 class TestComposition(TestCase):
 
@@ -92,10 +89,26 @@ class TestComposition(TestCase):
         assert isinstance(ds, dataset.DataSet)
 
     def test_subframe(self):
-        pass
-df = pd.DataFrame(np.random.randn(10, 5))
-sub = SubFrame(df)
+        """
+        Assert that subclass of UserFrame/UserSeries work
+        """
+        class SubFrame(UserFrame):
+            def resample(self):
+                return 'test'
 
+            def irow(self, row, parent=False):
+                if parent:
+                    return super(SubFrame, self).irow(row)
+                return 'irow'
+
+        df = pd.DataFrame(np.random.randn(10, 5))
+        sub = SubFrame(df)
+
+        # test overriden method
+        assert sub.resample() == 'test'
+        assert sub.irow(3) == 'irow'
+        # this one calls super
+        assert np.all(sub.irow(0, parent=True) == df.ix[0])
 
 if __name__ == '__main__':                                                                                          
     import nose                                                                      

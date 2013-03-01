@@ -45,6 +45,12 @@ class UserPandasObject(object):
         except:
             pass
 
+        # this is support inheritance for subclasses of UserFrame/UserSeries
+        # for now it only supports the immediate
+        type_dict = type(self).__dict__
+        if '_pandas_type' not in type_dict and name in type_dict:
+            return object.__getattribute__(self, name) 
+
         if hasattr(self.pobj, name):
             return self._wrap(name) 
         
