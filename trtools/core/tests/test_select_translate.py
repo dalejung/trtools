@@ -50,6 +50,11 @@ class TestSelectTranslate(TestCase):
         assert np.all(test.values[0] == [1,3])
         assert np.all(test.values[1] == [2,4])
 
+        # test boolean index
+        test = df.ix[:, [True, False]]
+        col = df.columns[0] # not guaranteed column order so grab it this way
+        assert np.all(df.ix[:, [col]].values == test.values)
+
         # unset the translation so future tests don't mess up
         sl.KEY_TRANS = {}
 

@@ -69,7 +69,7 @@ def process_cols(obj, key):
         return key
 
     # don't handle bool indexes
-    if isinstance(columns[0], bool):
+    if isinstance(columns, collections.Iterable) and isinstance(columns[0], bool):
         return key
 
     cols = []
