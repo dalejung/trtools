@@ -45,6 +45,8 @@ class UserPandasObject(object):
         except:
             pass
 
+        print name
+        return object.__getattribute__(self, name) 
         if hasattr(self.pobj, name):
             return self._wrap(name) 
         
@@ -138,7 +140,7 @@ def get_methods(pandas_cls):
         Get a combination of PandasObject methods and wrapped DataFrame/Series magic
         methods to use in MetaClass
     """
-    ignore_list = ['__class__', '__metaclass__']
+    ignore_list = ['__class__', '__metaclass__', '__dict__']
     methods = {}
     user_methods = [(name, meth) for name, meth in UserPandasObject.__dict__.iteritems() \
                      if isinstance(meth, collections.Callable) and name not in ignore_list]
@@ -148,15 +150,22 @@ def get_methods(pandas_cls):
 
     # Wrap the magic_methods which won't be called via __getattribute__
     magic_methods = [(name, meth) for name, meth in pandas_cls.__dict__.iteritems() \
-                     if name.startswith('_') and isinstance(meth, collections.Callable) \
-                    and name not in ignore_list]
+                     if name not in ignore_list]
 
     for name, meth in magic_methods:
-        if name not in methods: # don't override PandasObject methods
+        if name in methods: # don't override PandasObject methods
+            continue
+
+        if callable(meth):
             methods[name] = _wrap_method(name)
+        else:
+            methods[name] = _wrap_attr(name)
 
     return methods
 
+def _wrap_attr(name):
+    attr = property(lambda x: x._wrap(name))
+    return attr
 def _wrap_method(name):
     def _meth(self, *args, **kwargs):
         return self._delegate(name, *args, **kwargs)
@@ -202,3 +211,5 @@ class UserSeries(pd.Series):
             return
 
         assert False
+
+us = UserSeries(range(10))
