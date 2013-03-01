@@ -63,16 +63,21 @@ def process_cols(obj, key):
     """
     """
 
+    columns = key[1]
     # don't handle slice columns
-    if isinstance(key[1], slice):
+    if isinstance(columns, slice):
+        return key
+
+    # don't handle bool indexes
+    if isinstance(columns[0], bool):
         return key
 
     cols = []
-    columns = key[1]
 
     # single key
     if not isinstance(columns, collections.Iterable) \
        or isinstance(columns, basestring):
+        columns = KEY_TRANS.get(columns, columns)
         ind = obj.columns.get_loc(columns)
         cols = obj.columns[ind]
     else:
