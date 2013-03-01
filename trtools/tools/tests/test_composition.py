@@ -15,7 +15,8 @@ def curpath():
 
 class SubFrame(UserFrame):
     def resample(self):
-        return 'test'
+        meth = super(UserFrame,self).resample
+        return 'test', meth
 
 class TestComposition(TestCase):
 
@@ -95,6 +96,7 @@ class TestComposition(TestCase):
         pass
 df = pd.DataFrame(np.random.randn(10, 5))
 sub = SubFrame(df)
+assert isinstance(sub.cumsum(), SubFrame)
 
 
 if __name__ == '__main__':                                                                                          

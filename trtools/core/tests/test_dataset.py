@@ -48,6 +48,10 @@ class TestDataSet(TestCase):
         ds = df.dataset()
         assert np.all(ds.index == ind)
 
+s = composition.UserSeries(1, index=ind)
+s.bob = 'hi'
+s.zz = 'zz'
+s.name = 'bee'
 if __name__ == '__main__':                                                                                          
     import nose                                                                      
     nose.runmodule(argv=[__file__,'-vvs','-x','--pdb', '--pdb-failure'],exit=False)   

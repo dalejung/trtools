@@ -20,37 +20,6 @@ class UserPandasObject(object):
     def _get(self, name):
         """ Get base attribute. Not pandas object """
         return object.__getattribute__(self, name)
-    
-    def __getattribute__(self, name):
-        """
-            #NOTE The reason we use __getattribute__ is that we're
-            subclassing pd.DataFrame. That means that our SubClass instance
-            will have DataFrame methods that will be called on itself and 
-            *not* the self.pobj. 
-
-            This is confusing but in essense, UserFrame's self is an empty DataFrame.
-            So calling its methods would operate on an empty DataFrame. We want
-            to call the methods on pobj, which is where the data lives. 
-
-            We will subclass the DataFrame to trick internal pandas machinery
-            into thinking this class quacks like a duck.
-        """
-        # special attribute that need to go straight to this obj
-        if name in ['pget', 'pobj', '_delegate', '_wrap', '_get', 
-                    '__class__', '__array_finalize__', 'view', '__tr_getattr__']:
-            return object.__getattribute__(self, name)
-
-        try:
-            return self.__tr_getattr__(name)
-        except:
-            pass
-
-        print name
-        return object.__getattribute__(self, name) 
-        if hasattr(self.pobj, name):
-            return self._wrap(name) 
-        
-        return object.__getattribute__(self, name) 
 
     def __setattr__(self, name, value):
         if name in self._get('__dict__'):
@@ -59,8 +28,15 @@ class UserPandasObject(object):
             return object.__setattr__(self.pobj, name, value)
         return object.__setattr__(self, name, value)
 
+    def __getattribute__(self, name):
+        if hasattr(self, name):
+            return getattr(self, name)
+        return object.__getattribute__(self, name)
+
     def __getattr__(self, name):
         # unset the inherited logic here. 
+        if hasattr(self.pobj, name):
+            return self._wrap(name)
         raise AttributeError(name)
 
     def __tr_getattr__(self, name):
@@ -140,7 +116,7 @@ def get_methods(pandas_cls):
         Get a combination of PandasObject methods and wrapped DataFrame/Series magic
         methods to use in MetaClass
     """
-    ignore_list = ['__class__', '__metaclass__', '__dict__']
+    ignore_list = ['__class__', '__metaclass__', '__dict__', '__new__', '__array_finalize__']
     methods = {}
     user_methods = [(name, meth) for name, meth in UserPandasObject.__dict__.iteritems() \
                      if isinstance(meth, collections.Callable) and name not in ignore_list]
@@ -163,9 +139,15 @@ def get_methods(pandas_cls):
 
     return methods
 
+def _prop(name):
+    def _func(self):
+        return self._wrap(name)
+    return _func
+
 def _wrap_attr(name):
-    attr = property(lambda x: x._wrap(name))
+    attr = property(_prop(name))
     return attr
+
 def _wrap_method(name):
     def _meth(self, *args, **kwargs):
         return self._delegate(name, *args, **kwargs)
@@ -185,20 +167,14 @@ class UserSeries(pd.Series):
     _pandas_type = pd.Series
     pobj = None
     __metaclass__ = PandasMeta
+
     def __new__(cls, *args, **kwargs):
-        # since i am not calling npndarray.__new__, UserSeries.__array_finalize__ 
-        # does not get called.
-        pobj = cls._pandas_type(*args, **kwargs)
-        instance = pobj.view(cls)
-        return instance
+        instance = pd.Series.__new__(cls, *args, **kwargs)
+        return instance.view(cls)
 
     def __array_finalize__(self, obj):
         if isinstance(obj, UserSeries):
-            # self.values will be correct, but we don't have the index
-            # TODO go over this logic again. it works but uh
-            # not too happy about it
-            object.__setattr__(self, '_index', obj._index)
-            self.pobj = self.view(pd.Series)
+            self.pobj = obj.pobj
             return
 
         if isinstance(obj, pd.Series):
@@ -210,6 +186,5 @@ class UserSeries(pd.Series):
             self.pobj = obj
             return
 
-        assert False
-
 us = UserSeries(range(10))
+s = us.view(UserSeries)

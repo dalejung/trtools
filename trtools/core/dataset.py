@@ -5,8 +5,7 @@ from trtools.monkey import patch
 import trtools.tools.composition as composition
 
 def _get_meta(obj):
-    # _get grabs from the obj itself and not it's pobj
-    getter = getattr(obj, '_get', None)
+    getter = getattr(obj, 'pget', None)
     meta = {}
     if callable(getter):
         d = getter('__dict__')
@@ -46,7 +45,7 @@ class DataSet(composition.UserFrame):
             return self._wrap_series(key)
         raise AttributeError(key)
 
-    def __tr_getattr__(self, key):
+    def __getattr__(self, key):
         return self[key]
 
 @patch(pd.DataFrame, 'dataset')
