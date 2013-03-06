@@ -97,6 +97,13 @@ def patch_call():
     """
         Wrap around the Function call to enable rplot -> matplotlib
     """
+    # check if we are in regular terminal session. 
+    import IPython
+    instance = IPython.Application._instance
+    if isinstance(instance, IPython.frontend.terminal.ipapp.TerminalIPythonApp):
+        print 'Not in Notebook: no patching'
+        return
+
     if hasattr(robjects.Function, '__base_call__'):
         return
     robjects.Function.__base_call__ = robjects.Function.__call__

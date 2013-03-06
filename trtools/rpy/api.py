@@ -66,3 +66,4 @@ class TrtoolsR(object):
         robjects.r.assign(key, val)
 
 r = TrtoolsR()
+r.NULL = robjects.NULL
