@@ -51,7 +51,7 @@ def start(width=None, height=None, dpi=None):
 
     temp_dir = tempfile.mkdtemp()
     filemask = "%s/Rplots%%03d.png" % (temp_dir)
-    png(filemask, width=width, height=height, units='in', res=dpi)
+    png(filemask, width=width, height=height, units='in', res=dpi, pointsize=34)
     return temp_dir
 
 def process_plots(temp_dir):
