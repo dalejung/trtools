@@ -321,10 +321,11 @@ class Downsample(object):
         self.obj = obj
         self.axis = axis
 
-    def __call__(self, freq, closed=None, label=None, axis=None):
+    def __call__(self, freq, closed=None, label=None, axis=None, drop_empty=True):
         if axis is None:
             axis = self.axis
-        return downsample(self.obj, freq=freq, closed=closed, label=label, axis=axis)
+        return downsample(self.obj, freq=freq, closed=closed, label=label, axis=axis,
+                         drop_empty=drop_empty)
 
     def __getattr__(self, key):
         key = key.replace('_', '-')
@@ -347,8 +348,7 @@ def downsample_prop(self):
 def downsample_prop_panel(self):
     return Downsample(self, axis=1)
 
-#@patch([DataFrame, Series], 'downsample')
-def downsample(self, freq, closed=None, label=None, axis=0):
+def downsample(self, freq, closed=None, label=None, axis=0, drop_empty=True):
     """
         Essentially use resample logic but reutrning the groupby object
     """
@@ -363,10 +363,22 @@ def downsample(self, freq, closed=None, label=None, axis=0):
     tg = TimeGrouper(freq, closed=closed, label=label, axis=axis)
     grouper = tg.get_grouper(self)
 
-    # TODO Get rid of empty bins? 
-    #bins = [0] 
-    #bins.extend(grouper.bins)
-    #periods_in_bin = np.diff(bins)
+    
+    # drop empty groups. this is when we have irregular data that
+    # we just want to group into Daily without creating empty days.
+    if drop_empty:
+        bins = [0] # start with 0 for np.diff
+        bins.extend(grouper.bins)
+        bins = np.array(bins)
+        periods_in_bin = np.diff(bins)
+        empty = periods_in_bin == 0
+
+        binlabels = grouper.binlabels
+
+        # skip the 0 we added
+        bins = bins[1:][~empty]
+        binlabels = binlabels[~empty]
+        grouper = BinGrouper(bins, binlabels)
 
     return self.groupby(grouper, axis=axis)
 
