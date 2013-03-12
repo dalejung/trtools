@@ -59,6 +59,7 @@ class TransFrameIndexer(object):
     def __getattr__(self, key):
         return getattr(self.obj._ix, key)
 
+_is_bool = lambda x: isinstance(x, bool) or isinstance(x, np.bool_)
 def process_cols(obj, key):
     """
     """
@@ -69,7 +70,7 @@ def process_cols(obj, key):
         return key
 
     # don't handle bool indexes
-    if isinstance(columns, collections.Iterable) and isinstance(columns[0], bool):
+    if isinstance(columns, collections.Iterable) and _is_bool(columns[0]):
         return key
 
     cols = []
