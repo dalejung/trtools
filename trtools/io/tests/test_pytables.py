@@ -55,7 +55,7 @@ class TestPyTables(TestCase):
             assert colnames == ['timestamp', 'open', 'high', 'low', 'close', 'vol', 'other_dates', 'symbol']
 
             temp = store.ix['AAPL']
-            tm.assert_frame_equal(temp, df, "dataframe returned from HDF is different")
+            tm.assert_frame_equal(temp, df, "dataframe returned from HDF is different", check_names=False)
 
             # this shoudl throw error
             bad_df = df.reindex(columns=['high', 'low', 'open', 'close', 'other_dates', 'vol'])
