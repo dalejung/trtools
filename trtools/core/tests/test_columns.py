@@ -15,11 +15,12 @@ sets = itertools.product(limit, stop, target)
 sets = list(sets)
 
 mi = pd.MultiIndex.from_tuples(sets)
-mi.names = ['limit', 'stop', 'target']
 N = len(mi)
 ind = pd.date_range(start="2000-01-01", freq="D", periods=N)
 
 df = pd.DataFrame(np.random.randn(N, N), columns=mi, index=ind)
+df.columns.names = ['limit', 'stop', 'target']
+m = MultiIndexGetter(df)
 
 class TestColumns(TestCase):
 
@@ -33,8 +34,12 @@ class TestColumns(TestCase):
         pass
 
     def test_multiindexgetter(self):
-        m = MultiIndexGetter(mi)
-        df.ix[:, m.limit == 0]
+        test = df.ix[:, (m.limit == 0) & (m.stop == 3)]
+        assert len(test.columns) == 10 # should just be one row of targets
+
+    def test_property_cx(self):
+        test = df.ix[:, (df.col.limit == 0) & (df.col.stop == 3)]
+        assert len(test.columns) == 10 # should just be one row of targets
 
 if __name__ == '__main__':                                                                                          
     import nose                                                                      
