@@ -95,7 +95,7 @@ def ix(self):
     """
     """
     if not hasattr(self, '_ix') or self._ix is None:
-        self._ix = _NDFrameIndexer(self)
+        self._ix = _NDFrameIndexer(self, 'ix')
 
     if not hasattr(self, '_trx') or self._trx is None:
         self._trx = TransFrameIndexer(self)
