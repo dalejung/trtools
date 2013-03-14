@@ -1,3 +1,6 @@
+"""
+Idea is to turn on writing to images for all plots
+"""
 import IPython
 import pandas as pd
 import matplotlib.pylab as pylab
