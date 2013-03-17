@@ -12,9 +12,12 @@ import pandas as pd
 from trtools.monkey import patch_prop
 
 class IndexGetter(object):
-    def __init__(self, obj, attr='columns'):
+    def __init__(self, obj, attr=None):
         self._obj = obj
-        self._index = getattr(obj, attr)
+        if isinstance(obj, pd.Index) and attr is None:
+            self._index = obj
+        else:
+            self._index = getattr(obj, attr)
 
     def __getattr__(self, name):
         if name in self.names:
@@ -56,7 +59,7 @@ class ObjectIndexGetter(IndexGetter):
     Handles an Index of objects and treats the attributes like un-ordered levels. 
     """
     def sub_column(self, name):
-        return pd.Index([_get_val(col, name) for col in self._obj.columns])
+        return pd.Index([_get_val(col, name) for col in self._index])
 
     @property
     def names(self):
@@ -72,17 +75,21 @@ class ObjectIndexGetter(IndexGetter):
             names = test.__dict__.keys()
             return names
 
-def _getter(obj):
+def _getter(obj, attr='columns'):
     if isinstance(obj.columns, pd.MultiIndex):
-        return MultiIndexGetter(obj)
+        return MultiIndexGetter(obj, attr=attr)
 
     test = obj.columns[0]
     if isinstance(obj.columns, pd.Index) and not np.isscalar(test):
-        return ObjectIndexGetter(obj)
+        return ObjectIndexGetter(obj, attr=attr)
 
 @patch_prop([pd.DataFrame], 'col')
 def col(self):
     return _getter(self)
+
+@patch_prop([pd.MultiIndex], 'lev')
+def lev(self):
+    return MultiIndexGetter(self)
 
 # IPYTYHON
 def install_ipython_completers():  # pragma: no cover

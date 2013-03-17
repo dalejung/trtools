@@ -31,7 +31,7 @@ class TestMultiIndexGetter(TestCase):
         df = pd.DataFrame(np.random.randn(N, N), index=ind)
         df.columns = mi
         df.columns.names = ['limit', 'stop', 'target']
-        m = MultiIndexGetter(df)
+        m = MultiIndexGetter(df, attr='columns')
         self.df = df
         self.m = m
 
@@ -46,11 +46,21 @@ class TestMultiIndexGetter(TestCase):
         test = df.ix[:, (df.col.limit == 0) & (df.col.stop == 3)]
         assert len(test.columns) == 10 # should just be one row of targets
 
+    def test_lev(self):
+        """
+        Added a lev attribute to MultiIndex to access levels by name
+        """
+        mi = pd.MultiIndex.from_tuples(sets)
+        mi.names = ['limit', 'stop', 'target']
+        test = (mi.lev.limit == 0) & (mi.lev.stop == 3)
+        assert sum(test) == 10 # should just be one row of targets
+
+
 def dict_cols():
     df = pd.DataFrame(np.random.randn(N, N), index=ind)
     cols = [dict(zip(('limit', 'stop', 'target'), vals)) for vals in sets]
     df.columns = cols
-    ogetter = ObjectIndexGetter(df)
+    ogetter = ObjectIndexGetter(df, attr='columns')
     return df, ogetter
 
 def object_cols():
@@ -64,7 +74,7 @@ def object_cols():
 
     df = pd.DataFrame(np.random.randn(N, N), index=ind)
     df.columns = cols
-    ogetter = ObjectIndexGetter(df)
+    ogetter = ObjectIndexGetter(df, attr='columns')
     return df, ogetter
 
 class TestObjectIndexGetter(TestCase):
