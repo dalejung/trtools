@@ -104,8 +104,8 @@ class AttrNameSpace(object):
 
     def method_attrs(self):
         import inspect
-        attrs = inspect.getmembers(self.endpoint, predicate=inspect.ismethod)
-        attrs = [attr for attr, type in attrs]
+        attrs = inspect.getmembers(self.endpoint)
+        attrs = [attr for attr, type in attrs if not attr.startswith('_')]
         return attrs
 
     def attrs(self):
