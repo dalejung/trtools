@@ -21,23 +21,22 @@ def patch(classes, name=None, override=False):
                 old_func = getattr(cls, func_name)
                 setattr(cls, old_func_name, old_func)
 
-            func.old = old_func
             setattr(cls, func_name, func)
         return func
     return decorator
 
 def patch_prop(classes, name=None):
+    """
+    Wraps around patch and sends it a property(func)
+    """
     if not isinstance(classes, list):
         classes = [classes]
 
     def decorator(func):
         for cls in classes:
             prop_name = name and name or func.__name__
-            func_name = '_func_'+prop_name        
-            setattr(cls, func_name, func)
             prop = property(func)
-            setattr(cls, prop_name, prop)
-
+            patch(cls, name=prop_name)(prop)
         return func
     return decorator
 
@@ -60,15 +59,42 @@ def patcher(classes, func, name=None):
 
 class AttrNameSpace(object):
     """
+    AttrNameSpace does not define the namespace. It is merely a middleman that translates
+    attribute access for obj.attr and relays it to the proper endpoint.
+
+    Note on wrapping. AttrNameSpace will try to replicate a normal method call by passing in
+    self.obj into function calls. That means that a regular NameSpace.method will receive
+    two parameters, (AttrNameSpace.endpoint, AttrNameSpace.obj). 
+
+    If there is no reason for access to the endpoint, then make its methods static. 
+
+    That way, the method will only receive the .obj and will acts as if it's a normal method of obj. 
+
+    The first purpose of this class is for organization. It is taking flat namespace with 100 methods, 
+    and splitting some off into their own namespace without altering their functionality. 
+
+    Storing state in the endpoint and accessing it is permissable, but not the primary function. 
     """
-    def __init__(self, obj, endpoint):
+    def __init__(self, obj, endpoint, name):
+        """
+        Parameters
+        ----------
+        obj : object
+        endpoint : object
+        name : string
+            The attr name of obj that endpoint takes over.
+        """
         self.obj = obj
         self.endpoint = endpoint
+        self.name = name
         self.wrap = True
         if hasattr(self.endpoint, '__getattr__'):
             # don't wrap, assume endpoint is wrapping
             self.wrap = False
             self.endpoint.obj = obj
+
+        # on creation, store easy ref to overriden function if it exists
+        self._old_func = self._get_old_func()
 
     def __getattr__(self, name):
         func = getattr(self.endpoint, name)
@@ -96,7 +122,25 @@ class AttrNameSpace(object):
         attrs = self.attrs()
         if attrs:
             out += "\n".join(attrs)
+
+        # add info for old_func
+        if self._old_func:
+            out += "\n\nOverridden method: \n"
+            out += 'Docstring:\t'+self._old_func.__doc__
+            # TODO add more info
         return out
+
+    def _get_old_func(self):
+        func_name = '_old_' + self.name
+        func = getattr(self.obj, func_name, None)
+        return func
+
+    def __call__(self, *args, **kwargs):
+        func = self._old_func
+        if func and callable(func):
+            return func(*args, **kwargs)
+        raise TypeError("{attr} on {obj} was not callable".format(attr=self.name, obj=str(self.obj)))
+
 
 def attr_namespace(target, name):
     """
@@ -110,18 +154,15 @@ def attr_namespace(target, name):
         You could access via df.ret.log_returns
     """
 
-    def func(cls):
+    def class_wrap(cls):
         def attr_get(self):
-            attr_name = '_attr_ns_'+name
-            if not hasattr(self, attr_name):
-                setattr(self, attr_name, AttrNameSpace(self, cls()))
-
-            return getattr(self, attr_name)
-
+            # create namespace
+            attr_ns = AttrNameSpace(self, cls(), name)
+            return attr_ns
         patch_prop(target, name)(attr_get)
         return cls
 
-    return func
+    return class_wrap
 
 class AttrProxy(object):
     """
