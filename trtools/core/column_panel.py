@@ -101,7 +101,7 @@ class ColumnPanelMapper(object):
         func = getattr(test, key, None)
         if func is None:
             raise AttributeError("{0} not a method".format(key))
-        if callable(func):
+        if callable(func) and not isinstance(func, monkey.AttrNameSpace):
             return self._wrap(key)
         else: 
             return monkey.AttrProxy(key, test, lambda _, key: self._wrap(key))
