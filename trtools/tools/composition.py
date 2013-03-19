@@ -90,15 +90,15 @@ class UserPandasObject(object):
         """
         """
         attr = self.pget(name)
-        if callable(attr):
-            def _wrapped(*args, **kwargs):
-                return self._delegate(name, *args, **kwargs)
-            return _wrapped
-        elif isinstance(attr, AttrNameSpace):
+        if isinstance(attr, AttrNameSpace):
             # Not sure when to call this other than check AttrNameSpace
             # note this won't catch the .str namepsace yet
             # also doesn't catch .ix
             return AttrProxy(name, self.pobj, lambda obj, full: self._wrap(full))
+        elif callable(attr):
+            def _wrapped(*args, **kwargs):
+                return self._delegate(name, *args, **kwargs)
+            return _wrapped
         else:
             return self._delegate(name)
         
