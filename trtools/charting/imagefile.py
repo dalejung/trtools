@@ -1,27 +1,58 @@
 """
 Idea is to turn on writing to images for all plots
 """
-import IPython
+import os
+import tempfile
+
 import pandas as pd
-import matplotlib.pylab as pylab
-import matplotlib.pyplot as pyplot
-import trtools.charting.api as charting
-
+import IPython
 import IPython.core.pylabtools as pylabtools
+import matplotlib.pylab as pylab
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 
+def save_to_pdf(file, figs=None):
+    pp = PdfPages(file)
 
-s = pd.Series(range(10))
+    if figs is None:
+        figs = pylabtools.getfigs()
 
-fig = charting.Figure(1)
-s.fplot()
-fig = charting.Figure(1)
-s.fplot()
+    for fig in figs:
+        fig.savefig(pp, format='pdf')
 
-figs = pylabtools.getfigs()
+    pp.close()
+    close_figures()
 
-DIR = ''
-for i, fig in enumerate(figs, 1):
-    label = fig.get_label()
-    if label == '':
-        label = "Figure %d" % i
-    fig.savefig(DIR+label)
+def plot_pdf(open=True):
+    file = tempfile.NamedTemporaryFile(suffix='.pdf', delete=False)
+    fn = file.name
+    save_to_pdf(fn)
+    if open:
+        os.system('open '+fn)
+    return fn
+
+def save_images(dir='', figs=None):
+    if figs is None:
+        figs = pylabtools.getfigs()
+
+    for i, fig in enumerate(figs, 1):
+        label = fig.get_label()
+        if label == '':
+            label = "Figure %d" % i
+        fig.savefig(dir+label)
+
+    close_figures()
+
+def close_figures():
+    plt.close('all')
+
+# start of doing something where the execution stuff runs automatically?
+shell = IPython.InteractiveShell._instance
+execution_magic = shell.magics_manager.registry['ExecutionMagics']
+
+def imagefile_reroute(func):
+    def wrapped(*args, **kwargs):
+        return func(*args, **kwargs)
+    return wrapped
+
+execution_magic.default_runner = imagefile_reroute(execution_magic.default_runner)
