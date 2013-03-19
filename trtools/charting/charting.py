@@ -118,9 +118,9 @@ class TimestampFormatter(object):
         ax.xaxis.set_major_formatter(ticker.FuncFormatter(self.format_date))
         ax.xaxis.grid(True)
 
-def gcf():
+def gcf(reset=False):
     global CURRENT_FIGURE
-    if CURRENT_FIGURE is None:
+    if CURRENT_FIGURE is None or reset:
         CURRENT_FIGURE = Figure(1)
     return CURRENT_FIGURE
 

@@ -11,6 +11,8 @@ import matplotlib.pylab as pylab
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
+import trtools.charting.charting as charting
+
 def save_to_pdf(file, figs=None):
     pp = PdfPages(file)
 
@@ -46,7 +48,7 @@ def save_images(dir='', figs=None):
 
 def close_figures():
     plt.close('all')
-
+    charting.gcf(reset=True)
 
 
 # start of doing something where the execution stuff runs automatically?
@@ -56,6 +58,7 @@ def imagefile_reroute(func):
     return wrapped
 
 shell = IPython.InteractiveShell._instance
+shell = None
 
 # check so we don't break non ipython runs
 if shell:
