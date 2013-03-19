@@ -1,6 +1,7 @@
 import os
 import types
 import glob
+import cPickle as pickle
 
 import pandas as pd
 
@@ -56,10 +57,13 @@ class FileCache(object):
     def __repr__(self):
         output = '%s\nCache path: %s\n' % (type(self), self.cache_dir)
 
-        if len(self) > 0:
-            output += '\n'.join(self.keys())
-        else:
+        if len(self) == 0:
             output += 'Empty'
+        elif len(self) < 50:
+            output += '\n'.join(map(str, self.keys()))
+        else:
+            output += '\n'.join(map(str, self.keys()[:50]))
+            output += '\n{0} more items...'.format(len(self) - 50)
 
         return output
 
@@ -75,6 +79,49 @@ class FileCache(object):
 
     def __getstate__(self): return self.__dict__
     def __setstate__(self, d): self.__dict__.update(d)
+
+class MetaFileCache(FileCache):
+    """
+    Like MetaFileCache but stores keys are pickled object.
+    """
+    def __init__(self, *args, **kwargs):
+        super(MetaFileCache, self).__init__(*args, **kwargs)
+        self._keys = {} # key -> filename
+
+        self.keys_fn = self.get_filename('index')
+        try:
+            with open(self.keys_fn, 'rb') as f:
+                keys = pickle.load(f)
+                self._keys = keys
+            print 'loaded'
+        except:
+            print 'not loaded'
+
+    def save_keys(self):
+        with open(self.keys_fn, 'wb') as f:
+            pickle.dump(self._keys, f)
+
+    def add_key(self, key):
+        self._keys[key] = _filename(key)
+        self.save_keys()
+
+    def remove_key(self, key):
+        del self._keys[key]
+        self.save_keys()
+
+    def keys(self):
+        return self._keys.keys()
+
+    def __getitem__(self, key):
+        return self.get(key)
+
+    def __setitem__(self, key, value):
+        self.put(key, value)
+        self.add_key(key)
+
+    def __contains__(self, key):
+        filepath = self.get_filename(key)
+        return os.path.exists(filepath)
 
 def leveled_filename(fc, name, length=1):
     name = _filename(name)
