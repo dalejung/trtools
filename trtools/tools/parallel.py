@@ -1,5 +1,6 @@
 import multiprocessing as mp
 import math
+import datetime
 
 default_consumers = mp.cpu_count() * 2 
 
@@ -30,6 +31,7 @@ def farm(tasks, num_consumers=None, verbose=False, result_handler=missing):
     print result_handler
 
     # Start consumers
+    print 'Starting farming tasks at:{time}'.format(time=datetime.datetime.now())
     print 'Creating %d consumers' % num_consumers
     consumers = [ DataProcess(task_queue, result_queue, verbose=verbose)
                   for i in xrange(num_consumers) ]
