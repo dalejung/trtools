@@ -46,13 +46,17 @@ def save_images(dir='', figs=None):
 def close_figures():
     plt.close('all')
 
-# start of doing something where the execution stuff runs automatically?
-shell = IPython.InteractiveShell._instance
-execution_magic = shell.magics_manager.registry['ExecutionMagics']
 
+
+# start of doing something where the execution stuff runs automatically?
 def imagefile_reroute(func):
     def wrapped(*args, **kwargs):
         return func(*args, **kwargs)
     return wrapped
 
-execution_magic.default_runner = imagefile_reroute(execution_magic.default_runner)
+shell = IPython.InteractiveShell._instance
+
+# check so we don't break non ipython runs
+if shell:
+    execution_magic = shell.magics_manager.registry['ExecutionMagics']
+    execution_magic.default_runner = imagefile_reroute(execution_magic.default_runner)
