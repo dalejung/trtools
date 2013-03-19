@@ -23,9 +23,10 @@ def save_to_pdf(file, figs=None):
     pp.close()
     close_figures()
 
-def plot_pdf(open=True):
-    file = tempfile.NamedTemporaryFile(suffix='.pdf', delete=False)
-    fn = file.name
+def plot_pdf(fn=None, open=True):
+    if fn is None:
+        file = tempfile.NamedTemporaryFile(suffix='.pdf', delete=False)
+        fn = file.name
     save_to_pdf(fn)
     if open:
         os.system('open '+fn)
