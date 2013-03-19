@@ -15,6 +15,7 @@ from matplotlib.finance import candlestick,\
              plot_day_summary 
 
 import trtools.core.column_grep
+from trtools.monkey import attr_namespace
 from trtools.core.column_grep import *
 
 import IPython
@@ -377,6 +378,9 @@ class Grapher(object):
 
         self.plot(name, series, **props)
 
+    def plot_surface(self, df, *args, **kwargs):
+        pass
+
 def plot_markers(series, yvalues=None, xindex=None, **kwargs):
     if yvalues is not None:
         series = process_signal(series, yvalues)
@@ -461,3 +465,23 @@ def ohlc_plot(self, width=0.3, *args, **kwargs):
     fig.ohlc(self, width=width, *args, **kwargs)
 
 DataFrame.ohlc_plot = ohlc_plot
+
+class PlotNS(object):
+    pass
+
+# take over .plot
+@attr_namespace(Series, 'plot')
+class SeriesPlotNS(PlotNS):
+    @staticmethod
+    def plot(self, *args, **kwargs):
+        series_plot(*args, **kwargs)
+
+@attr_namespace(DataFrame, 'plot')
+class DataFramePlotNS(PlotNS):
+    @staticmethod
+    def plot(self, *args, **kwargs):
+        df_plot(*args, **kwargs)
+
+    @staticmethod
+    def ohlc_plot(self, *args, **kwargs):
+        ohlc_plot(*args, **kwargs)
