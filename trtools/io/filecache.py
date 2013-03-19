@@ -93,9 +93,8 @@ class MetaFileCache(FileCache):
             with open(self.keys_fn, 'rb') as f:
                 keys = pickle.load(f)
                 self._keys = keys
-            print 'loaded'
         except:
-            print 'not loaded'
+            pass
 
     def save_keys(self):
         with open(self.keys_fn, 'wb') as f:
