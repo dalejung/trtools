@@ -2,6 +2,14 @@ import warnings
 import functools 
 
 def patch(classes, name=None, override=False):
+    """
+    Notes:
+        By default this will not patch an attr twice. It keeps track of this by appending an
+        _old_[attr]. Might be better to just a dictionary around.
+
+        If we're patching a new attr, we still set None to the _old_[attr] to keep track of 
+        patching
+    """
     if not isinstance(classes, list):
         classes = [classes]
 
@@ -12,13 +20,15 @@ def patch(classes, name=None, override=False):
 
 
             old_func = getattr(cls, old_func_name, None)
-            if old_func is not None and not override:
+            has_old = hasattr(cls, old_func_name)
+            if has_old and not override:
                 warnings.warn("{0} was already monkey patched. Detected _old_ func".format(func_name))
                 continue
 
             # do not override old_func_name, which should always point to original
-            if old_func is None and hasattr(cls, func_name):
-                old_func = getattr(cls, func_name)
+            if not has_old:
+                # Make sure to add a None to keep track of whether we patched or not
+                old_func = getattr(cls, func_name, None)
                 setattr(cls, old_func_name, old_func)
 
             setattr(cls, func_name, func)
@@ -153,7 +163,6 @@ def attr_namespace(target, name):
 
         You could access via df.ret.log_returns
     """
-
     def class_wrap(cls):
         def attr_get(self):
             # create namespace
