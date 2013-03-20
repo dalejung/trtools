@@ -131,7 +131,7 @@ class MetaFileCache(FileCache):
         return os.path.join(dir, name)
 
     def save_keys(self):
-        if not self.auto_save:
+        if not self.autosave:
             return
         with open(self.keys_fn, 'wb') as f:
             pickle.dump(self._keys, f)
