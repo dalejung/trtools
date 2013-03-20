@@ -7,6 +7,7 @@ from itertools import izip
 import pandas as pd
 
 from trtools.io.common import _filename
+import trtools.tools.datapanel as datapanel
 
 class FileCache(object):
     """
@@ -194,3 +195,24 @@ class LeveledFileCache(FileCache):
         pat = self.cache_dir + '/*/*'
         files = glob.glob(pat)
         return [os.path.basename(f) for f in files]
+
+def move_to_new_store(new_store, old_store):
+    """
+    Utility to move from one MetaFileCache to another
+    Useful for when you change leveling
+    """
+    keys = old_store.keys()
+    # turn off autosave of keys
+    new_store.autosave = False
+
+    moveover = datapanel.DataPanel(keys, result_handler=None)
+    def move_file(ps):
+        new_store[ps] = old_store[ps]
+    moveover.process(move_file)
+
+    # move over keys
+    for k in keys:
+        new_store.add_key(ps)
+    # save the keys
+    new_store.autosave = True
+    new_store.save_keys()
