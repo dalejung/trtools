@@ -35,6 +35,7 @@ class FileCache(object):
 
         filename = self.get_filename(name)
         pd.save(obj, filename)
+        return filename
 
     def get(self, name):
         filename = self.get_filename(name)
@@ -100,6 +101,7 @@ class MetaFileCache(FileCache):
         """
         super(MetaFileCache, self).__init__(*args, **kwargs)
 
+        self.autosave = kwargs.pop('autosave', True)
         self.leveled = kwargs.pop('leveled', False)
         self._keys = {} # key -> filename
 
@@ -120,7 +122,7 @@ class MetaFileCache(FileCache):
 
         if not leveled:
             # normal flat FileCache
-            return FileCache.get_filename(key)
+            return FileCache.get_filename(self, key)
 
         name = _filename(key)
         subdirs = leveled_key_dir(key, leveled)
@@ -129,11 +131,18 @@ class MetaFileCache(FileCache):
         return os.path.join(dir, name)
 
     def save_keys(self):
+        if not self.auto_save:
+            return
         with open(self.keys_fn, 'wb') as f:
             pickle.dump(self._keys, f)
 
-    def add_key(self, key):
-        self._keys[key] = _filename(key)
+    def add_key(self, key, filename=None):
+        if filename is None:
+            filename = self.get_filename(key)
+        # meh storing relative path. Feels like i'm doing a lot of 
+        # extra work here
+        relpath = os.path.relpath(filename, self.cache_dir)
+        self._keys[key] = relpath
         self.save_keys()
 
     def remove_key(self, key):
@@ -147,8 +156,8 @@ class MetaFileCache(FileCache):
         return self.get(key)
 
     def __setitem__(self, key, value):
-        self.put(key, value)
-        self.add_key(key)
+        filename = self.put(key, value)
+        self.add_key(key, filename)
 
     def __contains__(self, key):
         filepath = self.get_filename(key)
