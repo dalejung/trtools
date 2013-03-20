@@ -2,6 +2,7 @@ import os
 import types
 import glob
 import cPickle as pickle
+from itertools import izip
 
 import pandas as pd
 
@@ -85,16 +86,47 @@ class MetaFileCache(FileCache):
     Like MetaFileCache but stores keys are pickled object.
     """
     def __init__(self, *args, **kwargs):
+        """
+        Parameters:
+            leveled : bool / int
+                Determines the folder hierarchy. False will create a flat hierarchy. Otherwise this value
+                determines the depth. We are assuming the key is iterable which will determine the 
+                level values.
+
+        Example: 
+            a key of ('HI', 1, 3) and leveled = 2 would create a file
+            /cache_dir/HI/1/HI_1_3
+            Assuming that HI_1_3 is the filename
+        """
         super(MetaFileCache, self).__init__(*args, **kwargs)
+
+        self.leveled = kwargs.pop('leveled', False)
         self._keys = {} # key -> filename
 
-        self.keys_fn = self.get_filename('index')
+        self.keys_fn = self.get_filename('index', leveled=False)
         try:
             with open(self.keys_fn, 'rb') as f:
                 keys = pickle.load(f)
                 self._keys = keys
         except:
             pass
+
+    def get_filename(self, key, leveled=None):
+        """
+            leveled is a param so we can call non-leveled on 'index' file
+        """
+        if leveled is None:
+            leveled = self.leveled
+
+        if not leveled:
+            # normal flat FileCache
+            return FileCache.get_filename(key)
+
+        name = _filename(key)
+        subdirs = leveled_key_dir(key, leveled)
+        dir = os.path.join(self.cache_dir, *subdirs)
+        FileCache.create_dir(dir)
+        return os.path.join(dir, name)
 
     def save_keys(self):
         with open(self.keys_fn, 'wb') as f:
@@ -122,9 +154,22 @@ class MetaFileCache(FileCache):
         filepath = self.get_filename(key)
         return os.path.exists(filepath)
 
+def leveled_key_dir(key, leveled):
+    dirs = [str(dir) for dir, _ in izip(key, range(leveled))]
+    return dirs
+
 def leveled_filename(fc, name, length=1):
+    """
+    Creates a 2 deep file structure. Files will be stored in:
+        /cache_dir/prefix/file
+
+        The prefix is the first N letters of the name as determined by length
+    Note:
+        The filename function creates the subdir
+    """
     name = _filename(name)
     subdir = os.path.join(fc.cache_dir, name[:length])
+    # create the subdirs
     FileCache.create_dir(subdir)
     return os.path.join(subdir, name)
 
