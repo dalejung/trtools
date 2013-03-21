@@ -72,6 +72,18 @@ class TestOBTFile(TestCase):
             assert store.handle.meta('testtest') == 123
             assert store.obt.meta('testtest') == 456
 
+    def test_tuple_frame_key(self):
+        """
+            Moved OBT to default to directory format. Test the the meta is working
+        """
+        with TemporaryDirectory() as td:
+            store = tb.OBTFile(td + '/test', 'w', 'symbol', type='directory')
+            store[('AAPL', 5902)] = df
+            store.close()
+
+            # reload
+            store = tb.OBTFile(td + '/test')
+
 if __name__ == '__main__':                                                                                          
     import nose                                                                      
     nose.runmodule(argv=[__file__,'-vvs','-x','--pdb', '--pdb-failure'],exit=False)   

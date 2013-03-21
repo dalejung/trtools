@@ -20,6 +20,13 @@ import pandas as pd
 from hdf5_store import HDFFile, OBTFile
 
 def bundle_filepath(path):
+    """
+    This is essentially just repeating the last bit. so /bob/frank = /bob/frank/frank
+    bundle_dir = /bob/frank
+    main_file = /bob/frank/frank
+
+    So this essentially returns the path for the main data file in a bundle. Normally an HDF5.
+    """
     filepath = os.path.abspath(path)
     filename = os.path.basename(path)
     filepath = os.path.join(filepath, filename)

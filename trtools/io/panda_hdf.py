@@ -98,7 +98,7 @@ def create_obt(parent, name, df, frame_key, frame_key_sample=None, expectedrows=
     if frame_key_sample is None:
         frame_key_sample = ""
     if frame_key not in template.columns:
-        template[frame_key] = frame_key_sample
+        template[frame_key] = [frame_key_sample]
 
     meta = {'group_type':'obt', 'frame_key':frame_key}
     group = parent.create_group(name, meta=meta) 
