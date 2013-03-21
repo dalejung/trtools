@@ -76,6 +76,8 @@ def save_panel(panel, path, frame_key='frame_key'):
     # This is so I don't have to trust pytabels/hdf5 with storing funky indexes
     # like object indexes. Would be easy enough to restore since I'm saving 
     # them via pickling
+    # though in most cases, I have funky items (ParamSet objects for batch simulations) and not so much
+    # in columns/index
     for i, item in enumerate(panel.items):
         frame = panel[item]
         store[i] = frame
