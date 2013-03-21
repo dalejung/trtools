@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 import trtools.util.testing as tm
-from trtools.core.columns import MultiIndexGetter, ObjectIndexGetter
+from trtools.core.columns import MultiIndexGetter, ObjectIndexGetter, LevelWrapper
 
 limit = range(10)
 stop = range(3,7)
@@ -104,15 +104,83 @@ class TestObjectIndexGetter(TestCase):
 
     def test_col(self):
         df, ogetter = object_cols()
-        stops = df.col.stop
+        stops = df.col.stop.values
         for i, s in enumerate(sets):
             assert stops[i] == s[1] # stop is second value of tuple
 
         # test dicts
         df, ogetter = dict_cols()
-        targets = df.col.target
+        targets = df.col.target.values
         for i, s in enumerate(sets):
             assert targets[i] == s[2] # targets is third value of tuple
+
+class TestLevelWrapper(TestCase):
+
+    def __init__(self, *args, **kwargs):
+        TestCase.__init__(self, *args, **kwargs)
+
+    def setUp(self):
+        mi = pd.MultiIndex.from_tuples(sets)
+        df = pd.DataFrame(np.random.randn(N, N), index=ind)
+        df.columns = mi
+        df.columns.names = ['limit', 'stop', 'target']
+        m = MultiIndexGetter(df, attr='columns')
+        self.df = df
+        self.m = m
+
+    def test_level_wrapper_mi(self):
+        """
+        Test level wrapper against MultiIndex
+        """
+        mi = pd.MultiIndex.from_tuples(sets)
+        df = pd.DataFrame(np.random.randn(N, N), index=ind)
+        df.columns = mi
+        df.columns.names = ['limit', 'stop', 'target']
+        m = MultiIndexGetter(df, attr='columns')
+        lw = df.columns.lev.limit
+        # test some ops
+        test = lw == 0
+        correct = mi.get_level_values('limit') == 0
+        tm.assert_almost_equal(test, correct)
+
+        test = lw > 1
+        correct = mi.get_level_values('limit') > 1
+        tm.assert_almost_equal(test, correct)
+
+        # test getitem
+        assert lw[0] == 0
+        assert lw[1] == 1
+
+    def test_level_wrapper_oi(self):
+        """
+        Test level wrapper against Object Index
+        """
+        class ObjectCol(object):
+            def __init__(self, bob, frank):
+                self.bob = bob
+                self.frank = frank
+
+            def __repr__(self):
+                return "bob={bob},frank={frank}".format(**self.__dict__)
+
+        bobs = [3,4,2,1,2,2,1,]
+        franks = range(len(bobs))
+
+        objects = [ObjectCol(bob, frank) for bob, frank in zip(bobs, franks)]
+        df = pd.DataFrame({'test'+str(i) : np.random.randn(len(objects)) for i in range(len(objects))})
+        df.columns = objects
+        assert isinstance(df.columns , pd.Index)
+
+        assert isinstance(df.col.bob, LevelWrapper)
+        assert isinstance(df.col.frank, LevelWrapper)
+
+        assert np.all(df.col.bob == bobs) # note that bobs is not monotonic
+        assert np.all(df.col.frank == franks)
+
+        # test that labels are unique and monotonic
+        assert df.col.bob.labels.is_unique
+        assert df.col.bob.labels.is_monotonic
+        assert np.all(df.col.bob.labels == np.unique(bobs)) # note np.unique also orders
 
 if __name__ == '__main__':                                                                                          
     import nose                                                                      
