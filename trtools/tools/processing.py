@@ -92,7 +92,7 @@ class ParallelDataProcessor(DataProcessor):
         batch = self.jobs
         return self.process_parallel(batch, func, *args, **kwargs)
 
-    def process_parallel(self, batch, func, num_consumers=8, verbose=False):
+    def process_parallel(self, batch, func, num_consumers=None, verbose=False, process_vars=None):
         tasks = self.generate_tasks(func, batch)
         result_wrap = result_handler = self.result_handler
         if result_handler:
@@ -100,7 +100,7 @@ class ParallelDataProcessor(DataProcessor):
             result_wrap = lambda result: result_handler(result[0], result[1])
 
         parallel.farm(tasks, num_consumers=num_consumers, verbose=verbose, 
-                            result_handler=result_wrap)
+                            result_handler=result_wrap, process_vars=process_vars)
         return result_handler
 
     def result_wrapper(self, result):

@@ -20,7 +20,7 @@ class ResultHandler(object):
 
 
 missing = object() # sentinel since None is valid input
-def farm(tasks, num_consumers=None, verbose=False, result_handler=missing):
+def farm(tasks, num_consumers=None, verbose=False, result_handler=missing, process_vars=None):
     if result_handler is missing:
         result_handler = ResultHandler()
     if num_consumers is None:
@@ -33,7 +33,8 @@ def farm(tasks, num_consumers=None, verbose=False, result_handler=missing):
     # Start consumers
     print 'Starting farming tasks at:{time}'.format(time=datetime.datetime.now())
     print 'Creating %d consumers' % num_consumers
-    consumers = [ DataProcess(task_queue, result_queue, verbose=verbose)
+    consumers = [ DataProcess(task_queue, result_queue, verbose=verbose, 
+                              process_vars=process_vars)
                   for i in xrange(num_consumers) ]
 
     num_jobs = len(tasks)
@@ -97,13 +98,16 @@ class Task(object):
         return "Task("+str(self.job)+")"
 
 class DataProcess(mp.Process):
-    def __init__(self, task_queue, result_queue, verbose=False):
+    def __init__(self, task_queue, result_queue, verbose=False, process_vars=None):
         super(DataProcess, self).__init__()
         self.task_queue = task_queue
         self.result_queue = result_queue
         self.current_task = None
         self.jobs_complete = 0
         self.verbose = verbose
+        if process_vars:
+            for k, v in process_vars.items():
+                setattr(self, k, v) 
 
     def run(self):
         while self._process_queue():
