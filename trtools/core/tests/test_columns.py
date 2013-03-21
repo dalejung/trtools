@@ -182,6 +182,33 @@ class TestLevelWrapper(TestCase):
         assert df.col.bob.labels.is_monotonic
         assert np.all(df.col.bob.labels == np.unique(bobs)) # note np.unique also orders
 
+        # comp
+        test = df.col.bob == 1
+        correct = np.array(bobs) == 1
+        assert np.all(test == correct)
+
+        # only match should be bobs[2]
+        test = df.col.bob == df.col.frank
+        assert test[2]
+        assert sum(test) == 1
+
+        # arithmetic
+        test = df.col.bob + 1
+        correct = np.array(bobs) + 1
+        assert np.all(test == correct)
+
+        test = df.col.bob * 13.2
+        correct = np.array(bobs) * 13.2
+        assert np.all(test == correct)
+
+        # test against other LevelWrapper
+        test = df.col.bob / df.col.bob 
+        assert np.all(test == 1)
+
+        test = df.col.bob / df.col.frank 
+        correct = np.array(bobs) / np.array(franks)
+        assert np.all(test == correct)
+
 if __name__ == '__main__':                                                                                          
     import nose                                                                      
     nose.runmodule(argv=[__file__,'-vvs','-x','--pdb', '--pdb-failure'],exit=False)   

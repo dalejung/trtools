@@ -9,8 +9,16 @@ import operator
 
 import numpy as np
 import pandas as pd
+from pandas.util import py3compat
 
 from trtools.monkey import patch_prop
+
+def _sub_method(op, name):
+    def _wrapper(self, other):
+        if isinstance(other, LevelWrapper):
+            other = other.values
+        return op(self.values, other)
+    return _wrapper
 
 class LevelWrapper(object):
     def __init__(self, name, getter):
@@ -36,26 +44,36 @@ class LevelWrapper(object):
         vals = self.getter.sub_column(self.name)
         return vals
 
-    def level_op(self, other, op):
-        return op(self.values, other)
+    #----------------------------------------------------------------------
+    #   Arithmetic operators
 
-    def __eq__(self, other):
-        return self.level_op(other, operator.eq)
+    __add__ = _sub_method(operator.add, '__add__')
+    __sub__ = _sub_method(operator.sub, '__sub__')
+    __mul__ = _sub_method(operator.mul, '__mul__')
+    __truediv__ = _sub_method(operator.truediv, '__truediv__')
+    __floordiv__ = _sub_method(operator.floordiv, '__floordiv__')
+    __pow__ = _sub_method(operator.pow, '__pow__')
 
-    def __ne__(self, other):
-        return self.level_op(other, operator.ne)
+    #__radd__ = _sub_method(_radd_compat, '__add__')
+    __rmul__ = _sub_method(operator.mul, '__mul__')
+    __rsub__ = _sub_method(lambda x, y: y - x, '__sub__')
+    __rtruediv__ = _sub_method(lambda x, y: y / x, '__truediv__')
+    __rfloordiv__ = _sub_method(lambda x, y: y // x, '__floordiv__')
+    __rpow__ = _sub_method(lambda x, y: y ** x, '__pow__')
 
-    def __gt__(self, other):
-        return self.level_op(other, operator.gt)
+    # comparisons
+    __gt__ = _sub_method(operator.gt, '__gt__')
+    __ge__ = _sub_method(operator.ge, '__ge__')
+    __lt__ = _sub_method(operator.lt, '__lt__')
+    __le__ = _sub_method(operator.le, '__le__')
+    __eq__ = _sub_method(operator.eq, '__eq__')
+    __ne__ = _sub_method(operator.ne, '__ne__')
 
-    def __ge__(self, other):
-        return self.level_op(other, operator.ge)
-
-    def __lt__(self, other):
-        return self.level_op(other, operator.lt)
-
-    def __le__(self, other):
-        return self.level_op(other, operator.le)
+    # Python 2 division operators
+    if not py3compat.PY3:
+        __div__ = _sub_method(operator.div, '__div__')
+        __rdiv__ = _sub_method(lambda x, y: y / x, '__div__')
+        __idiv__ = __div__
 
 
 class IndexGetter(object):
