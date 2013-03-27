@@ -12,7 +12,14 @@ def _gen_labels(labels, names=None):
 
 def heatmap(data, xlabels=None, ylabels=None, title=None):
     fig, ax = plt.subplots()
-    heatmap = ax.pcolormesh(data.values, cmap=plt.cm.RdYlGn)
+
+    values = data.values
+    cmap = plt.cm.RdYlGn
+    # plot np.nan as white
+    cmap.set_bad('w',1.)
+    masked_array = np.ma.array(values, mask=np.isnan(values))
+
+    heatmap = ax.pcolormesh(masked_array, cmap=cmap)
     plt.colorbar(heatmap)
 
 
