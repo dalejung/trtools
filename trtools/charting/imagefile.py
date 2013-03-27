@@ -41,7 +41,7 @@ def save_images(dir='', figs=None):
     for i, fig in enumerate(figs, 1):
         label = fig.get_label()
         if label == '':
-            label = "Figure %d" % i
+            label = "Figure_%d" % i
         fig.savefig(dir+label)
 
     close_figures()
