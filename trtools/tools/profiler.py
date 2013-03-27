@@ -1,9 +1,9 @@
-from line_profiler import LineProfiler
+from line_profiler import LineProfiler as _LineProfiler
 
 class Profiler(object):
 
     def __init__(self, *args):
-        self.profile = LineProfiler()
+        self.profile = _LineProfiler()
 
         if len(args) > 0:
             for func in args:
