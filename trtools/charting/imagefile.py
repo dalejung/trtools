@@ -34,14 +34,37 @@ def plot_pdf(fn=None, open=True):
         os.system('open '+fn)
     return fn
 
-def save_images(dir='', figs=None):
+def _get_title(fig):
+    """ 
+    grab title from figure. Assume it's a one ax per figure or that
+    the main ax is the first one
+    """
+    ax = fig.get_axes()[0] # assume first ax is correct
+    title = ax.title.get_text()
+    return title
+
+def save_images(dir='', figs=None, prefix=None):
+    """
+    Save all open figures to image files. 
+
+    Parameters:
+    ----------
+    dir : string
+        Directory to place image files into
+    figs : list of Figures
+        will default to open figures
+    prefix : string
+        prefix all image file names
+    """
     if figs is None:
         figs = pylabtools.getfigs()
 
     for i, fig in enumerate(figs, 1):
-        label = fig.get_label()
+        label = _get_title(fig)
         if label == '':
             label = "Figure_%d" % i
+        if prefix:
+            label = prefix + '_' + label
         fig.savefig(dir+label)
 
     close_figures()
