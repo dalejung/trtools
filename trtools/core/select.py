@@ -112,6 +112,9 @@ def time_pluck(df, target, buffer=2, index=None):
 def peek(self, num_rows=5, max_col=None):
     # need to access the pandas column logic instead of hardcoded five
     max_col = max_col or 5
+    rows, cols = self.shape
+    num_rows = min(num_rows, rows)
+    max_col = min(max_col, cols)
     return self.iloc[:num_rows, :max_col]
 
 @patch([DataFrame], 'barf')
