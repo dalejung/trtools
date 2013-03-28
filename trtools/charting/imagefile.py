@@ -2,6 +2,7 @@
 Idea is to turn on writing to images for all plots
 """
 import os
+import errno
 import tempfile
 
 import pandas as pd
@@ -43,6 +44,17 @@ def _get_title(fig):
     title = ax.title.get_text()
     return title
 
+def mkdir_p(path):
+    """
+    http://stackoverflow.com/questions/600268/mkdir-p-functionality-in-python 
+    """
+    try:
+        os.makedirs(path)
+    except OSError as exc: # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else: raise
+
 def save_images(dir='', figs=None, prefix=None):
     """
     Save all open figures to image files. 
@@ -59,13 +71,17 @@ def save_images(dir='', figs=None, prefix=None):
     if figs is None:
         figs = pylabtools.getfigs()
 
+    if dir:
+        mkdir_p(dir)
+
     for i, fig in enumerate(figs, 1):
         label = _get_title(fig)
         if label == '':
             label = "Figure_%d" % i
         if prefix:
             label = prefix + '_' + label
-        fig.savefig(dir+label)
+        filepath = os.path.join(dir, label)
+        fig.savefig(filepath)
 
     close_figures()
 
