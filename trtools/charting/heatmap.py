@@ -35,9 +35,13 @@ def heatmap(data, xlabels=None, ylabels=None, title=None):
 
     #yticks = np.arange(len(ylabels))
 
-    # generate ticks at the first occurance of each new level 0
-    labels, ind = np.unique(yaxis.labels[0], return_index=True)
-    yticks = ind + 0.5
+    # trying to be smart about creating ticks. 
+    # previously this was to cut down on having like 1000's of labels
+    for i in range(len(yaxis.labels)):
+        labels, ind = np.unique(yaxis.labels[i], return_index=True)
+        yticks = ind + 0.5
+        if len(ind) > 1:
+            break
 
     ax.set_xticks(np.arange(len(xaxis))+0.5, minor=False)
     ax.set_yticks(yticks, minor=False)
