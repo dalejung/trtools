@@ -1,11 +1,14 @@
 from __future__ import division
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from pylab import *
 
 def _gen_labels(labels, names=None):
     if names is None:
         names = labels.names
+    if np.isscalar(labels[0]):
+        labels = [(l,) for l in labels]
     zips = [zip(names, l) for l in labels]
     new_labels = [', '.join(['{1}'.format(*m) for m in z]) for z in zips]
     return new_labels, names
@@ -33,12 +36,15 @@ def heatmap(data, xlabels=None, ylabels=None, title=None):
     ax.set_xlabel(xnames)
     ax.set_ylabel(ynames)
 
-    #yticks = np.arange(len(ylabels))
-
     # trying to be smart about creating ticks. 
     # previously this was to cut down on having like 1000's of labels
-    for i in range(len(yaxis.labels)):
-        labels, ind = np.unique(yaxis.labels[i], return_index=True)
+    if isinstance(yaxis, pd.MultiIndex):
+        yaxis_labels = yaxis.labels
+    else:
+        yaxis_labels = [yaxis]
+
+    for i in range(len(yaxis_labels)):
+        labels, ind = np.unique(yaxis_labels[i], return_index=True)
         yticks = ind + 0.5
         if len(ind) > 1:
             break
