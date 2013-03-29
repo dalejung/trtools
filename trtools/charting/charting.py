@@ -451,7 +451,8 @@ Series.fplot = series_plot
 TimeSeries.fplot = series_plot
 
 def df_plot(self, *args, **kwargs):
-    if len(self.columns) > 20:
+    force_plot = kwargs.pop('force_plot', False)
+    if len(self.columns) > 20 and not force_plot:
         print 'you crazy? too many columns'
         return;
     for col in self.columns:
