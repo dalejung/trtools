@@ -53,6 +53,21 @@ class TestPandas(TestCase):
         # https://github.com/pydata/pandas/issues/2537
         bingrouped.agg(agg_func)
 
+    def test_multindex_dtype_promotion(self):
+        """
+        Creating a multindex is promoting floats to object
+        """
+        # https://github.com/pydata/pandas/issues/3211
+        lev1 = np.arange(10)
+        lev2 = np.linspace(0, 9, 10)
+        mi = pd.MultiIndex.from_arrays([lev1, lev2])
+
+        # ints work fine
+        assert lev1.dtype == mi.levels[0].dtype
+
+        # failure
+        assert lev2.dtype == mi.levels[1].dtype
+
 
 if __name__ == '__main__':                                                                                          
     import nose                                                                      
