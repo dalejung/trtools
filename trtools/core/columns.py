@@ -44,6 +44,14 @@ class LevelWrapper(object):
         vals = self.getter.sub_column(self.name)
         return vals
 
+    def __array__(self):
+        vals = self.values
+        # vals is pd.Index
+        # pd.Index promotes flaots to objects, we demote to float if it's numeric
+        if vals.is_numeric() and not isinstance(vals, pd.Int64Index):
+            vals = vals.values.astype(float)
+        return vals
+
     #----------------------------------------------------------------------
     #   Arithmetic operators
 
