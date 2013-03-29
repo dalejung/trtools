@@ -273,7 +273,13 @@ class Grapher(object):
             ax = self.get_right_ax()
         ax.plot(xax, plot_series, **kwargs)
 
-        plt.legend(loc=0)
+        # generate combined legend
+        lines, labels = self.ax.get_legend_handles_labels()
+        if self.right_ax:
+            lines2, labels2 = self.right_ax.get_legend_handles_labels()
+            lines = lines + lines2
+            labels = labels + labels2
+        self.ax.legend(lines, labels, loc=0)
 
         if is_datetime: 
             # plot empty space for leading NaN and trailing NaN
