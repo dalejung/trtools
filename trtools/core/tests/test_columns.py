@@ -209,6 +209,15 @@ class TestLevelWrapper(TestCase):
         correct = np.array(bobs) / np.array(franks)
         assert np.all(test == correct)
 
+    def test_level_wrapper_isclose(self):
+        """
+        Test that __eq__ uses np.isclose
+
+        # 03-30-13. This fails since __eq__  currently uses __eq__
+        """
+        mi = pd.MultiIndex.from_arrays([np.linspace(.001, .024, 24)]*2, names=['first', 'second'])
+        assert np.any(mi.lev.first == .01)
+
 if __name__ == '__main__':                                                                                          
     import nose                                                                      
     nose.runmodule(argv=[__file__,'-vvs','-x','--pdb', '--pdb-failure'],exit=False)   
