@@ -80,7 +80,7 @@ def save_images(dir='', figs=None, prefix=None):
             label = "Figure_%d" % i
         if prefix:
             label = prefix + '_' + label
-        filepath = os.path.join(dir, label)
+        filepath = os.path.join(dir, label+'.png')
         fig.savefig(filepath)
 
     close_figures()
