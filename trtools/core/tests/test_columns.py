@@ -213,10 +213,15 @@ class TestLevelWrapper(TestCase):
         """
         Test that __eq__ uses np.isclose
 
-        # 03-30-13. This fails since __eq__  currently uses __eq__
+        # 03-30-13 This fails since __eq__  currently uses __eq__
+        # 03-30-13 passes now
         """
-        mi = pd.MultiIndex.from_arrays([np.linspace(.001, .024, 24)]*2, names=['first', 'second'])
-        assert np.any(mi.lev.first == .01)
+        mi = pd.MultiIndex.from_arrays([np.linspace(.001, .024, 24), ['h']*24, [True, False]*12], names=['floats', 'string', 'bools'])
+        assert np.any(mi.lev.floats == .01)
+        # make sure isclose is only used for numerics
+        assert np.all(mi.lev.string == 'h')
+        assert sum(mi.lev.bools == True) == 12
+        assert sum(mi.lev.bools == False) == 12
 
 if __name__ == '__main__':                                                                                          
     import nose                                                                      

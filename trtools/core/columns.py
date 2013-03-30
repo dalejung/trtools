@@ -45,11 +45,17 @@ class LevelWrapper(object):
         return vals
 
     def __array__(self):
+        # TODO
+        # Reset dtypes to proper dtype. Other than the numerics, things like bools
+        # come out of here as dtype == object.
         vals = self.values
         # vals is pd.Index
         # pd.Index promotes flaots to objects, we demote to float if it's numeric
         if vals.is_numeric() and not isinstance(vals, pd.Int64Index):
             vals = vals.values.astype(float)
+        else:
+            # always return an np.ndarray and not index
+            vals = vals.values
         return vals
 
     #----------------------------------------------------------------------
@@ -74,7 +80,15 @@ class LevelWrapper(object):
     __ge__ = _sub_method(operator.ge, '__ge__')
     __lt__ = _sub_method(operator.lt, '__lt__')
     __le__ = _sub_method(operator.le, '__le__')
-    __eq__ = _sub_method(operator.eq, '__eq__')
+
+    def __eq__(self, other):
+        vals = np.array(self)
+        try:
+            return np.isclose(vals, other)
+        except TypeError:
+            # likely here because vals/other is not numeric
+            return operator.eq(vals, other)
+
     __ne__ = _sub_method(operator.ne, '__ne__')
 
     # Python 2 division operators
