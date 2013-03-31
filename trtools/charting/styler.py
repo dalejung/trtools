@@ -5,7 +5,7 @@ import numpy as np
 
 LINESTYLES = ('-', '--', ':')
 COLORS = ('b', 'g', 'r', 'c', 'm', 'y', 'k')
-MARKERS = ('o', 's', 'v', '*', '^', 'x')
+MARKERS = (None,'o', 's', 'v', '*', '^', 'x')
 
 def styler():
 
@@ -23,7 +23,7 @@ def marker_styler():
 
     # cycle through
     while True:
-        yield dict(zip(('linestyle', 'color', 'markers'), styles.next()))
+        yield dict(zip(('linestyle', 'color', 'marker'), styles.next()))
 
 class StyleCategory(object):
     def __init__(self, name, values):

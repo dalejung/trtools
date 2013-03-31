@@ -17,6 +17,7 @@ from matplotlib.finance import candlestick,\
 import trtools.core.column_grep
 from trtools.monkey import attr_namespace
 from trtools.core.column_grep import *
+import trtools.charting.styler as cstyler
 
 import IPython
 
@@ -450,6 +451,13 @@ def series_plot(self, label=None, *args, **kwargs):
         label = prefix +' '+label
     except:
         pass
+
+    # add in style args
+    styler = kwargs.pop('styler', None)
+    if styler:
+        style_dict = next(styler)
+        kwargs.update(style_dict)
+
     fig = gcf()
     fig.plot(str(label), self, *args, **kwargs)
 
@@ -458,9 +466,14 @@ TimeSeries.fplot = series_plot
 
 def df_plot(self, *args, **kwargs):
     force_plot = kwargs.pop('force_plot', False)
+    styler = kwargs.pop('styler', cstyler.marker_styler())
+
     if len(self.columns) > 20 and not force_plot:
         print 'you crazy? too many columns'
         return;
+
+    # pass styler to each series plot
+    kwargs['styler'] = styler
     for col in self.columns:
         series = self[col]
         series.fplot(*args, **kwargs)
