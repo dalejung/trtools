@@ -139,12 +139,19 @@ def table_agg(self, funcs):
 def pairwise(self, func, force_values=False, order=True):
     """
         Basically a rip of DataFrame.corr
-
+        func : callable
+            will be passed in two Series 
+            func(A,B) corresponds to return[A, B] of the return
+            matrix. So A represents the index and B represents
+            the column value
         force_values:
             will skip the autoboxing of Series and just send in
             the np.ndarray. Much faster.
         order:
             Does order matter? If no, then func(i,j) == func(j,i)
+
+    Example usage would be calculating Sharpe Ratio when one asset is shorted
+    and the other held long. In that case order would be True.
     """
     numeric_df = self._get_numeric_data()
     cols = numeric_df.columns
@@ -170,4 +177,4 @@ def pairwise(self, func, force_values=False, order=True):
             if not order:
                 matrix[j, i] = val
 
-    return self._constructor(matrix, index=cols, columns=cols)
+    return self._constructor(matrix, index=cols.copy(), columns=cols.copy())
