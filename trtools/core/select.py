@@ -124,7 +124,7 @@ def barf(self, num_rows=5, max_col=None):
     """
     from IPython.core.display import HTML
     import pandas.core.config as config 
-    config.set_option("print.max_columns", 1000)
+    config.set_option("display.max_columns", 1000)
     h = HTML(self.to_html())
-    config.reset_option("print.max_columns")
+    config.reset_option("display.max_columns")
     return h
