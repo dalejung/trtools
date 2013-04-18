@@ -409,6 +409,10 @@ def normalize(self, inplace=False):
     self.index = index
     return self
 
+@patch_prop([DatetimeIndex], 'time')
+def dt_time(self):
+    return np.array([time(*time_tuple) for time_tuple in zip(self.hour, self.minute, self.second)])
+
 # IPYTYHON
 # Autocomplete the target endpoint
 def install_ipython_completers():  # pragma: no cover
@@ -427,3 +431,4 @@ if "IPython" in sys.modules:  # pragma: no cover
         install_ipython_completers()
     except Exception:
         pass 
+
