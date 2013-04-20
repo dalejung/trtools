@@ -303,6 +303,17 @@ class ColumnPanel(object):
             self._col_cache = pd.Index(self._columns)
         return self._col_cache
 
+    def dropitems(self):
+        """
+        Drop frames that have no values.
+
+        Example usage would be for cp.tail(), where some items might not
+        have data for the time period
+        """
+        panel = self._panel
+        new_data = panel.dropna(how='all')
+        return ColumnPanel(new_data)
+
     def _init_dict(self, data):
         # just aligning indexes
         panel = Panel(data)

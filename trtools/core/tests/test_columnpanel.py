@@ -137,6 +137,28 @@ class TestColumnPanel(TestCase):
         assert isinstance(cp.columns, pd.Index)
         assert cp.columns.equals(pd.Index(['strings', 'test', 'test_col'])) # did cache update?
 
+    def test_dropitems(self):
+        """
+        Test that CP.dropitems drops empty frames
+        """
+        ind = pd.date_range(start="2000-01-01", freq="D", periods=5)
+        df = pd.DataFrame({'test':range(5), 
+                           'strings':['bob', 'dale', 't', '123', 'frank']}, index=ind)
+        data = {'df1':df, 'df2':df.iloc[:3]} # note that df2 has ONLY the first 3 rows, rest NA
+        cp = column_panel.ColumnPanel(data)
+
+        test = cp.tail(2)
+        assert cp.items == ['df1', 'df2']
+
+        test = cp.tail(2).dropitems()
+        assert test.items == ['df1'], 'dropitems should have dropped df2'
+
+        # tail(3) has a one-row df2
+        test = cp.tail(3).dropitems()
+        assert test.items == ['df1', 'df2']
+        df2 = test.im['df2']
+        assert np.all(df2.count() == 1), 'df2 has only one non-na row'
+
 
 if __name__ == '__main__':                                                                                          
     import nose                                                                      
