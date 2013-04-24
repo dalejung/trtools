@@ -1,4 +1,4 @@
-from datetime import datetime, time
+from datetime import datetime, time, date
 from functools import partial
 from dateutil import relativedelta
 import calendar
@@ -393,8 +393,13 @@ def fillforward(df):
     """
     return df.asfreq(datetools.BDay(), method='pad')
 
-@patch([DatetimeIndex, Series])
-def date(self):
+@patch([Series], 'date')
+def to_date(self):
+    """
+    Return a normalized index. Will work on anything convertible to
+    DatetimeIndex
+    # note, this won't normalize the Series.index
+    """
     dt = DatetimeIndex(self).normalize()
     return dt
 
@@ -412,6 +417,10 @@ def normalize(self, inplace=False):
 @patch_prop([DatetimeIndex], 'time')
 def dt_time(self):
     return np.array([time(*time_tuple) for time_tuple in zip(self.hour, self.minute, self.second)])
+
+@patch_prop([DatetimeIndex], 'date')
+def dt_date(self):
+    return np.array([date(*date_tuple) for date_tuple in zip(self.year, self.month, self.day)])
 
 # IPYTYHON
 # Autocomplete the target endpoint
