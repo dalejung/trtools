@@ -253,11 +253,17 @@ class Grapher(object):
         if is_datetime:
             self.setup_datetime(self.df.index)
 
-        # we add to df to reindex
-        # not sure how to handle if we start with a 
-        # smaller index. i.e. hourly then trying to plot minute
-
+        # Previous we were using DataFrame.setitem to implicitly reindex
+        # and then fillna later. This only works if the original series
+        # has items that line up in the Grapher.df
+        # We now reindex and fillna in one step. 
+        # Ran into this when plotting daily data that had no normalized (midnight)
+        # times. 
+        series = series.reindex(self.df.index, method=fillna)
         self.df[name] = series
+
+        plot_series = self.df[name]
+
         if name is not None:
             kwargs['label'] = name
 
@@ -266,9 +272,6 @@ class Grapher(object):
             xax = np.arange(len(self.df))
             self.formatter.index = self.df.index
         
-        plot_series = self.df[name]
-        if fillna:
-            plot_series = plot_series.fillna(method=fillna)
         ax = self.ax
         if secondary_y: 
             ax = self.get_right_ax()
