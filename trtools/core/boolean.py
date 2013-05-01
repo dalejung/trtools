@@ -7,3 +7,11 @@ def true(self):
         Return the True values of a series
     """
     return self[self]
+
+@patch(pd.DataFrame, 'isnull')
+def isnull(self):
+    return pd.isnull(self)
+
+@patch(pd.DataFrame, 'notnull')
+def notnull(self):
+    return pd.notnull(self)
