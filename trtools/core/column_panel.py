@@ -217,6 +217,27 @@ class ColumnPanelIndexer(object):
     def __setitem__(self, key, val):
         self.obj[key] = val
 
+class PandasPanelIndexer(object):
+    """
+    This relegates to the pd.Panel.ix and returns a ColumnPanel
+    The normal ColumnPanel.ix is based on replicating the DataFrame.ix,
+    so that we can replace a function that uses DataFrames with ColumnPanels.
+    """
+    def __init__(self, obj):
+        self.obj = obj
+
+    def __getitem__(self, key):
+        """
+        """
+        panel = self.obj._panel
+        if panel is None:
+            panel = self.obj.to_panel()
+        ret = panel.ix[key]
+
+        if isinstance(ret, Panel):
+            return ColumnPanel(ret)
+        return ret
+
 def dispatch_ix(self, key):
     """
         Essentially call ix[key] for each dataframe and return new
@@ -303,7 +324,7 @@ class ColumnPanel(object):
             self._col_cache = pd.Index(self._columns)
         return self._col_cache
 
-    def dropitems(self):
+    def dropitems(self, how='all'):
         """
         Drop frames that have no values.
 
@@ -311,7 +332,7 @@ class ColumnPanel(object):
         have data for the time period
         """
         panel = self._panel
-        new_data = panel.dropna(how='all')
+        new_data = panel.dropna(how=how)
         return ColumnPanel(new_data)
 
     def _init_dict(self, data):
@@ -352,6 +373,13 @@ class ColumnPanel(object):
         if self._ix is None:
             self._ix = ColumnPanelIndexer(self)
         return self._ix
+
+    _pix = None
+    @property
+    def pix(self):
+        if self._pix is None:
+            self._pix = PandasPanelIndexer(self)
+        return self._pix
 
     @property
     def index(self):
@@ -441,13 +469,21 @@ class ColumnPanel(object):
         if key in self._cache:
             return self._cache[key]
 
+        # if our readonly panel still exists. Grab the data from there
+        if self._panel:
+            df = self._panel.ix[:, :, key]
+        else:
+            df = self._gather_frames_column(key)
+        self._cache[key] = df
+        return df
+
+    def _gather_frames_column(self, key):
         results = {}
         for name, df in self.frames.iteritems():
             results[name] = df[key]
 
         df = DataFrame(results)
         df.name = key
-        self._cache[key] = df
         return df
 
     def to_panel(self):
