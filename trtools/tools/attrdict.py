@@ -46,3 +46,8 @@ class attrdict(dict):
             ind = keys.index(name)
             return self[keys[ind]]
         raise KeyError()
+
+    def __repr__(self):
+        out = 'Keys:\n'
+        out += '\n'.join(self.keys())
+        return out
