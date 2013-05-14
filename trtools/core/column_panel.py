@@ -376,6 +376,8 @@ class ColumnPanel(object):
 
     @property
     def items(self):
+        if self._panel:
+            return list(self._panel.items)
         return self.frames.keys()
 
     def foreach(self, func, *args, **kwargs):
@@ -458,7 +460,7 @@ class ColumnPanel(object):
         return Panel(copies)
 
     def __repr__(self):
-        item_keys = self.frames.keys()
+        item_keys = self.items
         lengths = len(self.columns), len(self.items)
         dims = "Dimensions: {0} Columns x {1} Items".format(*lengths)
         items = 'Items: %s to %s' % (item_keys[0], item_keys[-1])
