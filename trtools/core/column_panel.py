@@ -549,6 +549,11 @@ class ColumnPanel(object):
         finally:
             store.close()
 
+# monkey
+@monkey.patch(Panel)
+def to_columnpanel(self):
+    return ColumnPanel(self)
+
 # IPYTYHON
 def install_ipython_completers():  # pragma: no cover
     """Register the DataFrame type with IPython's tab completion machinery, so
