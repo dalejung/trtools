@@ -20,7 +20,12 @@ def pmin(*args, **kwargs):
 
 def generic_wrap(data):
     """
-        This is to handle cases like aggregate where the return can be anything from a scalar to a panel. 
+        This is to handle cases like aggregate where the return 
+        can be anything from a scalar to a panel. 
+
+        This is useful when using DataFrames and ColumnPanels. 
+        ColumnPanels are meant to be interchangable with DataFrames.
+        Aggregating results is a common thing, this is to make that easier.
     """
     if isinstance(data, (pd.Panel, pd.DataFrame, pd.Series)):
         return data
