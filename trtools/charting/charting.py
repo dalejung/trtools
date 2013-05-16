@@ -21,12 +21,30 @@ import trtools.charting.styler as cstyler
 
 import IPython
 
+IN_NOTEBOOK = True
+instance = IPython.Application._instance
+if isinstance(instance, IPython.frontend.terminal.ipapp.TerminalIPythonApp):
+    IN_NOTEBOOK = False
+shell = IPython.InteractiveShell._instance
+
+
 IPython.core.pylabtools.figsize(15, 10)
 
 def figsize(width, height):
     IPython.core.pylabtools.figsize(width, height)
 
 CURRENT_FIGURE = None
+
+def reset_figure(*args):
+    """
+    In ipython notebook, clear the figure after each cell execute.
+    This negates the need to specify a Figure for each plot
+    """
+    global CURRENT_FIGURE
+    CURRENT_FIGURE = None
+
+if IN_NOTEBOOK:
+    shell.register_post_execute(reset_figure)
 
 class TimestampLocator(ticker.Locator):
     """  
