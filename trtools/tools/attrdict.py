@@ -1,3 +1,5 @@
+missing = object()
+
 class attrdict(dict):
     """A dict whose items can also be accessed as member variables.
 
@@ -51,3 +53,24 @@ class attrdict(dict):
         out = 'Keys:\n'
         out += '\n'.join(self.keys())
         return out
+
+    def foreach(self, key=None, func=missing):
+        """
+        A convenient way to get a subset of results. 
+
+        I often use attrdict to store DataFrames with a common
+        column indexes. This allows me to quickly get a subset
+        """
+        if func is None and key is None:
+            raise ValueError('invalid number of arguments')
+
+        if func is missing:
+            func = lambda dct, key: dct[key]
+
+        res = attrdict()
+        for k, v in self.iteritems():
+            try:
+                res[k] = func(v, key)
+            except:
+                pass
+        return res
