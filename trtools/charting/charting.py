@@ -482,8 +482,7 @@ def df_plot(self, *args, **kwargs):
     styler = kwargs.pop('styler', cstyler.marker_styler())
 
     if len(self.columns) > 20 and not force_plot:
-        print 'you crazy? too many columns'
-        return;
+        raise Exception("Are you crazy? Too many columns")
 
     # pass styler to each series plot
     kwargs['styler'] = styler
