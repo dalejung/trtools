@@ -46,7 +46,7 @@ def _generic_wrap_dict(data):
         return pd.Series(data)
 
     if isinstance(test, pd.Series):
-        return pd.Series(data)
+        return pd.DataFrame(data)
 
     if isinstance(test, pd.DataFrame):
-        return pd.Panel(data)
+        return pd.Panel.from_dict(data)
