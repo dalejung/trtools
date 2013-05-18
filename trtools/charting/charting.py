@@ -25,8 +25,6 @@ IN_NOTEBOOK = True
 instance = IPython.Application._instance
 if isinstance(instance, IPython.frontend.terminal.ipapp.TerminalIPythonApp):
     IN_NOTEBOOK = False
-shell = IPython.InteractiveShell._instance
-
 
 IPython.core.pylabtools.figsize(15, 10)
 
@@ -43,7 +41,8 @@ def reset_figure(*args):
     global CURRENT_FIGURE
     CURRENT_FIGURE = None
 
-if IN_NOTEBOOK:
+shell = IPython.InteractiveShell._instance
+if IN_NOTEBOOK and shell:
     shell.register_post_execute(reset_figure)
 
 class TimestampLocator(ticker.Locator):
