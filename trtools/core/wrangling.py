@@ -178,3 +178,9 @@ def pairwise(self, func, force_values=False, order=True):
                 matrix[j, i] = val
 
     return self._constructor(matrix, index=cols.copy(), columns=cols.copy())
+
+@patch(DataFrame, 'to_frame')
+def df_to_frame(self):
+    """
+    """
+    return self
