@@ -136,7 +136,7 @@ def table_agg(self, funcs):
     return res
 
 @patch([DataFrame], 'pairwise')
-def pairwise(self, func, force_values=False, order=True):
+def pairwise(self, func, force_values=True, order=True):
     """
         Basically a rip of DataFrame.corr
         func : callable
