@@ -276,7 +276,8 @@ class Grapher(object):
         # We now reindex and fillna in one step. 
         # Ran into this when plotting daily data that had no normalized (midnight)
         # times. 
-        series = series.reindex(self.df.index, method=fillna)
+        if not np.isscalar(series):
+            series = series.reindex(self.df.index, method=fillna)
         self.df[name] = series
 
         plot_series = self.df[name]
