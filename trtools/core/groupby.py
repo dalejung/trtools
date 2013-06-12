@@ -10,6 +10,7 @@ from pandas.core.groupby import DataFrameGroupBy, PanelGroupBy, BinGrouper, Seri
 
 from trtools.monkey import patch, patch_prop
 from trtools.core.column_panel import PanelDict, ColumnPanel
+from trtools.tools.boxer import box_data
 
 class PanelGroupByMap(object):
     """
@@ -36,14 +37,19 @@ class PanelGroupByMap(object):
         return mapper
 
     def apply(self, func, *args, **kwargs):
-        result = {}
+        result = OrderedDict()
         for key, df in self.obj.iteritems():
             grp = DataFrameGroupBy(df, grouper=self.grouper)
+            f = func
             if not callable(func):
                 f = getattr(grp, func)
                 res = f(*args, **kwargs)
+            else:
+                # call the grouper.apply cuz we will box our own data
+                keys, data, mutated = grp.grouper.apply(f, df, grp.axis)
+                res = box_data(keys, data)
             result[key] = res
-        return Panel.from_dict(result)
+        return box_data(result)
 
 
     def __call__(self, func, *args, **kwargs):
