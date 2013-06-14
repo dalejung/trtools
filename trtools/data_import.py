@@ -24,6 +24,10 @@ def _get_di_vars(code):
                 data[name] = value
     return data
 
+def _cache_key(fullname, config):
+    custom_key = config.get('DATAIMPORT_CACHE_KEY', None)
+    return custom_key or fullname
+
 class DataImportLoader(imputil.Importer):
     def __init__(self, fullname, path):
         self.fullname = fullname
@@ -45,7 +49,7 @@ class DataImportLoader(imputil.Importer):
         code = ast.parse(source, pathname)
         config = _get_di_vars(code)
         # LOAD CACHE
-        cache = self.load_cache(fullname)
+        cache = self.load_cache(config)
         # process the ast and remove the cache vars
         code = self.process_ast(code, config, cache)
 
@@ -58,21 +62,24 @@ class DataImportLoader(imputil.Importer):
         mod.__dict__.update(ns)
 
         # SAVE CACHE
-        self.save_cache(ns)
+        self.save_cache(ns, config)
         return mod
 
     # in process cache
     def load_cache(self, config):
-        cache = MODULE_VAR_CACHE.get(self.fullname, {})
+        cache_key = _cache_key(self.fullname, config)
+        cache = MODULE_VAR_CACHE.get(cache_key, {})
         return cache
 
-    def save_cache(self, vars):
+    def save_cache(self, vars, config):
         SKIP_TYPES = (types.ModuleType, types.FunctionType, types.LambdaType, 
                      types.ClassType, types.FileType)
         vars = {k:v for k, v in vars.iteritems() 
                 if not isinstance(v, SKIP_TYPES)}
         vars.pop('__builtins__', None)
-        MODULE_VAR_CACHE[self.fullname] = vars
+
+        cache_key = _cache_key(self.fullname, config)
+        MODULE_VAR_CACHE[cache_key] = vars
 
     def process_ast(self, code, config, cache):
         new_body = skip_nodes_in_cache(code.body, cache)
