@@ -7,7 +7,7 @@ import imputil
 
 # http://www.python.org/dev/peps/pep-0302/
 
-MODULE_VAR_CACHE = {}
+_CACHE = {}
 
 def _get_di_vars(code):
     data = OrderedDict()
@@ -23,10 +23,6 @@ def _get_di_vars(code):
             for name in names:
                 data[name] = value
     return data
-
-def _cache_key(fullname, config):
-    custom_key = config.get('DATAIMPORT_CACHE_KEY', None)
-    return custom_key or fullname
 
 class DataImportLoader(imputil.Importer):
     def __init__(self, fullname, path):
@@ -49,7 +45,9 @@ class DataImportLoader(imputil.Importer):
         code = ast.parse(source, pathname)
         config = _get_di_vars(code)
         # LOAD CACHE
-        cache = self.load_cache(config)
+        cache_key = self._cache_key(self.fullname, config)
+        cache = self.load_cache(cache_key, config)
+
         # process the ast and remove the cache vars
         code = self.process_ast(code, config, cache)
 
@@ -58,28 +56,54 @@ class DataImportLoader(imputil.Importer):
         ns = {}
         # populate namespace with cache vars
         ns.update(cache)
+        ns['__datastore__'] = cache
         exec code in ns
         mod.__dict__.update(ns)
 
         # SAVE CACHE
+        ns = self._clean_vars(ns)
         self.save_cache(ns, config)
         return mod
 
-    # in process cache
-    def load_cache(self, config):
-        cache_key = _cache_key(self.fullname, config)
-        cache = MODULE_VAR_CACHE.get(cache_key, {})
+    def _cache_key(self, fullname, config):
+        custom_key = config.get('DATAIMPORT_CACHE_KEY', None)
+        return custom_key or fullname
+
+    def _load_cache(self, cache_key):
+        # in process cache
+        cache = _CACHE.get(cache_key, None)
         return cache
 
+    # in process cache
+    def load_cache(self, cache_key, config=None):
+        cache = self._load_cache(cache_key)
+        if cache is None:
+            cache = {}
+            self._save_cache(cache_key, cache)
+        return cache
+
+    def _save_cache(self, cache_key, cache):
+        _CACHE[cache_key] = cache
+
     def save_cache(self, vars, config):
+        cache_key = self._cache_key(self.fullname, config)
+        # save to in process
+        cache = self.load_cache(cache_key)
+        cache.clear()
+        cache.update(vars)
+        self._save_cache(cache_key, cache)
+
+    def _clean_vars(self, vars):
+        """
+        Dont' store variables that are things like modules, lambdas, classes, etc
+        """
         SKIP_TYPES = (types.ModuleType, types.FunctionType, types.LambdaType, 
                      types.ClassType, types.FileType)
         vars = {k:v for k, v in vars.iteritems() 
                 if not isinstance(v, SKIP_TYPES)}
         vars.pop('__builtins__', None)
-
-        cache_key = _cache_key(self.fullname, config)
-        MODULE_VAR_CACHE[cache_key] = vars
+        vars.pop('__datastore__', None)
+        return vars
 
     def process_ast(self, code, config, cache):
         new_body = skip_nodes_in_cache(code.body, cache)
@@ -147,9 +171,8 @@ def _skip_node(node, cache):
     except:
         return False
 
-    if name in cache:
+    if name in cache.keys():
         return True
-
 
 def install_data_import(loader_class=None):
     sys.meta_path = [DataImportFinder(loader_class)]
