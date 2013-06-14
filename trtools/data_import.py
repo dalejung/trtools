@@ -1,3 +1,8 @@
+"""
+import trtools.data_import as data_import
+
+data_import.install_data_import()
+"""
 from collections import OrderedDict
 import types
 import ast
@@ -142,7 +147,8 @@ class DataImportFinder(object):
         config = _get_di_vars(code)
 
         # no dataimport variables
-        if len(config) == 0:
+        enabled = config.get('DATAIMPORT_ENABLED', False)
+        if not enabled:
             return None
 
         loader = self.loader_class(fullname, path)
@@ -176,14 +182,3 @@ def _skip_node(node, cache):
 
 def install_data_import(loader_class=None):
     sys.meta_path = [DataImportFinder(loader_class)]
-
-"""
-Check if cache has data
-if cache:
-    load from cache
-    create_new_module
-    update module dict
-else:
-    load module
-    save cache 
-"""
