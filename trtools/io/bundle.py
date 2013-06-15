@@ -88,6 +88,7 @@ def save_panel(panel, path, frame_key='frame_key'):
     for i, item in enumerate(panel.items):
         frame = panel[item]
         store[i] = frame
+    store.close()
 
 def load_panel(path):
     """
@@ -98,6 +99,7 @@ def load_panel(path):
     store = OBTFile(filepath)
     #df = store.obt.table.read()
     df = store.obt.ix[:]
+    store.close()
 
     load_meta = functools.partial(_load_meta, path=path)
     items = load_meta('items')
