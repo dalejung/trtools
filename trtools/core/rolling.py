@@ -35,3 +35,8 @@ class Rolling(object):
                 return wrap_rolling(func, self.obj)
 
         raise AttributeError("No rolling func")
+
+    # ability to pass in arbitrary functions
+    # though, i think apply already handles this
+    #def __call__(self, window, func, **kwargs):
+    #    return pd.rolling_apply(self, window, func, **kwargs)
