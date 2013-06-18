@@ -2,6 +2,7 @@ from trtools.core.column_panel import ColumnPanel, PanelDict
 import trtools.core.boolean # monkey
 import trtools.core.columns # monkey
 import trtools.core.select # monkey
+import trtools.core.topper # monkey
 import trtools.core.groupby # monkey
 import trtools.core.select # monkey
 import trtools.core.wrangling # monkey
