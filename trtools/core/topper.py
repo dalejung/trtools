@@ -90,8 +90,8 @@ topargn = bn_topargn
 
 @patch(pd.Series, 'topn')
 def _topn_series(self, N, ascending=True):
-    return topn(self, N, ascending=ascending)
+    return pd.Series(topn(self, N, ascending=ascending))
 
 @patch(pd.Series, 'topargn')
 def _topargn_series(self, N, ascending=True):
-    return topargn(self, N, ascending=ascending)
+    return pd.Series(topargn(self, N, ascending=ascending))
