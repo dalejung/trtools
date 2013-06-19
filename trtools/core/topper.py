@@ -34,6 +34,7 @@ def bn_topn(arr, N, ascending=True):
     Results are ordered smallest-to-largest regardless if you grab
     from bottom or top. Use `ascending` param to change sort order
     """
+    arr = arr[~np.isnan(arr)]
     if N > 0: # nlargest
         N = len(arr) - abs(N)
         sl = slice(N, None)
@@ -57,6 +58,13 @@ def bn_topargn(arr, N, ascending=True):
     >>> np.all(res1 == res2)
         True
     """
+    na_mask = np.isnan(arr)
+    has_na = na_mask.sum()
+    if has_na:
+        # store the old indices for translating back later
+        old_index_map = np.where(~na_mask)[0]
+        arr = arr[~na_mask]
+
     if N > 0: # nlargest
         N = len(arr) - abs(N)
         sl = slice(N, None)
@@ -69,7 +77,13 @@ def bn_topargn(arr, N, ascending=True):
     index_sort = np.argsort(arr[index])
     if not ascending:
         index_sort = index_sort[::-1]
-    return index[index_sort]
+    index = index[index_sort]
+
+    # index is only correct with arr without nans. 
+    # Map back to old_index if needed
+    if has_na:
+        index = old_index_map[index]
+    return index
 
 topn = bn_topn
 topargn = bn_topargn
