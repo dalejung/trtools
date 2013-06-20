@@ -20,7 +20,7 @@ def where(ser, cond, other=np.nan, inplace=False):
         if len(other) == 1:
             other = np.array(other[0]*len(ser))
 
-    change = ser if inplace else None
+    change = ser 
     com._maybe_upcast_putmask(ser,~cond,other,change=change)
 
     return None if inplace else ser
