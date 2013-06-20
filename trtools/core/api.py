@@ -11,3 +11,4 @@ import trtools.core.indexing # monkey
 import trtools.core.time_selector # monkey
 import trtools.core.timeseries as timeseries
 from trtools.core.base import *
+import trtools.core.pandas_np as pnp
