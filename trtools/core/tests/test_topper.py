@@ -25,8 +25,8 @@ class TestTopper(TestCase):
     def test_topn_largest(self):
         # get the n largest
         bn_res = topper.bn_topn(arr, 10)
-        assert bn_res[-1] == max(arr) # sanity check
-        pd_res = s.order()[-10:]
+        assert bn_res[0] == max(arr) # sanity check
+        pd_res = s.order(ascending=False)[:10]
         tm.assert_almost_equal(bn_res, pd_res)
 
         # change result to biggest to smallest
@@ -80,7 +80,7 @@ class TestTopper(TestCase):
         nanarr[nanarr % 2 == 0] = np.nan
 
         test = topper.topn(nanarr, 3)
-        correct = [5,7,9]
+        correct = [9,7,5]
         tm.assert_almost_equal(test, correct)
 
         test = topper.topn(nanarr, -3)
@@ -88,7 +88,7 @@ class TestTopper(TestCase):
         tm.assert_almost_equal(test, correct)
 
         test = topper.topargn(nanarr, 3)
-        correct = [5,7,9]
+        correct = [9,7,5]
         tm.assert_almost_equal(test, correct)
 
         test = topper.topargn(nanarr, -3)
@@ -155,6 +155,32 @@ class TestTopper(TestCase):
     def test_df_topargn(self):
         # really this is tested via topindexn indirectly
         pass
+
+    def test_default_ascending(self):
+        """
+        Changed ascending to change based on N
+        More intuitive, by default you'd expect the greatest or lowest
+        value would be first, depending on which side you are looking for
+        """
+        # top should default to asc=False
+        bn_res = topper.bn_topn(arr, 10)
+        pd_res = s.order(ascending=False)[:10]
+        tm.assert_almost_equal(bn_res, pd_res)
+
+        # make sure ascending is still respected
+        bn_res = topper.bn_topn(arr, 10, ascending=True)
+        pd_res = s.order(ascending=True)[-10:]
+        tm.assert_almost_equal(bn_res, pd_res)
+
+        # bottom defaults asc=True
+        bn_res = topper.bn_topn(arr, -10)
+        pd_res = s.order()[:10]
+        tm.assert_almost_equal(bn_res, pd_res)
+
+        # make sure ascending is still respected
+        bn_res = topper.bn_topn(arr, -10, ascending=False)
+        pd_res = s.order()[:10][::-1]
+        tm.assert_almost_equal(bn_res, pd_res)
 
 if __name__ == '__main__':
     import nose                                                                      

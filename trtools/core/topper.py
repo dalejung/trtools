@@ -4,19 +4,7 @@ import numpy as np
 
 from trtools.monkey import patch
 
-def top_x(df, max=10, ascending=True):
-    """
-    Returns a grid with columns being order position and values being 
-    the df.columns
-    """
-    def topper(s):
-        ret = pd.Series(index=range(max))
-        data = s.order(ascending=ascending)[:max].index
-        ret[range(len(data))] = data
-        return ret
-    return df.apply(topper, axis=1)
-
-def bn_topn(arr, N, ascending=True):
+def bn_topn(arr, N, ascending=None):
     """
     Return the top N results. Negative N will give N lowest results
 
@@ -27,13 +15,19 @@ def bn_topn(arr, N, ascending=True):
     N : int
         number of elements to return. Negative numbers will return smallest
     ascending : bool
-        Ordering of the return values. Default to True
+        Ordering of the return values. Default behavior is greatest absolute
+        magnitude.
 
     Note
     ----
-    Results are ordered smallest-to-largest regardless if you grab
-    from bottom or top. Use `ascending` param to change sort order
+    Default ascending order depends on N and whether you are looking for the
+    top and bottom results. If you are looking for the top results, the 
+    most positive results will come first. If you are looking for the bottom
+    results, then the most negative results comes first
     """
+    if ascending is None:
+        ascending = not N > 0
+
     arr = arr[~np.isnan(arr)]
     if N > 0: # nlargest
         N = len(arr) - abs(N)
@@ -48,7 +42,7 @@ def bn_topn(arr, N, ascending=True):
         bn_res = bn_res[::-1]
     return bn_res
 
-def bn_topargn(arr, N, ascending=True):
+def bn_topargn(arr, N, ascending=None):
     """
     Return the indices of the top N results. 
     The following should be equivalent
@@ -58,6 +52,9 @@ def bn_topargn(arr, N, ascending=True):
     >>> np.all(res1 == res2)
         True
     """
+    if ascending is None:
+        ascending = not N > 0
+
     na_mask = np.isnan(arr)
     has_na = na_mask.sum()
     if has_na:
@@ -89,17 +86,17 @@ topn = bn_topn
 topargn = bn_topargn
 
 @patch(pd.Series, 'topn')
-def _topn_series(self, N, ascending=True):
+def _topn_series(self, N, ascending=None):
     return pd.Series(topn(self, N, ascending=ascending))
 
 @patch(pd.Series, 'topargn')
-def _topargn_series(self, N, ascending=True):
+def _topargn_series(self, N, ascending=None):
     return pd.Series(topargn(self, N, ascending=ascending))
 
 # bn.partsort works on matrix, but i dunno how to handle nans in that case
 # i suppose I could min/max and then set Nan to sentinal values?
 @patch(pd.DataFrame, 'topn', override=True)
-def topn_df(self, N, ascending=True, wrap=True):
+def topn_df(self, N, ascending=None, wrap=True):
     vals = self.values
     rows = vals.shape[0]
     ret = np.ndarray((rows, abs(N)))
@@ -111,7 +108,7 @@ def topn_df(self, N, ascending=True, wrap=True):
     return np.array(ret)
 
 @patch(pd.DataFrame, 'topargn', override=True)
-def topargn_df(self, N, ascending=True, wrap=True):
+def topargn_df(self, N, ascending=None, wrap=True):
     vals = self.values
     rows = vals.shape[0]
     ret = np.ndarray((rows, abs(N)), dtype=int)
@@ -123,7 +120,7 @@ def topargn_df(self, N, ascending=True, wrap=True):
     return np.array(ret)
 
 @patch(pd.DataFrame, 'topindexn', override=True)
-def topindexn_df(self, N, ascending=True):
+def topindexn_df(self, N, ascending=None):
     """
     Pretty much topargn, except it returns column key instead of
     positional int
