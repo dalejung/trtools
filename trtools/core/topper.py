@@ -98,6 +98,18 @@ def _topargn_series(self, N, ascending=True):
 
 # bn.partsort works on matrix, but i dunno how to handle nans in that case
 # i suppose I could min/max and then set Nan to sentinal values?
+@patch(pd.DataFrame, 'topn', override=True)
+def topn_df(self, N, ascending=True, wrap=True):
+    vals = self.values
+    rows = vals.shape[0]
+    ret = np.ndarray((rows, abs(N)))
+    for i in range(rows):
+        r = topn(vals[i], N=N, ascending=ascending)
+        ret[i] = r
+    if wrap:
+        return pd.DataFrame(ret, index=self.index)
+    return np.array(ret)
+
 @patch(pd.DataFrame, 'topargn', override=True)
 def topargn_df(self, N, ascending=True, wrap=True):
     vals = self.values
