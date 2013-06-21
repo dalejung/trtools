@@ -9,6 +9,7 @@ reload(topper)
 
 arr = np.random.randn(10000)
 s = pd.Series(arr)
+df = tm.makeDataFrame()
 
 class TestTopper(TestCase):
 
@@ -97,6 +98,37 @@ class TestTopper(TestCase):
         test = topper.topargn(nanarr, -3, ascending=False)
         correct = [5,3,1]
         tm.assert_almost_equal(test, correct)
+
+    def test_df_topindexn(self):
+        # long way of getting the topindexn
+        top_pos = df.apply(lambda s: s.topargn(2, ascending=False), axis=1)
+        correct = df.columns[top_pos.values]
+        correct = pd.DataFrame(correct, index=df.index)
+
+        test = topper.topindexn_df(df, 2, ascending=False)
+        tm.assert_almost_equal(test, correct)
+
+        # sanity check, make sure first value is right
+        c = df.iloc[0].order().index[-1]
+        t = test.iloc[0][0]
+        tm.assert_almost_equal(t, c)
+
+        # bottom 2
+        top_pos = df.apply(lambda s: s.topargn(-2), axis=1)
+        correct = df.columns[top_pos.values]
+        correct = pd.DataFrame(correct, index=df.index)
+
+        test = topper.topindexn_df(df, -2)
+        tm.assert_almost_equal(test, correct)
+
+        # sanity check, make sure first value is right
+        c = df.iloc[0].order().index[0]
+        t = test.iloc[0][0]
+        tm.assert_almost_equal(t, c)
+
+    def test_df_topargn(self):
+        # really this is tested via topindexn indirectly
+        pass
 
 if __name__ == '__main__':
     import nose                                                                      
