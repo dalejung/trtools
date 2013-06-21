@@ -51,7 +51,7 @@ class attrdict(dict):
 
     def __repr__(self):
         out = 'Keys:\n'
-        out += '\n'.join(self.keys())
+        out += '\n'.join([str(k) for k in self.keys()])
         return out
 
     def foreach(self, key=None, func=missing):
