@@ -30,13 +30,19 @@ def bn_topn(arr, N, ascending=None):
 
     arr = arr[~np.isnan(arr)]
     if N > 0: # nlargest
+        N = min(abs(N), len(arr))
         N = len(arr) - abs(N)
         sl = slice(N, None)
     else: # nsmallest
-        N = abs(N)
+        N = min(abs(N), len(arr))
         sl = slice(None, N)
-    out = nb.partsort(arr, N)
-    bn_res = out[sl]
+
+    if N == 0:
+        bn_res = arr
+    else:
+        out = nb.partsort(arr, N)
+        bn_res = out[sl]
+
     bn_res = np.sort(bn_res) # sort output
     if not ascending:
         bn_res = bn_res[::-1]
