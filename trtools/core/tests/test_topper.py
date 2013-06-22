@@ -206,6 +206,53 @@ class TestTopper(TestCase):
         pd_res = s.order()[:10][::-1]
         tm.assert_almost_equal(bn_res, pd_res)
 
+    def test_test_ndim(self):
+        """
+        Make sure topn and topargn doesn't accept DataFrame
+        """
+        try:
+            topper.topn(df, 1)
+        except:
+            pass
+        else:
+            assert False
+
+        try:
+            topper.topargn(df, 1)
+        except:
+            pass
+        else:
+            assert False
+
+    def test_too_big_n_df(self):
+        df = pd.DataFrame(np.random.randn(100, 10))
+        df[df > 0] = np.nan
+        testdf = topper.topn_df(df, 10)
+        for x in range(len(df)):
+            correct = df.iloc[x].order(ascending=False).reset_index(drop=True)
+            test = testdf.iloc[x]
+            tm.assert_almost_equal(test, correct)
+
+        testdf = topper.topn_df(df, 2)
+        for x in range(len(df)):
+            correct = df.iloc[x].order(ascending=False).reset_index(drop=True)[:2]
+            test = testdf.iloc[x]
+            tm.assert_almost_equal(test, correct)
+
+        # bottom
+        testdf = topper.topn_df(df, -2)
+        for x in range(len(df)):
+            correct = df.iloc[x].order().reset_index(drop=True)[:2]
+            test = testdf.iloc[x]
+            tm.assert_almost_equal(test, correct)
+
+        # bottom
+        testdf = topper.topn_df(df, -20)
+        for x in range(len(df)):
+            correct = df.iloc[x].order().reset_index(drop=True)[:20]
+            test = testdf.iloc[x]
+            tm.assert_almost_equal(test, correct)
+
 if __name__ == '__main__':
     import nose                                                                      
     nose.runmodule(argv=[__file__,'-vvs','-x','--pdb', '--pdb-failure'],exit=False)   

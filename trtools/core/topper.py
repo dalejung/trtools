@@ -25,6 +25,8 @@ def bn_topn(arr, N, ascending=None):
     most positive results will come first. If you are looking for the bottom
     results, then the most negative results comes first
     """
+    if arr.ndim > 1:
+        raise Exception("Only works on ndim=1")
     if ascending is None:
         ascending = not N > 0
 
@@ -58,6 +60,8 @@ def bn_topargn(arr, N, ascending=None):
     >>> np.all(res1 == res2)
         True
     """
+    if arr.ndim > 1:
+        raise Exception("Only works on ndim=1")
     if ascending is None:
         ascending = not N > 0
 
@@ -105,10 +109,13 @@ def _topargn_series(self, N, ascending=None):
 def topn_df(self, N, ascending=None, wrap=True):
     vals = self.values
     rows = vals.shape[0]
-    ret = np.ndarray((rows, abs(N)))
+    # don't make the return have more columns than the dataframes
+    cols = min(len(self.columns), abs(N))
+    ret = np.ndarray((rows, cols))
+    ret[:] = np.nan
     for i in range(rows):
         r = topn(vals[i], N=N, ascending=ascending)
-        ret[i] = r
+        ret[i][:len(r)] = r
     if wrap:
         return pd.DataFrame(ret, index=self.index)
     return np.array(ret)
