@@ -34,7 +34,7 @@ def highlight_span(start=None, end=None, color='g', alpha=0.5, grapher=None):
     grapher.ax.axvspan(start, end, color=color, alpha=alpha)
 
 @patch(charting.Figure, 'hl_span')
-def hl_span_figure(self, **kwargs):
+def hl_span_figure(self, *args, **kwargs):
     grapher = self.grapher
     kwargs['grapher'] = grapher
-    return highlight_span(**kwargs)
+    return highlight_span(*args, **kwargs)
