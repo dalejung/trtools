@@ -19,11 +19,11 @@ def marker_styler():
     """
     Adds differing markers
     """
-    styles = itertools.product(LINESTYLES, COLORS, MARKERS)
+    styles = itertools.product(LINESTYLES, MARKERS, COLORS)
 
     # cycle through
     while True:
-        yield dict(zip(('linestyle', 'color', 'marker'), styles.next()))
+        yield dict(zip(('linestyle', 'marker', 'color'), styles.next()))
 
 class StyleCategory(object):
     def __init__(self, name, values):
