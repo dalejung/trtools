@@ -146,6 +146,33 @@ class TestComposition(TestCase):
         assert fr.bob is bob
         assert fr.tail().bob is bob
 
+    def test___init__(self):
+        """
+        Test that supermeta metaclass acts like a super parent
+        to both UserSeries and UserFrame
+        """
+        class InitSeries(UserSeries):
+            def __init__(self, *args, **kwargs):
+                # required 
+                bob = kwargs.pop('bob')
+                self.bob = bob
+                super(InitSeries, self).__init__(*args, **kwargs)
+
+        class InitFrame(UserFrame):
+            def __init__(self, *args, **kwargs):
+                # required 
+                bob = kwargs.pop('bob')
+                self.bob = bob
+                super(InitFrame, self).__init__(*args, **kwargs)
+
+        s = InitSeries(range(10), name='hello', bob=123)
+        assert s.bob == 123
+
+        df = tm.makeDataFrame()
+        fr = InitFrame(df, bob='woot')
+        assert fr.bob == 'woot'
+
+
 if __name__ == '__main__':                                                                                          
     import nose                                                                      
     nose.runmodule(argv=[__file__,'-vvs','-x','--pdb', '--pdb-failure'],exit=False)   

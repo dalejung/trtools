@@ -209,24 +209,37 @@ def _wrap_method(name):
         return self._delegate(name, *args, **kwargs)
     return _meth
 
+import inspect
+def init_args(pandas_type):
+    init_func = getattr(pandas_type, '__init__')
+    argspec = inspect.getargspec(init_func)
+    return argspec.args[1:] # skip self
+
 class UserFrame(pd.DataFrame):
     _pandas_type = pd.DataFrame
+    _init_args = init_args(pd.DataFrame)
     pobj = None
     __metaclass__ = PandasMeta
     def __new__(cls, *args, **kwargs):
-        pobj = cls._pandas_type(*args, **kwargs)
+        # only pass the kwargs that pandas want
+        panda_kwargs = {k:v for k, v in kwargs.items() if k in cls._init_args}
+        pobj = cls._pandas_type(*args, **panda_kwargs)
+
         instance = object.__new__(cls)
         instance.pobj = pobj
         return instance
 
 class UserSeries(pd.Series):
     _pandas_type = pd.Series
+    _init_args = init_args(pd.Series)
     pobj = None
     __metaclass__ = PandasMeta
     def __new__(cls, *args, **kwargs):
         # since i am not calling npndarray.__new__, UserSeries.__array_finalize__ 
         # does not get called.
-        pobj = cls._pandas_type(*args, **kwargs)
+        # only pass the kwargs that pandas want
+        panda_kwargs = {k:v for k, v in kwargs.items() if k in cls._init_args}
+        pobj = cls._pandas_type(*args, **panda_kwargs)
         instance = pobj.view(cls)
         return instance
 
