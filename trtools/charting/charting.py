@@ -510,6 +510,17 @@ def df_plot(self, *args, **kwargs):
 
 DataFrame.fplot = df_plot
 
+def series_plot_markers(self, label=None, *args, **kwargs):
+    """
+    Really just an automated way of calling gcf
+    """
+    label = label or kwargs.get('label')
+    label = label and label or self.name
+    fig = gcf()
+    fig.plot_markers(str(label), self, *args, **kwargs)
+
+Series.fplot_markers = series_plot_markers
+
 def ohlc_plot(self, width=0.3, *args, **kwargs):
     fig = gcf()
     fig.ohlc(self, width=width, *args, **kwargs)
