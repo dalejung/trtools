@@ -110,6 +110,42 @@ class TestComposition(TestCase):
         # this one calls super
         assert np.all(sub.irow(0, parent=True) == df.ix[0])
 
+    def test_supermeta(self):
+        """
+        Test that supermeta metaclass acts like a super parent
+        to both UserSeries and UserFrame
+        """
+        class CommonBase(composition.PandasSuperMeta):
+            """
+            Test common base 
+            """
+            _bob = object()
+
+            @property
+            def bob(self):
+                return self._bob
+
+        class CommonSeries(UserSeries):
+            __metaclass__ = CommonBase
+
+        class CommonFrame(UserFrame):
+            __metaclass__ = CommonBase
+
+        bob = CommonBase._bob
+
+        s = CommonSeries(range(10))
+        assert s.ix[3] == 3
+        tm.assert_almost_equal(s, range(10))
+        assert s.bob is bob
+        s._bob = 123
+        assert s.bob == 123
+
+        df = tm.makeDataFrame()
+        fr = CommonFrame(df)
+        tm.assert_almost_equal(fr, df)
+        assert fr.bob is bob
+        assert fr.tail().bob is bob
+
 if __name__ == '__main__':                                                                                          
     import nose                                                                      
     nose.runmodule(argv=[__file__,'-vvs','-x','--pdb', '--pdb-failure'],exit=False)   

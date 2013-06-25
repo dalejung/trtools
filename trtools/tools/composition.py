@@ -139,6 +139,47 @@ class PandasMeta(type):
 
         return super(PandasMeta, cls).__new__(cls, name, bases, new_attrs)
 
+class PandasSuperMeta(PandasMeta):
+    """
+    Currently, there's not a way to have a superclass that 
+    both UserSeries and UserFrame inherit from. 
+
+    So to share common methods and members, we this metaclass. 
+
+    Define members and methods onto this class and it will move them
+    to the class definition. 
+
+    Note: currently doesn't support magic methods, ignores all '__' vars
+
+    ```python
+    class CommonBase(composition.PandasSuperMeta):
+        _bob = 123
+
+        @property
+        def bob(self):
+            return self._bob
+
+    class CommonSeries(UserSeries):
+        __metaclass__ = CommonBase
+
+    class CommonFrame(UserFrame):
+        __metaclass__ = CommonBase
+
+    s = CommonSeries()
+    fr = CommonFrame()
+    s.bob == fr.bob # true
+    ```
+    """
+    def __new__(meta, name, bases, attrs):
+        # move all non double-underscore attrs from the 
+        # metaclass to the class instance
+        for k, attr in meta.__dict__.items():
+            if k.startswith('__'):
+                continue
+            attrs[k] = attr
+        klass = super(PandasSuperMeta, meta).__new__(meta, name, bases, attrs)
+        return klass
+
 def get_methods(pandas_cls):
     """
         Get a combination of PandasObject methods and wrapped DataFrame/Series magic
