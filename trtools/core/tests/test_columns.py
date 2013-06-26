@@ -88,13 +88,6 @@ class TestObjectIndexGetter(TestCase):
     def setUp(self):
         pass
 
-    def test_names_keys(self):
-        # this uses __dict__ names
-        df, ogetter = dict_cols()
-        col = df.columns[0]
-        assert hasattr(col, 'keys') # dict has uses keys()
-        assert set(ogetter.names) == set(['limit', 'stop', 'target'])
-
     def test_names__dict__(self):
         # this uses __dict__ names
         df, ogetter = object_cols()
@@ -107,12 +100,6 @@ class TestObjectIndexGetter(TestCase):
         stops = df.col.stop.values
         for i, s in enumerate(sets):
             assert stops[i] == s[1] # stop is second value of tuple
-
-        # test dicts
-        df, ogetter = dict_cols()
-        targets = df.col.target.values
-        for i, s in enumerate(sets):
-            assert targets[i] == s[2] # targets is third value of tuple
 
 class TestLevelWrapper(TestCase):
 
