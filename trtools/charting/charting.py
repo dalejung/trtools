@@ -262,6 +262,24 @@ class Grapher(object):
     def is_datetime(self):
         return self.df.index.inferred_type in ('datetime', 'date', 'datetime64')
 
+    def find_ax(self, secondary_y, kwargs):
+        """
+        multiple y-axis support. stay backward compatible with secondary_y
+        
+        Note: we take in the actual kwargs because we want to pop('yax')
+        to affect the callers kwargs
+        """
+        yax = kwargs.pop('yax', None)
+        if yax and secondary_y:
+            raise Exception('yax and secondary_y should not both be set')
+        if secondary_y:
+            yax = 'right'
+
+        ax = self.ax
+        if yax:
+            ax = self.get_yax(yax)
+        return ax
+
     def plot(self, name, series, index=None, fillna=None, secondary_y=False, 
              **kwargs):
         if self.sharex is not None:
@@ -294,9 +312,7 @@ class Grapher(object):
             xax = np.arange(len(self.df))
             self.formatter.index = self.df.index
         
-        ax = self.ax
-        if secondary_y: 
-            ax = self.get_right_ax()
+        ax = self.find_ax(secondary_y, kwargs)
         ax.plot(xax, plot_series, **kwargs)
 
         # generate combined legend
@@ -313,11 +329,30 @@ class Grapher(object):
             plt.xlim(0, len(self.df.index)-1)
 
     def get_right_ax(self):
-        if self.right_ax is None:
-            self.yaxes['right'] = self.ax.twinx()
-            # making a new ax seems to unset locator, rest here
+        return self.get_yax('right')
+
+    def get_yax(self, name):
+        """
+        Get a yaxis keyed by name. Returns a newly
+        generted twinx if it doesn't exist
+        """
+        def make_patch_spines_invisible(ax):
+            ax.set_frame_on(True)
+            ax.patch.set_visible(False)
+            for sp in ax.spines.itervalues():
+                sp.set_visible(False)
+
+        size = len(self.yaxes)
+        if name not in self.yaxes:
+            ax = self.ax.twinx()
+            self.yaxes[name] = ax
+            # set spine 
+            ax.spines["right"].set_position(("axes", 1+(.06 * size)))    
+            make_patch_spines_invisible(ax)
+            ax.spines["right"].set_visible(True)
+
             self.set_formatter()
-        return self.right_ax
+        return self.yaxes[name]
 
     def setup_datetime(self, index):
         """
@@ -351,9 +386,7 @@ class Grapher(object):
         self.set_index(index)
         clean_values = [remove_na(x) for x in df.values.T]
 
-        ax = self.ax
-        if secondary_y: 
-            ax = self.get_right_ax()
+        ax = self.find_ax(secondary_y, kwargs)
 
         # positions need to start at 0 to align with TimestampLocator
         ax.boxplot(clean_values, positions=np.arange(len(index)))
@@ -386,9 +419,7 @@ class Grapher(object):
         xax = np.arange(len(self.df.index))
         quotes = izip(xax, self.df['open'], self.df['close'], self.df['high'], self.df['low'])
 
-        ax = self.ax
-        if secondary_y: 
-            ax = self.get_right_ax()
+        ax = self.find_ax(secondary_y, kwargs)
 
         self.setup_datetime(index)
         candlestick(ax, quotes, width=width, colorup='g')
