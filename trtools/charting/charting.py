@@ -251,9 +251,13 @@ class Grapher(object):
         self.df = None
         self.formatter = None
         self.ax = ax
-        self.right_ax = None
         self.skip_na = skip_na
         self.sharex = sharex
+        self.yaxes = {}
+
+    @property
+    def right_ax(self):
+        return self.yaxes.get('right', None)
 
     def is_datetime(self):
         return self.df.index.inferred_type in ('datetime', 'date', 'datetime64')
@@ -310,7 +314,7 @@ class Grapher(object):
 
     def get_right_ax(self):
         if self.right_ax is None:
-            self.right_ax = self.ax.twinx()
+            self.yaxes['right'] = self.ax.twinx()
             # making a new ax seems to unset locator, rest here
             self.set_formatter()
         return self.right_ax
