@@ -494,6 +494,7 @@ def process_signal(series, source):
     """
     temp = series.astype(float).copy()
     temp[temp == 0] = None
+    temp, source = temp.align(source, join='left')
     temp *= source
     return temp
 
