@@ -364,9 +364,10 @@ class Grapher(object):
             ax = self.ax.twinx()
             self.yaxes[name] = ax
             # set spine 
-            ax.spines["right"].set_position(("axes", 1+(.06 * size)))    
+            ax.spines["right"].set_position(("outward", 50 * size))    
             make_patch_spines_invisible(ax)
             ax.spines["right"].set_visible(True)
+            ax.set_ylabel(name)
 
             self.set_formatter()
         return self.yaxes[name]
