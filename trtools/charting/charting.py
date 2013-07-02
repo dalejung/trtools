@@ -316,17 +316,24 @@ class Grapher(object):
         ax.plot(xax, plot_series, **kwargs)
 
         # generate combined legend
-        lines, labels = self.ax.get_legend_handles_labels()
-        if self.right_ax:
-            lines2, labels2 = self.right_ax.get_legend_handles_labels()
-            lines = lines + lines2
-            labels = labels + labels2
+        lines, labels = self.consolidate_legend()
         self.ax.legend(lines, labels, loc=0)
 
         if is_datetime: 
             # plot empty space for leading NaN and trailing NaN
             # not sure if I should only call this for is_datetime
             plt.xlim(0, len(self.df.index)-1)
+
+    def consolidate_legend(self):
+        """
+        consolidate the legends from all axes and merge into one
+        """
+        lines, labels = self.ax.get_legend_handles_labels()
+        for k, ax in self.yaxes.iteritems():
+            new_lines, new_labels = ax.get_legend_handles_labels()
+            lines = lines + new_lines
+            labels = labels + new_labels
+        return lines, labels
 
     def get_right_ax(self):
         return self.get_yax('right')
