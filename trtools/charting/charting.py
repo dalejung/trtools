@@ -253,6 +253,7 @@ class Grapher(object):
         self.ax = ax
         self.skip_na = skip_na
         self.sharex = sharex
+        self.styler = cstyler.styler()
         self.yaxes = {}
 
     @property
@@ -282,6 +283,15 @@ class Grapher(object):
 
     def plot(self, name, series, index=None, fillna=None, secondary_y=False, 
              **kwargs):
+
+        # use default styler if one is not passed in
+        styler = kwargs.pop('styler', self.styler)
+        if styler:
+            style_dict = next(styler)
+            # note we do it this way so explicit args passed in kwargs
+            # override style_dict
+            kwargs = dict(style_dict.items() + kwargs.items())
+
         if self.sharex is not None:
             series = series.reindex(self.sharex.index, method=fillna)
 
@@ -524,12 +534,6 @@ def series_plot(self, label=None, *args, **kwargs):
         label = prefix +' '+label
     except:
         pass
-
-    # add in style args
-    styler = kwargs.pop('styler', None)
-    if styler:
-        style_dict = next(styler)
-        kwargs.update(style_dict)
 
     fig = gcf()
     fig.plot(str(label), self, *args, **kwargs)
