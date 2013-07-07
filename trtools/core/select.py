@@ -108,6 +108,16 @@ def time_pluck(df, target, buffer=2, index=None):
     filter = (index >= start) & (index <= end)
     return df.ix[filter]
 
+@patch([DataFrame], 'subset')
+def subset(self, start, max=10):
+    """
+    Select a window of data.
+    """
+    if start < 0:
+        start = len(self) + start
+    end = start + max
+    return self.ix[start:end]
+
 @patch([DataFrame], 'peek')
 def peek(self, num_rows=5, max_col=None):
     # need to access the pandas column logic instead of hardcoded five
