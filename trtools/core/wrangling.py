@@ -184,3 +184,67 @@ def df_to_frame(self):
     """
     """
     return self
+
+def _dshift_fill_value(dtype):
+    if dtype == bool:
+        return False
+    if dtype == int:
+        return -1
+    return np.nan
+
+@patch(DataFrame, 'dshift', override=True)
+def dshift(self, periods, fill_value=None, raw=False):
+    """
+    dtype-safe shift
+
+    Basically a shift that preserves dtype by using a nan 
+    sentinel value. 
+
+    Parameters
+    -----------
+        periods : int
+            akin to DataFrame.shift(periods)
+        fill_value : scalar, optional
+            Value to fill instead of NaN
+        raw: boolean, default False
+            If True, return the np.ndarray without wrapping.
+
+    Default fill_value
+    ------------------
+    int : -1
+    bool : False
+    float : np.nan
+    object : np.nan
+
+    Use Case
+    --------
+    >>> bool_df = df > 0
+    >>> %timeit bool_df.shift(1) | bool_df.shift(2) # slow due to object dtype
+    1 loops, best of 3: 875 ms per loop
+    >>> bool_df.dshift(1) | bool_df.dshift(2) # fast!
+    100 loops, best of 3: 6.09 ms per loop
+    """
+    vals = self.values
+    dtype = vals.dtype
+    if fill_value is None:
+        fill_value = _dshift_fill_value(dtype)
+
+    shape = self.shape
+    order = 'C'
+    if vals.flags['F_CONTIGUOUS']:
+        order = 'F'
+
+    arr = np.ndarray(shape, dtype=dtype, order=order)
+    arr[:] = fill_value
+
+    arr_slice = slice(periods, shape[0])
+    val_slice = slice(None, -periods)
+    # re-arrange if period is negative
+    if periods < 0:
+        arr_slice = slice(None, periods)
+        val_slice = slice(-periods, None)
+
+    arr[arr_slice] = vals[val_slice]
+    if raw:
+        return arr
+    return pd.DataFrame(arr, index=self.index, columns=self.columns)
