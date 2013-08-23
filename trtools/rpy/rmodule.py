@@ -215,16 +215,16 @@ def install_ipython_completers():  # pragma: no cover
     """Register the DataFrame type with IPython's tab completion machinery, so
     that it knows about accessing column names as attributes."""
     from IPython.utils.generics import complete_object
-    from pandas.util import py3compat
+    from pandas import compat
 
     @complete_object.when_type(RPackage)
     def complete_rpackage(obj, prev_completions):
         return prev_completions + [c for c in obj._subgroups \
-                    if isinstance(c, basestring) and py3compat.isidentifier(c)]                                          
+                    if isinstance(c, basestring) and compat.isidentifier(c)]                                          
     @complete_object.when_type(DotWrapper)
     def complete_dot_wrapper(obj, prev_completions):
         return prev_completions + [c for c in obj._funcs \
-                    if isinstance(c, basestring) and py3compat.isidentifier(c)]                                          
+                    if isinstance(c, basestring) and compat.isidentifier(c)]                                          
 
 # Importing IPython brings in about 200 modules, so we want to avoid it unless
 # we're in IPython (when those modules are loaded anyway).
