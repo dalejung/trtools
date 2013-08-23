@@ -425,13 +425,13 @@ def dt_date(self):
 # IPYTYHON
 # Autocomplete the target endpoint
 def install_ipython_completers():  # pragma: no cover
-    from pandas.util import py3compat
+    from pandas import compat
     from IPython.utils.generics import complete_object
 
     @complete_object.when_type(Downsample)
     def complete_column_panel(self, prev_completions):
         return [c for c in self._completers() \
-                    if isinstance(c, basestring) and py3compat.isidentifier(c)]                                          
+                    if isinstance(c, basestring) and compat.isidentifier(c)]                                          
 # Importing IPython brings in about 200 modules, so we want to avoid it unless
 # we're in IPython (when those modules are loaded anyway).
 import sys
