@@ -9,7 +9,7 @@ import operator
 
 import numpy as np
 import pandas as pd
-from pandas.util import py3compat
+from pandas import compat
 
 from trtools.monkey import patch_prop
 
@@ -92,7 +92,7 @@ class LevelWrapper(object):
     __ne__ = _sub_method(operator.ne, '__ne__')
 
     # Python 2 division operators
-    if not py3compat.PY3:
+    if not compat.PY3:
         __div__ = _sub_method(operator.div, '__div__')
         __rdiv__ = _sub_method(lambda x, y: y / x, '__div__')
         __idiv__ = __div__
@@ -222,12 +222,11 @@ def install_ipython_completers():  # pragma: no cover
     """Register the DataFrame type with IPython's tab completion machinery, so
     that it knows about accessing column names as attributes."""
     from IPython.utils.generics import complete_object
-    from pandas.util import py3compat
 
     @complete_object.when_type(MultiIndexGetter)
     def complete_column_panel_items(obj, prev_completions):
         return prev_completions + [c for c in obj.names \
-                    if isinstance(c, basestring) and py3compat.isidentifier(c)]                                          
+                    if isinstance(c, basestring) and compat.isidentifier(c)]                                          
 
 # Importing IPython brings in about 200 modules, so we want to avoid it unless
 # we're in IPython (when those modules are loaded anyway).
