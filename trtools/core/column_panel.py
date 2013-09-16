@@ -470,7 +470,7 @@ class ColumnPanel(object):
             return self._cache[key]
 
         # if our readonly panel still exists. Grab the data from there
-        if self._panel:
+        if self._panel is not None:
             df = self._panel.ix[:, :, key]
         else:
             df = self._gather_frames_column(key)
