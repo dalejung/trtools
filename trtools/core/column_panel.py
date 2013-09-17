@@ -404,7 +404,7 @@ class ColumnPanel(object):
 
     @property
     def items(self):
-        if self._panel:
+        if self._panel is not None:
             return list(self._panel.items)
         return self.frames.keys()
 
