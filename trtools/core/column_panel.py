@@ -519,6 +519,11 @@ class ColumnPanel(object):
         grouped = ColumnPanelGroupBy(grouped)
         return grouped
 
+    def shift(self, *args, **kwargs):
+        """ Replciate Panel.shift """
+        panel = self.to_panel()
+        return panel.shift(*args, **kwargs)
+
     def sample(self, N=10, axis='items'):
         """
             Grab a random sample
