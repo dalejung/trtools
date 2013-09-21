@@ -1,6 +1,7 @@
+from collections import OrderedDict
 missing = object()
 
-class attrdict(dict):
+class attrdict(OrderedDict):
     """A dict whose items can also be accessed as member variables.
 
     >>> d = attrdict(a=1, b=2)
@@ -20,14 +21,14 @@ class attrdict(dict):
     TypeError: 'int' object is not callable
     """
     def __init__(self, *args, **kwargs):
-        dict.__init__(self, *args, **kwargs)
-        self.__dict__ = self
+        OrderedDict.__init__(self, *args, **kwargs)
 
     def __getattr__(self, name):
         try:
              return self[name]
         except:
-            raise AttributeError()
+            pass
+        return OrderedDict.__getattribute__(self, name)
 
     def __getitem__(self, name):
         """
@@ -39,7 +40,7 @@ class attrdict(dict):
             # where two keys match the same other. 
         """
         # regular ole dict check
-        if name in self.__dict__:
+        if name in self:
             return dict.__getitem__(self, name)
 
         # list.__contains__ uses eq() to check membership
@@ -74,3 +75,24 @@ class attrdict(dict):
             except:
                 pass
         return res
+
+# IPYTYHON
+def install_ipython_completers():  # pragma: no cover
+    """Register the DataFrame type with IPython's tab completion machinery, so
+    that it knows about accessing column names as attributes."""
+    from IPython.utils.generics import complete_object
+    from pandas import compat
+
+    @complete_object.when_type(attrdict)
+    def complete_attrdict(obj, prev_completions):
+        return prev_completions + [c for c in obj.keys() \
+                    if isinstance(c, basestring) and compat.isidentifier(c)]                                          
+
+# Importing IPython brings in about 200 modules, so we want to avoid it unless
+# we're in IPython (when those modules are loaded anyway).
+import sys
+if "IPython" in sys.modules:  # pragma: no cover
+    try: 
+        install_ipython_completers()
+    except Exception:
+        pass 
