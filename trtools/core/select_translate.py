@@ -41,14 +41,18 @@ class TransFrameIndexer(object):
 
     def __getitem__(self, key):
         ix = self.obj._ix
+        if not isinstance(key, tuple):
+            key = (key,)
+
         if type(key) is tuple:
             try:
                 return self.obj.get_value(*key)
             except Exception:
                 pass
 
-            if len(key) >= 2:
-                key = process_cols(self.obj, key)
+            info_axis_number = self.obj._info_axis_number
+            if len(key)-1 >= info_axis_number:
+                key = process_info_axis(self.obj, key)
             return ix._getitem_tuple(key)
         else:
             return ix._getitem_axis(key, axis=0)
@@ -60,11 +64,19 @@ class TransFrameIndexer(object):
         return getattr(self.obj._ix, key)
 
 _is_bool = lambda x: isinstance(x, bool) or isinstance(x, np.bool_)
-def process_cols(obj, key):
+def process_info_axis(obj, key):
     """
-    """
+    obj : NDFrame
+    key : object/list
+        Proper form is largely dependent on the KEY_TRANS
 
-    columns = key[1]
+    Will translate keys for the info axis (DataFrame.columns, Panel.items) with 
+    the translate function.
+    """
+    # columns on DataFrame, items on Panel
+    info_axis_number = obj._info_axis_number
+    info_axis = obj._get_axis(info_axis_number)
+    columns = key[info_axis_number]
     # don't handle slice columns
     if isinstance(columns, slice):
         return key
@@ -79,18 +91,17 @@ def process_cols(obj, key):
     if not isinstance(columns, collections.Iterable) \
        or isinstance(columns, basestring):
         columns = KEY_TRANS.get(columns, columns)
-        ind = obj.columns.get_loc(columns)
-        cols = obj.columns[ind]
+        ind = info_axis.get_loc(columns)
+        cols = info_axis[ind]
     else:
         columns = [KEY_TRANS.get(c, c) for c in columns]
-        cols = [obj.columns[obj.columns.get_loc(c)] for c in columns]
+        cols = [info_axis[info_axis.get_loc(c)] for c in columns]
 
-    new_key = [key[0]]
-    new_key.append(cols)
-    new_key.extend(key[2:])
+    new_key = list(key)
+    new_key[info_axis_number] = cols
     return tuple(new_key)
 
-@patch_prop([DataFrame], 'ix')
+@patch_prop([DataFrame, Panel], 'ix')
 def ix(self):
     """
     """

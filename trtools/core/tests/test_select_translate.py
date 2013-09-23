@@ -2,6 +2,7 @@ from unittest import TestCase
 
 import numpy as np
 import pandas as pd
+import trtools.util.testing as tm
 import trtools.core.select_translate as sl
 
 
@@ -16,7 +17,7 @@ class TestSelectTranslate(TestCase):
     def setUp(self):
         pass
 
-    def test_select_translate(self):
+    def test_select_translate_frame(self):
         """
             Test the dictionary translate
         """
@@ -57,6 +58,32 @@ class TestSelectTranslate(TestCase):
 
         # unset the translation so future tests don't mess up
         sl.KEY_TRANS = {}
+
+    def test_select_translate_panel(self):
+        """
+            Test the dictionary translate
+        """
+        df1 = tm.makeTimeDataFrame()
+        df2 = tm.makeTimeDataFrame()
+        df3 = tm.makeTimeDataFrame()
+        panel = pd.Panel({111: df1, 123: df2, 666:df3})
+
+        # setup the translation
+        sl.KEY_TRANS = {'dale': 111, 'bob': 123}
+        test = panel.ix["dale"]
+        tm.assert_frame_equal(test, df1)
+        tm.assert_frame_equal(panel.ix[123], df2)
+        tm.assert_frame_equal(panel.ix['bob'], df2)
+        tm.assert_frame_equal(panel.ix['bob', :10], df2.ix[:10])
+        tm.assert_frame_equal(panel.ix['bob', :10, :3], df2.ix[:10, :3])
+        # grab sub panel
+        test = panel.ix[["dale", "bob"]]
+        assert np.all(test.items == [111, 123])
+        tm.assert_frame_equal(test.ix['dale'], df1)
+        tm.assert_frame_equal(test.ix['bob'], df2)
+
+        sl.KEY_TRANS = None
+
 
 if __name__ == '__main__':                                                                                          
     import nose                                                                      
