@@ -2,6 +2,7 @@
     Collections of tools to quickly select rows/items
 """
 import collections
+import warnings
 
 import numpy as np
 
@@ -37,47 +38,14 @@ def show(self, val):
         bools = self == val
     return self[bools]
 
-class PosIndexer(object):
-    """
-        Only indexes on int position. So if index is an IntIndex, it will never match
-        the name. Only the position.
-    """
-    def __init__(self, obj):
-        self.obj = obj
-        self.get_func = self._set_get_item()
-
-    def __getitem__(self, key):
-        return self.get_func(key)
-
-    def _set_get_item(self):
-        if isinstance(self.obj, Panel):
-            return self._getitem_panel
-        if isinstance(self.obj, DataFrame):
-            return self._getitem_dataframe
-        if isinstance(self.obj, Series):
-            return self._getitem_series
-
-    def _getitem_panel(self, key):
-        label = self.obj.major_axis[key]
-        return self.obj.major_xs(label)
-
-    def _getitem_dataframe(self, key):
-        return self.obj.irow(key)
-
-    def _getitem_series(self, key):
-        label = self.obj.index[key]
-        return self.obj[label]
-
 @patch_prop([Panel, DataFrame, Series], 'rx')
 def rx(self):
     """
         For grabbing row-wise which means the axis that a DatetimeIndex would 
         normally be found
     """
-    if not hasattr(self, '_rx'):
-        self._rx = PosIndexer(self)
-
-    return self._rx
+    warnings.warn(".rx is deprecated in favor of .iloc")
+    return self.iloc
 
 @patch([DataFrame, Series])
 def pluck(df, target, buffer=2):
