@@ -410,7 +410,7 @@ def normalize(self, inplace=False):
     """
     if not inplace:
         self = self.copy()
-    index = self.index.date()
+    index = self.index.normalize()
     self.index = index
     return self
 
