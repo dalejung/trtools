@@ -7,7 +7,7 @@ import warnings
 import numpy as np
 
 from pandas import Panel, DataFrame, MultiIndex, Series, Timestamp
-from pandas.core.indexing import _NDFrameIndexer
+from pandas.core.indexing import _IXIndexer
 
 from trtools.monkey import patch, patch_prop
 
@@ -29,7 +29,7 @@ def show(self, val):
     """
         show(val)
         show all rows matching a value
-        val can be a value or a func. 
+        val can be a value or a func.
     """
     if callable(val):
         func = np.vectorize(val)
@@ -41,7 +41,7 @@ def show(self, val):
 @patch_prop([Panel, DataFrame, Series], 'rx')
 def rx(self):
     """
-        For grabbing row-wise which means the axis that a DatetimeIndex would 
+        For grabbing row-wise which means the axis that a DatetimeIndex would
         normally be found
     """
     warnings.warn(".rx is deprecated in favor of .iloc")
@@ -61,7 +61,7 @@ def pluck(df, target, buffer=2):
 def time_pluck(df, target, buffer=2, index=None):
     from pandas.tseries.frequencies import to_offset
     """
-        Instead of an pos-int pluck, we create a datetime-span 
+        Instead of an pos-int pluck, we create a datetime-span
     """
     if isinstance(buffer, int):
         buffer = "{0}D".format(buffer)
@@ -101,7 +101,7 @@ def barf(self, num_rows=5, max_col=None):
         Keep on running into issues where in notebook, I want to just show everything.
     """
     from IPython.core.display import HTML
-    import pandas.core.config as config 
+    import pandas.core.config as config
     config.set_option("display.max_columns", 1000)
     h = HTML(self.to_html())
     config.reset_option("display.max_columns")
