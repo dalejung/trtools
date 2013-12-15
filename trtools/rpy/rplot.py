@@ -11,7 +11,14 @@ r = robjects.r
 IN_NOTEBOOK = True
 import IPython
 instance = IPython.Application._instance
-if isinstance(instance, IPython.frontend.terminal.ipapp.TerminalIPythonApp):
+# IPython.frontend was flattened so its submodule now live in the root
+# namespace. i.e. IPython.frontend.terminal -> IPython.terminal
+if hasattr(IPython, 'frontend'):
+    terminal = IPython.frontend.terminal.ipapp.TerminalIPythonApp
+else:
+    terminal = IPython.terminal.ipapp.TerminalIPythonApp
+
+if isinstance(instance, terminal):
     IN_NOTEBOOK = False
 
 RPLOT_CONTEXT = None
@@ -82,7 +89,7 @@ def plot_image(image):
 def wrapped_call(self, *args, **kwargs):
     """
         Wraps around Function.__call__ to enable
-        RPlotting. 
+        RPlotting.
         #TODO There has to be a better way to do this.
     """
     global RPLOT_CONTEXT
