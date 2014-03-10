@@ -21,12 +21,12 @@ def _is_tick(offset):
 ## TODO See if I still need this. All this stuff was pre resample
 
 def first_day(year, month, bday=True):
-    """ 
+    """
         Return first day of month. Default to business days
     """
     weekday, days_in_month = calendar.monthrange(year, month)
 
-    if not bday: 
+    if not bday:
         return 1
 
     if weekday <= 4:
@@ -35,7 +35,7 @@ def first_day(year, month, bday=True):
         return 7-weekday+1
 
 class MonthStart(DateOffset):
-    """ 
+    """
         Really the point of this is for DateRange, creating
         a range where the month is anchored on day=1 and not the end
     """
@@ -47,10 +47,10 @@ class MonthStart(DateOffset):
         else:
             result = other.replace(day=first)
 
-        return datetime(result.year, result.month, result.day) 
+        return datetime(result.year, result.month, result.day)
 
     def onOffset(self, someDate):
-        return someDate.day == first_day(someDate.year, someDate.month) 
+        return someDate.day == first_day(someDate.year, someDate.month)
 
 def daily_group(df):
     daterange_func = partial(DatetimeIndex, freq=datetools.day)
@@ -92,7 +92,7 @@ def dropna_get(x, pos):
 def aggregate_picker(grouped, grouped_indices, col=None):
     """
     In [276]: g.agg(np.argmax).high
-    Out[276]: 
+    Out[276]:
         key_0
         2007-04-27    281
         2007-04-30      0
@@ -108,7 +108,7 @@ def aggregate_picker(grouped, grouped_indices, col=None):
     for key, group in grouped:
         if col:
             group = group[col]
-        sub_index = grouped_indices[key] 
+        sub_index = grouped_indices[key]
         index.append(group.index[sub_index])
         values.append(group.iget_value(sub_index))
     return {'index':index, 'values':values}
@@ -128,7 +128,7 @@ def _kv_agg(grouped, func, col=None):
 
 def kv_agg(grouped, func, col=None):
     """
-        Simpler version that is a bit faster. Really, I don't use aggregate_picker, 
+        Simpler version that is a bit faster. Really, I don't use aggregate_picker,
         which makes it slightly faster.
     """
 
@@ -142,7 +142,7 @@ def kv_agg(grouped, func, col=None):
         val = group.iget_value(sub_index)
         values.append(val)
         index.append(group.index[sub_index])
-    
+
     return TimeSeries(values, index=index)
 
 def set_time(arr, hour, minute):
@@ -154,7 +154,7 @@ def set_time(arr, hour, minute):
     for date in arr:
         d = datetime.combine(date.date(), t)
         results.append(d)
-    return results      
+    return results
 
 def reset_time(df, hour, minute):
     if isinstance(df, (DataFrame, Series)):
@@ -169,7 +169,7 @@ def max_groupby(grouped, col=None):
 
 def trading_hours(df):
     # assuming timestamp marks end of bar
-    inds = df.index.indexer_between_time(time(9,30), 
+    inds = df.index.indexer_between_time(time(9,30),
                                          time(16), include_start=False)
     return df.take(inds)
 
@@ -211,14 +211,14 @@ def end_asof(index, label):
 # TODO Forget where I was using this. I think pandas does this now.
 class TimeIndex(object):
     """
-    Kind of like a DatetimeIndex, except it only cares about the time component of a Datetime object. 
+    Kind of like a DatetimeIndex, except it only cares about the time component of a Datetime object.
     """
     def __init__(self, times):
         self.times = times
 
     def asof(self, date):
         """
-            Follows price is right rules. Will return the closest time that is equal or below. 
+            Follows price is right rules. Will return the closest time that is equal or below.
             If time is after the last date, it will just return the date.
         """
         testtime = date.time()
@@ -230,7 +230,7 @@ class TimeIndex(object):
                 # found spot
                 break
             last = time
-        # TODO should I anchor this to the last time? 
+        # TODO should I anchor this to the last time?
         if last is None:
             return date
         new_date = datetime.combine(date.date(), last)
@@ -273,16 +273,16 @@ def anchor_downsample(obj, freq, axis=None):
 # END TODO
 
 cython_ohlc = {
-        'open':'first', 
-        'high': 'max', 
-        'low': 'min', 
+        'open':'first',
+        'high': 'max',
+        'low': 'min',
         'close': 'last',
         'vol': 'sum'
         }
 
 def ohlc_grouped_cython(grouped):
     """
-        Cython one is much faster. Should be same as old 
+        Cython one is much faster. Should be same as old
         ohlc version
     """
     hldf = grouped.agg(cython_ohlc)
@@ -297,13 +297,13 @@ def ohlc(self):
     return ohlc_grouped_cython(self)
 
 LEFT_OFFSETS = [
-    'D', 
-    'B', 
-    'W', 
-    'MS', 
-    'BMS', 
-    'AS', 
-    'BAS', 
+    'D',
+    'B',
+    'W',
+    'MS',
+    'BMS',
+    'AS',
+    'BAS',
     'QS',
     'BQS',
 ]
@@ -333,7 +333,7 @@ class Downsample(object):
             offset = to_offset(key)
             if stride is not None:
                 offset = offset * stride
-            return self(offset, closed, label, axis) 
+            return self(offset, closed, label, axis)
         return wrap
 
     def _completers(self):
@@ -352,7 +352,7 @@ def downsample(self, freq, closed=None, label=None, axis=0, drop_empty=True):
     """
         Essentially use resample logic but reutrning the groupby object
     """
-        
+
     # default closed/label on offset
     defaults = _offset_defaults(freq)
     if closed is None:
@@ -361,9 +361,9 @@ def downsample(self, freq, closed=None, label=None, axis=0, drop_empty=True):
     if label is None:
         label = defaults['label']
     tg = TimeGrouper(freq, closed=closed, label=label, axis=axis)
-    grouper = tg.get_grouper(self)
+    grouper = tg.get_grouper(self)[1]
 
-    
+
     # drop empty groups. this is when we have irregular data that
     # we just want to group into Daily without creating empty days.
     if drop_empty:
@@ -431,13 +431,13 @@ def install_ipython_completers():  # pragma: no cover
     @complete_object.when_type(Downsample)
     def complete_column_panel(self, prev_completions):
         return [c for c in self._completers() \
-                    if isinstance(c, basestring) and compat.isidentifier(c)]                                          
+                    if isinstance(c, basestring) and compat.isidentifier(c)]
 # Importing IPython brings in about 200 modules, so we want to avoid it unless
 # we're in IPython (when those modules are loaded anyway).
 import sys
 if "IPython" in sys.modules:  # pragma: no cover
-    try: 
+    try:
         install_ipython_completers()
     except Exception:
-        pass 
+        pass
 
