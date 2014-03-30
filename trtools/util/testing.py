@@ -52,7 +52,7 @@ class Timer:
 
     @property
     def msg(self):
-        msg = "Run {name}: CPU time: {interval}  Wall time: {wall_interval}"
+        msg = u"Run {name}: CPU time: {interval}  Wall time: {wall_interval}"
         return msg.format(name=self.name, interval=_format_time(self.interval),
                          wall_interval=_format_time(self.wall_interval))
 
@@ -110,7 +110,7 @@ def assert_columnpanel_equal(left, right):
 def _format_time(timespan, precision=3):
     """Formats the timespan in a human readable form"""
     import math
-    
+
     if timespan >= 60.0:
         # we have more than a minute, format that in a human readable form
         # Idea from http://snipplr.com/view/5713/
@@ -126,12 +126,12 @@ def _format_time(timespan, precision=3):
                 break
         return " ".join(time)
 
-    
+
     # Unfortunately the unicode 'micro' symbol can cause problems in
-    # certain terminals.  
+    # certain terminals.
     # See bug: https://bugs.launchpad.net/ipython/+bug/348466
     # Try to prevent crashes by being more secure than it needs to
-    units = [u"s", u"ms",u'us',"ns"] # the save value   
+    units = [u"s", u"ms",u'us',"ns"] # the save value
     if hasattr(sys.stdout, 'encoding') and sys.stdout.encoding:
         try:
             u'\xb5'.encode(sys.stdout.encoding)
@@ -139,7 +139,7 @@ def _format_time(timespan, precision=3):
         except:
             pass
     scaling = [1, 1e3, 1e6, 1e9]
-        
+
     if timespan > 0.0:
         order = min(-int(math.floor(math.log10(timespan)) // 3), 3)
     else:
