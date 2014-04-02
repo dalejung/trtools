@@ -10,7 +10,7 @@ import trtools.core.timeseries as ts
 # start on friday, so second day is saturday
 df = tm.fake_ohlc(1000000, freq="5min", start="2000-01-07")
 # business days and trading hours
-df = df.ix[df.index.dayofweek < 5] 
+df = df.ix[df.index.dayofweek < 5]
 df = ts.trading_hours(df)
 
 class TestBinning(TestCase):
@@ -24,7 +24,7 @@ class TestBinning(TestCase):
     def setUp(self):
         pass
 
-    def downsample(self):
+    def test_downsample(self):
         # these should be equivalent
         grouped = df.downsample('D', drop_empty=False)
         test = grouped.mean()
@@ -32,7 +32,7 @@ class TestBinning(TestCase):
         tm.assert_frame_equal(test, correct)
 
     def test_downsample_drop_empty(self):
-        """ 
+        """
         the drop_empty which is the default will not include
         empty groups into the GroupBy.
         """
@@ -42,5 +42,5 @@ class TestBinning(TestCase):
         tm.assert_frame_equal(test, correct)
 
 if __name__ == '__main__':
-    import nose                                                                      
-    nose.runmodule(argv=[__file__,'-vvs','-x','--pdb', '--pdb-failure'],exit=False)   
+    import nose
+    nose.runmodule(argv=[__file__,'-vvs','-x','--pdb', '--pdb-failure'],exit=False)
