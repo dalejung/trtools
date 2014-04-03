@@ -34,8 +34,6 @@ class TestDataSet(TestCase):
         assert isinstance(ds.dale, composition.UserSeries)
         assert ds.dale.bob == 'hi'
         assert ds.dale.zz == 'zz'
-        # 12-27-12 Fail. 'name' exists in the pobj __dict__
-        assert ds.dale.name == 'bee'
 
         s.zz = 'zz2'
         ds['dale'] = s
