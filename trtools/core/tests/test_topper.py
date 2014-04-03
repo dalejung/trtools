@@ -27,19 +27,19 @@ class TestTopper(TestCase):
         bn_res = topper.bn_topn(arr, 10)
         assert bn_res[0] == max(arr) # sanity check
         pd_res = s.order(ascending=False)[:10]
-        tm.assert_almost_equal(bn_res, pd_res)
+        np.testing.assert_almost_equal(bn_res, pd_res)
 
         # change result to biggest to smallest
         bn_res = topper.bn_topn(arr, 10, ascending=True)
         assert bn_res[-1] == max(arr) # sanity check
         pd_res = s.order(ascending=True)[-10:] # grab from end since we reversed
-        tm.assert_almost_equal(bn_res, pd_res)
+        np.testing.assert_almost_equal(bn_res, pd_res)
 
     def test_topn_big_N(self):
         """
-        When calling topn where N is greater than the number of non-nan values. 
+        When calling topn where N is greater than the number of non-nan values.
 
-        This can happen if you're tracking a Frame of returns where not all series start at the same time. 
+        This can happen if you're tracking a Frame of returns where not all series start at the same time.
 
         It's possible that in the begining or end, or anytime for that matter, you might not have enough
         values. This screws up the logic.
@@ -53,26 +53,26 @@ class TestTopper(TestCase):
         bn_res = topper.bn_topn(arr, 10)
         assert bn_res[0] == max(arr) # sanity check
         pd_res = s.order(ascending=False)[:10].dropna()
-        tm.assert_almost_equal(bn_res, pd_res)
+        tm.assert_almost_equal(bn_res, pd_res.values)
 
         # bottom
         bn_res = topper.bn_topn(arr, -10)
         assert bn_res[0] == min(arr) # sanity check
         pd_res = s.order()[:10].dropna() # grab from end since we reversed
-        tm.assert_almost_equal(bn_res, pd_res)
+        tm.assert_almost_equal(bn_res, pd_res.values)
 
     def test_top_smallest(self):
         # get the nsmallest
         bn_res = topper.bn_topn(arr, -10)
         assert bn_res[0] == min(arr) # sanity check
         pd_res = s.order()[:10]
-        tm.assert_almost_equal(bn_res, pd_res)
+        tm.assert_almost_equal(bn_res, pd_res.values)
 
         # change ordering
         bn_res = topper.bn_topn(arr, -10, ascending=False)
         assert bn_res[-1] == min(arr) # sanity check
         pd_res = s.order(ascending=False)[-10:] # grab from end since we reversed
-        tm.assert_almost_equal(bn_res, pd_res)
+        tm.assert_almost_equal(bn_res, pd_res.values)
 
     def test_top_arg(self):
         # get the nlargest
@@ -97,7 +97,7 @@ class TestTopper(TestCase):
         """
         bottleneck.partsort doesn't handle nans. We need to correct for them.
 
-        the arg version is trickiers since we need to make sure to 
+        the arg version is trickiers since we need to make sure to
         translate back into the nan-filled array
         """
         nanarr = np.arange(10).astype(float)
@@ -129,7 +129,7 @@ class TestTopper(TestCase):
         correct = pd.DataFrame(tops, index=df.index)
 
         test = topper.topn_df(df, 2, ascending=False)
-        tm.assert_almost_equal(test, correct)
+        tm.assert_frame_equal(test, correct)
 
         # sanity check, make sure first value is right
         c = df.iloc[0].order()[-1]
@@ -141,7 +141,7 @@ class TestTopper(TestCase):
         correct = pd.DataFrame(tops, index=df.index)
 
         test = topper.topn_df(df, -2)
-        tm.assert_almost_equal(test, correct)
+        tm.assert_frame_equal(test, correct)
 
         # sanity check, make sure first value is right
         c = df.iloc[0].order()[0]
@@ -156,7 +156,7 @@ class TestTopper(TestCase):
         correct = pd.DataFrame(correct, index=df.index)
 
         test = topper.topindexn_df(df, 2, ascending=False)
-        tm.assert_almost_equal(test, correct)
+        tm.assert_frame_equal(test, correct)
 
         # sanity check, make sure first value is right
         c = df.iloc[0].order().index[-1]
@@ -169,12 +169,12 @@ class TestTopper(TestCase):
         correct = pd.DataFrame(correct, index=df.index)
 
         test = topper.topindexn_df(df, -2)
-        tm.assert_almost_equal(test, correct)
+        tm.assert_frame_equal(test, correct)
 
         # sanity check, make sure first value is right
         c = df.iloc[0].order().index[0]
         t = test.iloc[0][0]
-        tm.assert_almost_equal(t, c)
+        tm.assert_frame_equal(test, correct)
 
     def test_df_topargn(self):
         # really this is tested via topindexn indirectly
@@ -189,22 +189,22 @@ class TestTopper(TestCase):
         # top should default to asc=False
         bn_res = topper.bn_topn(arr, 10)
         pd_res = s.order(ascending=False)[:10]
-        tm.assert_almost_equal(bn_res, pd_res)
+        tm.assert_almost_equal(bn_res, pd_res.values)
 
         # make sure ascending is still respected
         bn_res = topper.bn_topn(arr, 10, ascending=True)
         pd_res = s.order(ascending=True)[-10:]
-        tm.assert_almost_equal(bn_res, pd_res)
+        tm.assert_almost_equal(bn_res, pd_res.values)
 
         # bottom defaults asc=True
         bn_res = topper.bn_topn(arr, -10)
         pd_res = s.order()[:10]
-        tm.assert_almost_equal(bn_res, pd_res)
+        tm.assert_almost_equal(bn_res, pd_res.values)
 
         # make sure ascending is still respected
         bn_res = topper.bn_topn(arr, -10, ascending=False)
         pd_res = s.order()[:10][::-1]
-        tm.assert_almost_equal(bn_res, pd_res)
+        tm.assert_almost_equal(bn_res, pd_res.values)
 
     def test_test_ndim(self):
         """
@@ -254,5 +254,5 @@ class TestTopper(TestCase):
             tm.assert_almost_equal(test, correct)
 
 if __name__ == '__main__':
-    import nose                                                                      
-    nose.runmodule(argv=[__file__,'-vvs','-x','--pdb', '--pdb-failure'],exit=False)   
+    import nose
+    nose.runmodule(argv=[__file__,'-vvs','-x','--pdb', '--pdb-failure'],exit=False)
