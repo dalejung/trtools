@@ -361,7 +361,8 @@ def downsample(self, freq, closed=None, label=None, axis=0, drop_empty=True):
     if label is None:
         label = defaults['label']
     tg = TimeGrouper(freq, closed=closed, label=label, axis=axis)
-    grouper = tg.get_grouper(self)[1]
+    groupby = self.groupby(tg)
+    grouper = groupby.grouper
 
 
     # drop empty groups. this is when we have irregular data that
