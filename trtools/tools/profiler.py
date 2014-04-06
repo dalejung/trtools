@@ -184,11 +184,17 @@ class Follow(object):
         if depth:
             mask = mask | (df.indent > depth)
 
+        MSG_FORMAT = "{indent}{func_name} {filename}:{lineno}"
+
         df = df.loc[~mask]
         def format(row):
             indent = row[0]
+            filename = row[1]
+            lineno = row[2]
             func_name = row[3]
-            return "  "*indent + func_name
+            msg = MSG_FORMAT.format(indent=" "*indent*4, func_name=func_name,
+                                    filename=filename, lineno=lineno)
+            return msg
 
         df = df.reset_index(drop=True)
 

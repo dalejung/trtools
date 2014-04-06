@@ -13,12 +13,35 @@ class Tdb(Pdb):
 
     def add_trace(self, func):
         code = func.func_code
-        self.codemap[code] = None
+        self.codemap[code] = 0
+
+    def trace_dispatch(self, frame, event, arg):
+        if self.quitting:
+            return # None
+        if event == 'line':
+            return self.dispatch_line(frame)
+        if event == 'call':
+            return self.dispatch_call(frame, arg)
+        if event == 'return':
+            return self.dispatch_return(frame, arg)
+        if event == 'exception':
+            return self.dispatch_exception(frame, arg)
+        if event == 'c_call':
+            return self.trace_dispatch
+        if event == 'c_exception':
+            return self.trace_dispatch
+        if event == 'c_return':
+            return self.trace_dispatch
+        print 'bdb.Bdb.dispatch: unknown debugging event:', repr(event)
+        return self.trace_dispatch
+
 
     def dispatch_call(self, frame, arg):
         if not self.entered:
-            if frame.f_code in self.codemap:
+            f_code = frame.f_code
+            if f_code in self.codemap:
                 self.entered = True
+                self.codemap[f_code] += 1
                 self._set_stopinfo(frame, None)
                 return self.trace_dispatch
             else:
@@ -59,16 +82,16 @@ class Trace(object):
     def __init__(self, *args):
         self.tdb = Tdb(def_colors)
 
-        if len(args) > 0:
-            for func in args:
-                if callable(func):
-                    self.add_function(func)
+        funcs = filter(callable, args)
+        for func in funcs:
+            self.add_function(func)
 
     def add_function(self, func):
         self.tdb.add_trace(func)
 
     def __enter__(self):
         self.tdb.set_trace()
+        return self
 
     def __exit__(self, type, value, traceback):
         sys.settrace(None)
