@@ -49,7 +49,7 @@ class TestPandasTable(TestCase):
 
             table = pddb.PandasTable(filepath)
             table._init_df(data)
-            assert tm.assert_almost_equal(df, table._df)
+            assert tm.assert_almost_equal(df.values, table._df.values)
 
     def test_save(self):
         with TemporaryDirectory() as td:
@@ -66,15 +66,15 @@ class TestPandasTable(TestCase):
             # PandasTable saves as df
             data.seek(0)
             new_table = pickle.loads(data.read())
-            assert tm.assert_almost_equal(new_table, df)
+            assert tm.assert_almost_equal(new_table.values, df.values)
             data.free()
 
             # save to disk
             table.save()
             pandas_table = pddb.PandasTable(filepath)
-            assert tm.assert_almost_equal(pandas_table._df, df)
+            assert tm.assert_almost_equal(pandas_table._df.values, df.values)
 
 
-if __name__ == '__main__':                                                                                          
-    import nose                                                                      
-    nose.runmodule(argv=[__file__,'-vvs','-x','--pdb', '--pdb-failure'],exit=False)   
+if __name__ == '__main__':
+    import nose
+    nose.runmodule(argv=[__file__,'-vvs','-x','--pdb', '--pdb-failure'],exit=False)

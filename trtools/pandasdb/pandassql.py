@@ -188,7 +188,7 @@ class PandasColumn(object):
     def _wrap(self, func):
         def wrapped(*args, **kwargs):
             res = func(*args, **kwargs)
-            if isinstance(res, np.ndarray) and probably_bool(res):
+            if isinstance(res, (np.ndarray, pd.Series)) and probably_bool(res):
                 return self.db.execute(filters=[res.fillna(False)])
             return res
         return wrapped

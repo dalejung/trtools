@@ -33,7 +33,7 @@ class TestPandasDB(TestCase):
     def test_full_all(self):
         db = self.db
         res = db.query().all()
-        assert tm.assert_almost_equal(db.df, res)
+        assert tm.assert_almost_equal(db.df.values, res.values)
 
 
     def test_sql_filter(self):
@@ -116,7 +116,7 @@ class TestPandasDB(TestCase):
         db = self.db
         res = db.query()[:5]
         exp = db.query().all()[:5]
-        assert tm.assert_almost_equal(res, exp)
+        assert tm.assert_almost_equal(res.values, exp.values)
 
         # test single
         res = db.query().ix[5]
@@ -140,7 +140,7 @@ class TestPandasDB(TestCase):
         df2 = pd.DataFrame({'a':range(10), 'c':range(20,30), 'd':range(30,40)})
         res = df.sql.query().join(df2.xs(['a', 'c'], axis=1), 'a').all()
         exp = pd.DataFrame({'a':range(10), 'b':range(10,20), 'c': range(20,30)})
-        assert tm.assert_almost_equal(res, exp)
+        assert tm.assert_almost_equal(res.values, exp.values)
 
 class TestFilterGroup(TestCase):
 
@@ -224,6 +224,6 @@ class TestPandasSQL(TestCase):
         assert pd.isnull(s[3])
         assert s.sql.isnull().index[0] == 3
 
-if __name__ == '__main__':                                                                                          
-    import nose                                                                      
-    nose.runmodule(argv=[__file__,'-vvs','-x','--pdb', '--pdb-failure'],exit=False)   
+if __name__ == '__main__':
+    import nose
+    nose.runmodule(argv=[__file__,'-vvs','-x','--pdb', '--pdb-failure'],exit=False)
