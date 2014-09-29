@@ -5,7 +5,7 @@ import datetime
 default_consumers = mp.cpu_count() * 2
 
 def chunker(seq, size):
-        return (seq[pos:pos + size] for pos in xrange(0, len(seq), size))
+        return (seq[pos:pos + size] for pos in range(0, len(seq), size))
 
 # OSX Max Queue Size
 MAX_SIZE = 32000
@@ -35,7 +35,7 @@ def farm(tasks, num_consumers=None, verbose=False, result_handler=missing, proce
     print(('Creating %d consumers' % num_consumers))
     consumers = [ DataProcess(task_queue, result_queue, verbose=verbose,
                               process_vars=process_vars)
-                  for i in xrange(num_consumers) ]
+                  for i in range(num_consumers) ]
 
     num_jobs = len(tasks)
     print(('Creating Task Queue %d items' % num_jobs))
@@ -106,7 +106,7 @@ class DataProcess(mp.Process):
         self.jobs_complete = 0
         self.verbose = verbose
         if process_vars:
-            for k, v in process_vars.items():
+            for k, v in list(process_vars.items()):
                 setattr(self, k, v)
 
     def run(self):

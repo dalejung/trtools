@@ -31,7 +31,7 @@ class TestColumnPanel(TestCase):
         """
             Test that 
         """
-        df = pd.DataFrame({'test':range(5), 
+        df = pd.DataFrame({'test':list(range(5)), 
                            'strings':['bob', 'dale', 't', '123', 'frank']})
         data = {'df1':df, 'df2':df}
         cp = column_panel.ColumnPanel(data)
@@ -102,7 +102,7 @@ class TestColumnPanel(TestCase):
         Test single row ix. Shoudl return a dataframe
         """
         ind = pd.date_range(start="2000-01-01", freq="D", periods=5)
-        df = pd.DataFrame({'test':range(5), 
+        df = pd.DataFrame({'test':list(range(5)), 
                            'strings':['bob', 'dale', 't', '123', 'frank']}, index=ind)
         data = {'df1':df, 'df2':df}
         cp = column_panel.ColumnPanel(data)
@@ -123,7 +123,7 @@ class TestColumnPanel(TestCase):
         Test that the column is returned as a pandas Index
         """
         ind = pd.date_range(start="2000-01-01", freq="D", periods=5)
-        df = pd.DataFrame({'test':range(5), 
+        df = pd.DataFrame({'test':list(range(5)), 
                            'strings':['bob', 'dale', 't', '123', 'frank']}, index=ind)
         data = {'df1':df, 'df2':df}
         cp = column_panel.ColumnPanel(data)
@@ -142,7 +142,7 @@ class TestColumnPanel(TestCase):
         Test that CP.dropitems drops empty frames
         """
         ind = pd.date_range(start="2000-01-01", freq="D", periods=5)
-        df = pd.DataFrame({'test':range(5), 
+        df = pd.DataFrame({'test':list(range(5)), 
                            'strings':['bob', 'dale', 't', '123', 'frank']}, index=ind)
         data = {'df1':df, 'df2':df.iloc[:3]} # note that df2 has ONLY the first 3 rows, rest NA
         cp = column_panel.ColumnPanel(data)

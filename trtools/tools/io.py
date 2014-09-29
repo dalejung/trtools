@@ -1,8 +1,8 @@
 from trtools.compat import pickle
 
 def save(obj, path_or_buffer):
-    if isinstance(path_or_buffer, basestring):
-        f = open(basestring, 'wb')
+    if isinstance(path_or_buffer, str):
+        f = open(str, 'wb')
     else:
         f = path_or_buffer
 
@@ -12,8 +12,8 @@ def save(obj, path_or_buffer):
         f.close()
 
 def load(path_or_buffer):
-    if isinstance(path_or_buffer, basestring):
-        f = open(basestring, 'rb')
+    if isinstance(path_or_buffer, str):
+        f = open(str, 'rb')
     else:
         f = path_or_buffer
 

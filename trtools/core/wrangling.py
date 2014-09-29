@@ -9,6 +9,7 @@ from trtools.monkey import patch
 import trtools.core.timeseries as timeseries
 from trtools.core.column_panel import PanelDict
 import trtools.core.dataset as trdataset
+import collections
 
 @patch(Series, 'dropper')
 def dropper(self, value=None, *args, **kwargs):
@@ -35,10 +36,10 @@ def foreach_panel(self, func, *args, **kwargs):
         Really just does a foreach with each being dfs in a panel. 
     """
     d = {}
-    for key, df in self.iteritems():
+    for key, df in self.items():
         d[key] = func(df, *args, **kwargs)
     container = PanelDict
-    for key, result in d.items():
+    for key, result in list(d.items()):
         if isinstance(result, Series):
             container = DataFrame
         if isinstance(result, DataFrame):
@@ -51,10 +52,10 @@ def foreach_dataframe(self, func, force_dict=False, *args, **kwargs):
         Really just does a foreach with each being dfs in a panel. 
     """
     d = {}
-    for key, df in self.iteritems():
+    for key, df in self.items():
         d[key] = func(df, *args, **kwargs)
     container = PanelDict
-    for key, result in d.items():
+    for key, result in list(d.items()):
         if isinstance(result, Series):
             container = DataFrame
             break
@@ -63,7 +64,7 @@ def foreach_dataframe(self, func, force_dict=False, *args, **kwargs):
             break
 
     index = []
-    for key, result in d.items():
+    for key, result in list(d.items()):
         if not isinstance(result, (DataFrame, Series)):
             continue
         result.name = key
@@ -74,17 +75,17 @@ def foreach_dataframe(self, func, force_dict=False, *args, **kwargs):
         return PanelDict(d)
 
     res = DataFrame(None, index=index)
-    for key, result in d.items():
+    for key, result in list(d.items()):
         res = res.join(result)
 
     res = res.sort()
     return res
 
 def _func_name(func):
-    if isinstance(func, basestring):
+    if isinstance(func, str):
         return func
-    if callable(func):
-        return func.func_name
+    if isinstance(func, collections.Callable):
+        return func.__name__
 
 def func_translate(name, obj):
     if hasattr(obj, name):
@@ -122,9 +123,9 @@ def table_agg(self, funcs):
             fdict[name] = func
 
     data = OrderedDict()
-    for k, f in fdict.items():
+    for k, f in list(fdict.items()):
         func = f
-        if isinstance(f, basestring):
+        if isinstance(f, str):
             func = func_translate(f, self)
         else:
             func = lambda df: df.apply(f)
@@ -132,7 +133,7 @@ def table_agg(self, funcs):
         res = func(self)
         data[k] = res
 
-    res = pd.DataFrame(data, columns=data.keys()).T
+    res = pd.DataFrame(data, columns=list(data.keys())).T
     return res
 
 @patch([DataFrame], 'pairwise')
@@ -160,7 +161,7 @@ def pairwise(self, func, force_values=True, order=True):
         # speed up. values sent to func will be np.ndarray
         numeric_df = numeric_df.values.T
     else:
-        numeric_df.columns = range(K)
+        numeric_df.columns = list(range(K))
 
     matrix = np.empty((K,K), dtype=float)
 

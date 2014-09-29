@@ -5,6 +5,7 @@ import pandas as pd
 import pandas.util.testing as tm
 
 import trtools.monkey as monkey
+import collections
 
 series = pd.Series(['dale', 'bob', 'test', 'pandas', 'dales', 'whale'])
 
@@ -35,7 +36,7 @@ class TestMonkey(TestCase):
 
         ap2 = monkey.AttrProxy('str', series, callback=callback_delegate)
         test_func = ap2.startswith
-        assert callable(test_func)
+        assert isinstance(test_func, collections.Callable)
         assert np.all(test_func('ale') == series.str.startswith('ale'))
 
     def test_attr_namespace(self):

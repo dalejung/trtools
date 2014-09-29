@@ -54,7 +54,7 @@ class FileCache(object):
         return os.path.exists(filepath)
 
     def __len__(self):
-        return len(self.keys())
+        return len(list(self.keys()))
 
     def __repr__(self):
         output = '%s\nCache path: %s\n' % (type(self), self.cache_dir)
@@ -62,9 +62,9 @@ class FileCache(object):
         if len(self) == 0:
             output += 'Empty'
         elif len(self) < 50:
-            output += '\n'.join(map(str, self.keys()))
+            output += '\n'.join(map(str, list(self.keys())))
         else:
-            output += '\n'.join(map(str, self.keys()[:50]))
+            output += '\n'.join(map(str, list(self.keys())[:50]))
             output += '\n{0} more items...'.format(len(self) - 50)
 
         return output
@@ -150,7 +150,7 @@ class MetaFileCache(FileCache):
         self.save_keys()
 
     def keys(self):
-        return self._keys.keys()
+        return list(self._keys.keys())
 
     def __getitem__(self, key):
         return self.get(key)
@@ -164,7 +164,7 @@ class MetaFileCache(FileCache):
         return os.path.exists(filepath)
 
 def leveled_key_dir(key, leveled):
-    dirs = [str(dir) for dir, _ in izip(key, range(leveled))]
+    dirs = [str(dir) for dir, _ in zip(key, list(range(leveled)))]
     return dirs
 
 def leveled_filename(fc, name, length=1):
@@ -200,7 +200,7 @@ def move_to_new_store(new_store, old_store):
     Utility to move from one MetaFileCache to another
     Useful for when you change leveling
     """
-    keys = old_store.keys()
+    keys = list(old_store.keys())
     # turn off autosave of keys
     new_store.autosave = False
 

@@ -40,7 +40,7 @@ def _generic_wrap_dict(data):
     if len(data) == 0:
         return None
 
-    test = next(data.itervalues())
+    test = next(iter(data.values()))
 
     if np.isscalar(test):
         return pd.Series(data)

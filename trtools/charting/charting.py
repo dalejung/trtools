@@ -1,5 +1,5 @@
 import math
-from itertools import izip
+
 
 from matplotlib import pyplot as plt
 import matplotlib.ticker as ticker
@@ -192,14 +192,14 @@ class Figure(object):
         # TODO take a param of ax numbers to align
         left = []
         right = []
-        for grapher in self.graphers.values():
+        for grapher in list(self.graphers.values()):
             if grapher.df is None:
                 continue
             l, r = grapher.ax.get_xlim()
             left.append(l)
             right.append(r)
 
-        for grapher in self.graphers.values():
+        for grapher in list(self.graphers.values()):
             if grapher.df is None:
                 continue
             grapher.ax.set_xlim(min(left), max(right)) 
@@ -290,7 +290,7 @@ class Grapher(object):
             style_dict = next(styler)
             # note we do it this way so explicit args passed in kwargs
             # override style_dict
-            kwargs = dict(style_dict.items() + kwargs.items())
+            kwargs = dict(list(style_dict.items()) + list(kwargs.items()))
 
         if self.sharex is not None:
             series = series.reindex(self.sharex.index, method=fillna)
@@ -339,7 +339,7 @@ class Grapher(object):
         consolidate the legends from all axes and merge into one
         """
         lines, labels = self.ax.get_legend_handles_labels()
-        for k, ax in self.yaxes.iteritems():
+        for k, ax in self.yaxes.items():
             new_lines, new_labels = ax.get_legend_handles_labels()
             lines = lines + new_lines
             labels = labels + new_labels
@@ -356,7 +356,7 @@ class Grapher(object):
         def make_patch_spines_invisible(ax):
             ax.set_frame_on(True)
             ax.patch.set_visible(False)
-            for sp in ax.spines.itervalues():
+            for sp in ax.spines.values():
                 sp.set_visible(False)
 
         size = len(self.yaxes)
@@ -435,7 +435,7 @@ class Grapher(object):
 
         # grab merged data
         xax = np.arange(len(self.df.index))
-        quotes = izip(xax, self.df['open'], self.df['close'], self.df['high'], self.df['low'])
+        quotes = zip(xax, self.df['open'], self.df['close'], self.df['high'], self.df['low'])
 
         ax = self.find_ax(secondary_y, kwargs)
 

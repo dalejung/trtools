@@ -85,7 +85,7 @@ class TestObjectFrame(TestCase):
         df = el.to_frame()
         assert len(df.columns) == 1
         assert df.columns[0] == 'id'
-        tm.assert_series_equal(df['id'], pd.Series(range(10)))
+        tm.assert_series_equal(df['id'], pd.Series(list(range(10))))
 
     def test_repr_col(self):
         """

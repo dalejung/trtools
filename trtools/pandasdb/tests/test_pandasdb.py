@@ -1,6 +1,6 @@
 from unittest import TestCase
 import os.path
-import cPickle as pickle
+import pickle as pickle
 from trtools.util.tempdir import TemporaryDirectory
 
 import pandas as pd
@@ -22,7 +22,7 @@ class TestPandasTable(TestCase):
     def test_create(self):
         with TemporaryDirectory() as td:
             filepath = os.path.join(td, 'test')
-            df = pd.DataFrame({'test':range(10)})
+            df = pd.DataFrame({'test':list(range(10))})
             table = pddb.PandasTable(filepath)
             table._init_df(df)
 
@@ -39,7 +39,7 @@ class TestPandasTable(TestCase):
     def test_init_df(self):
         with TemporaryDirectory() as td:
             filepath = os.path.join(td, 'test')
-            df = pd.DataFrame({'test':range(10)})
+            df = pd.DataFrame({'test':list(range(10))})
             table = pddb.PandasTable(filepath)
             table.init_df(df)
 
@@ -55,7 +55,7 @@ class TestPandasTable(TestCase):
         with TemporaryDirectory() as td:
             filepath = os.path.join(td, 'test')
 
-            df = pd.DataFrame({'test':range(10)})
+            df = pd.DataFrame({'test':list(range(10))})
             table = pddb.PandasTable(filepath)
             table._init_df(df)
 

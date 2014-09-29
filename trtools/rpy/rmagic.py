@@ -78,7 +78,7 @@ class RInterpreterError(ri.RRuntimeError):
         __str__ = __unicode__
     else:
         def __str__(self):
-            return unicode_to_str(unicode(self), 'utf-8')
+            return unicode_to_str(str(self), 'utf-8')
 
 def Rconverter(Robj, dataframe=False):
     """
@@ -508,7 +508,7 @@ class RMagics(Magics):
                 self.r.assign(input, self.pyconverter(val))
 
         png_argdict = dict([(n, getattr(args, n)) for n in ['units', 'height', 'width', 'bg', 'pointsize']])
-        png_args = ','.join(['%s=%s' % (o,v) for o, v in png_argdict.items() if v is not None])
+        png_args = ','.join(['%s=%s' % (o,v) for o, v in list(png_argdict.items()) if v is not None])
         # execute the R code in a temporary directory
 
         tmpd = tempfile.mkdtemp()

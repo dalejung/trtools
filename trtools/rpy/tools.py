@@ -29,14 +29,14 @@ def rinfo(obj):
 def rrepr(obj):
     info = rinfo(obj)
     out = "" 
-    for k,vals in info.iteritems():
+    for k,vals in info.items():
         out += k + "\n"
         out += "\n".join(["\t"+str(val) for val in vals if val])
         out += "\n"
     return out 
 
 def printr(obj):
-    print(rrepr(obj))
+    print((rrepr(obj)))
 
 class RObjectWrapper(object):
     """
@@ -84,7 +84,7 @@ def _repr(obj):
         else:
             return "{" + ", ".join(obj.names) + '}'
 
-    if isinstance(obj, basestring):
+    if isinstance(obj, str):
         return obj
 
     if isinstance(obj, (int, float)):
@@ -112,7 +112,7 @@ class RList(RObjectWrapper):
         # named r list == OrderedDict
         out = "Named Items:\n==============\n"
         s = "{0}:\n{1}"
-        lines = [s.format(name, _repr(val)) for name, val in self.data.items()]
+        lines = [s.format(name, _repr(val)) for name, val in list(self.data.items())]
         out += "\n\n".join(lines)
 
         obj = self.robj
@@ -142,7 +142,7 @@ class RList(RObjectWrapper):
 
 def convert_ListVector(lt):
     data = {}
-    for k, v in lt.iteritems():
+    for k, v in lt.items():
         try:
             pass
             #v = to_py(v, skip_list=True)
@@ -168,7 +168,7 @@ def to_py(o, skip_list=False):
     try:
         rcls = o.do_slot("class")
         rcls = list(rcls)
-    except LookupError, le:
+    except LookupError as le:
         rcls = []
 
     try:

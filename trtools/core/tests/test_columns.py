@@ -7,9 +7,9 @@ import numpy as np
 import trtools.util.testing as tm
 from trtools.core.columns import MultiIndexGetter, ObjectIndexGetter, LevelWrapper
 
-limit = range(10)
-stop = range(3,7)
-target = range(10, 20)
+limit = list(range(10))
+stop = list(range(3,7))
+target = list(range(10, 20))
 
 sets = itertools.product(limit, stop, target)
 sets = list(sets)
@@ -66,7 +66,7 @@ def dict_cols():
 def object_cols():
     class Object(object):
         def __init__(self, dct):
-            for k, v in dct.items():
+            for k, v in list(dct.items()):
                 setattr(self, k, v)
 
     dicts = [dict(list(zip(('limit', 'stop', 'target'), vals))) for vals in sets]
@@ -151,7 +151,7 @@ class TestLevelWrapper(TestCase):
                 return "bob={bob},frank={frank}".format(**self.__dict__)
 
         bobs = [3,4,2,1,2,2,1,]
-        franks = range(len(bobs))
+        franks = list(range(len(bobs)))
 
         objects = [ObjectCol(bob, frank) for bob, frank in zip(bobs, franks)]
         df = pd.DataFrame({'test'+str(i) : np.random.randn(len(objects)) for i in range(len(objects))})

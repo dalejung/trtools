@@ -9,11 +9,12 @@ import pandas as pd
 import trtools.io.api as trio
 
 import trtools.monkey as monkey
+import collections
 
 def _iter_or_slice(key):
     if isinstance(key, slice):
         return key
-    if isinstance(key, basestring):
+    if isinstance(key, str):
         return [key]
     if not isinstance(key, Iterable): 
         return [key]
@@ -28,7 +29,7 @@ class PanelDict(OrderedDict):
         super(PanelDict, self).__init__()
 
     def __repr__(self):
-        return repr(Series(self.keys()))
+        return repr(Series(list(self.keys())))
 
     def __getattr__(self, key):
         try:
@@ -40,11 +41,11 @@ class PanelDict(OrderedDict):
             if key == '_OrderedDict__root':
                 raise
 
-        test = next(self.itervalues())
+        test = next(iter(self.values()))
         func = getattr(test, key, None)
         if func is None:
             return super(PanelDict, self).__getattr__(key)
-        if callable(func):
+        if isinstance(func, collections.Callable):
             return _wrap(self, key)
         else: 
             return monkey.AttrProxy(key, test, lambda _, key: _wrap(self, key))
@@ -55,7 +56,7 @@ def apply_cp(self, func, *args, **kwargs):
         based on return
     """
     data = PanelDict() 
-    for key, df in self.iteritems():
+    for key, df in self.items():
         data[key] = func(df, *args, **kwargs)
 
     if len(data) == 0:
@@ -65,9 +66,9 @@ def apply_cp(self, func, *args, **kwargs):
     return data
 
 def _box_items(data):
-    test = data[data.keys()[0]]
+    test = data[list(data.keys())[0]]
     if isinstance(test, ColumnPanel):
-        data = OrderedDict([(k, v.to_panel()) for k, v  in data.iteritems()])
+        data = OrderedDict([(k, v.to_panel()) for k, v  in data.items()])
         return Panel4D(data)
     if isinstance(test, Panel):
         return Panel4D(data)
@@ -97,11 +98,11 @@ class ColumnPanelMapper(object):
         return self[key]
 
     def __getitem__(self, key):
-        _, test = next(self.obj.iteritems())
+        _, test = next(iter(self.obj.items()))
         func = getattr(test, key, None)
         if func is None:
             raise AttributeError("{0} not a method".format(key))
-        if callable(func) and not isinstance(func, monkey.AttrNameSpace):
+        if isinstance(func, collections.Callable) and not isinstance(func, monkey.AttrNameSpace):
             return self._wrap(key)
         else: 
             return monkey.AttrProxy(key, test, lambda _, key: self._wrap(key))
@@ -245,10 +246,10 @@ def dispatch_ix(self, key):
     """
     data = OrderedDict()
 
-    for k, df in self.frames.iteritems():
+    for k, df in self.frames.items():
         data[k] = df.ix[key]
 
-    test = data[self.frames.keys()[0]]
+    test = data[list(self.frames.keys())[0]]
     if isinstance(test, pd.DataFrame):
         return ColumnPanel(data) 
     if isinstance(test, pd.Series):
@@ -268,7 +269,7 @@ def mask(self, index):
     data = OrderedDict()
 
     m = index   
-    for key, val in self.frames.iteritems():
+    for key, val in self.frames.items():
         if index.ndim > 1:
             m = index[key]
         val = na_promote(val.copy())
@@ -278,7 +279,7 @@ def mask(self, index):
 
 def na_promote(df):
     """ Make dataframe na promotable. Convert ints to float dtypes """
-    for k, dtype in df.dtypes.iteritems():
+    for k, dtype in df.dtypes.items():
         if dtype == int:
             df[k] = df[k].astype(float)
 
@@ -312,7 +313,7 @@ class ColumnPanel(object):
         if self._frames is None:
             self._frames = OrderedDict()
             if self._panel is not None:
-                for name, df in self._panel.iteritems():
+                for name, df in self._panel.items():
                     self._frames[name] = df
                     self._panel = None
         return self._frames
@@ -352,7 +353,7 @@ class ColumnPanel(object):
         if name is None:
             raise Exception('need a name for df')
 
-        for col, series in df.iteritems():
+        for col, series in df.items():
             frame = DataFrame({name:series})
             frame.name = col
             self.frames[col] = frame
@@ -363,7 +364,7 @@ class ColumnPanel(object):
             and index
         """
         data = OrderedDict()
-        for key, val in self.frames.iteritems():
+        for key, val in self.frames.items():
             data[key] = DataFrame(index=val.index)
         return ColumnPanel(data)
 
@@ -406,7 +407,7 @@ class ColumnPanel(object):
     def items(self):
         if self._panel is not None:
             return list(self._panel.items)
-        return self.frames.keys()
+        return list(self.frames.keys())
 
     def foreach(self, func, *args, **kwargs):
         return apply_cp(self, func, *args, **kwargs)
@@ -414,7 +415,7 @@ class ColumnPanel(object):
     def __setitem__(self, key, value):
         self._columns.append(key)
         self._col_cache = None
-        for name, df in self.frames.iteritems():
+        for name, df in self.frames.items():
             df[key] = value[name]
 
         if key in self._cache:
@@ -450,7 +451,7 @@ class ColumnPanel(object):
         data = {}
 
         # Need to match on eq() and not hash
-        keys = self.frames.keys()
+        keys = list(self.frames.keys())
         for key in keys:
             if key in items:
                 df = self.frames[key]
@@ -479,7 +480,7 @@ class ColumnPanel(object):
 
     def _gather_frames_column(self, key):
         results = {}
-        for name, df in self.frames.iteritems():
+        for name, df in self.frames.items():
             results[name] = df[key]
 
         df = DataFrame(results)
@@ -491,7 +492,7 @@ class ColumnPanel(object):
             return self._panel
 
         copies = {}
-        for k,v in self.frames.iteritems():
+        for k,v in self.frames.items():
             copies[k] = v.copy()
         return Panel(copies)
 
@@ -508,10 +509,10 @@ class ColumnPanel(object):
         return output
 
     def __iter__(self):
-        return self.iteritems()
+        return iter(self.items())
 
     def iteritems(self):
-        return self.frames.iteritems()
+        return iter(self.frames.items())
 
     def downsample(self, freq, closed=None, label=None, axis=None):
         panel = self.to_panel()
@@ -565,7 +566,7 @@ class ColumnPanel(object):
         filepath = trio.bundle_filepath(path)
         store = trio.OBTFile(filepath, 'w', frame_key=frame_key, type='directory')
         try:
-            for key, frame in self.frames.items():
+            for key, frame in list(self.frames.items()):
                 # helpful if key is an object
                 if hasattr(key, frame_key):
                     key = getattr(key, frame_key)
@@ -605,11 +606,11 @@ def install_ipython_completers():  # pragma: no cover
     @complete_object.when_type(ColumnPanel)
     def complete_column_panel(obj, prev_completions):
         return prev_completions + [c for c in obj.columns \
-                    if isinstance(c, basestring) and compat.isidentifier(c)]                                          
+                    if isinstance(c, str) and compat.isidentifier(c)]                                          
     @complete_object.when_type(ColumnPanelItems)
     def complete_column_panel_items(obj, prev_completions):
-        return prev_completions + [c for c in obj.obj.frames.keys() \
-                    if isinstance(c, basestring) and compat.isidentifier(c)]                                          
+        return prev_completions + [c for c in list(obj.obj.frames.keys()) \
+                    if isinstance(c, str) and compat.isidentifier(c)]                                          
 
 # Importing IPython brings in about 200 modules, so we want to avoid it unless
 # we're in IPython (when those modules are loaded anyway).

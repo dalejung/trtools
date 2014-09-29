@@ -5,7 +5,7 @@ def mixIn (base, addition):
     """
     assert not hasattr(base, '_mixed_')
     mixed = []
-    for item, val in addition.__dict__.items():
+    for item, val in list(addition.__dict__.items()):
         if not hasattr(base, item):
             setattr(base, item, val)
             mixed.append (item)

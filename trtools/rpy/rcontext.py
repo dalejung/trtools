@@ -9,7 +9,7 @@ def _r(val):
     """
     Convert val to valid R code
     """
-    if isinstance(val, basestring):
+    if isinstance(val, str):
         # no quoting quote
         if val.startswith("quote("): 
             return val
@@ -45,7 +45,7 @@ class DefaultR(object):
 
     @staticmethod
     def list(**kwargs):
-        parts = ["{0}={1}".format(k,_r(v)) for k,v in kwargs.items()]
+        parts = ["{0}={1}".format(k,_r(v)) for k,v in list(kwargs.items())]
         list_string = ','.join(parts)
         list_cmd = "list({0})".format(list_string)
         tl = r(list_cmd)
@@ -104,7 +104,7 @@ class RContext(object):
     def __exit__(self, type, value, traceback):
         # reset globals
         vars = self.scope
-        for key, val in self.change_list.iteritems():
+        for key, val in self.change_list.items():
             if val is None:
                 del vars[key]
                 continue

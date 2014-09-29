@@ -2,6 +2,8 @@ import operator
 
 import pandas as pd
 import numpy as np
+import collections
+from functools import reduce
 
 def combine_filters(filters, df=None, op=operator.and_):
     """
@@ -172,14 +174,14 @@ class PandasColumn(object):
         column = self.col
         if hasattr(column, key):
             attr = getattr(column, key)
-            if callable(attr):
+            if isinstance(attr, collections.Callable):
                 attr = self._wrap(attr)
             return attr
 
         # str methods
         if hasattr(column.str, key):
             attr = getattr(column.str, key)
-            if callable(attr):
+            if isinstance(attr, collections.Callable):
                 attr = self._wrap(attr)
             return attr
 
@@ -197,7 +199,7 @@ def probably_bool(arr):
     """ dumb test for bool arrays that ahve nans """
     s = pd.Series(arr)
     counts = s.value_counts()
-    keys = counts.keys()
+    keys = list(counts.keys())
     for key in keys:
         if not isinstance(key, bool) and not isinstance(key, np.bool_):
             return False
@@ -220,7 +222,7 @@ class Query(object):
         flist = []
         flist.extend(args)
 
-        for k, value in kwargs.items():
+        for k, value in list(kwargs.items()):
             if not isinstance(value, list):
                 value = [value]
             for v in value:

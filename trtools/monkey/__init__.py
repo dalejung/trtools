@@ -1,5 +1,6 @@
 import warnings
 import functools 
+import collections
 
 def patch(classes, name=None, override=False):
     """
@@ -147,7 +148,7 @@ class AttrNameSpace(object):
 
     def __call__(self, *args, **kwargs):
         func = self._old_func
-        if func and callable(func):
+        if func and isinstance(func, collections.Callable):
             return func(*args, **kwargs)
         raise TypeError("{attr} on {obj} was not callable".format(attr=self.name, obj=str(self.obj)))
 
@@ -209,7 +210,7 @@ def install_ipython_completers():  # pragma: no cover
     @complete_object.when_type(AttrNameSpace)
     def complete_column_panel(self, prev_completions):
         return [c for c in self.attrs() \
-                    if isinstance(c, basestring) and compat.isidentifier(c)]                                          
+                    if isinstance(c, str) and compat.isidentifier(c)]                                          
 # Importing IPython brings in about 200 modules, so we want to avoid it unless
 # we're in IPython (when those modules are loaded anyway).
 import sys

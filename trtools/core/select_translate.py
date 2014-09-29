@@ -20,7 +20,7 @@ def df__getitem__(self, key):
     # entry in translate table
     # Not sure if supporting ints is worthwhile since
     # int columns can exist automatically
-    if isinstance(key, basestring) and key in self.columns:
+    if isinstance(key, str) and key in self.columns:
         return self._old___getitem__(key)
 
     try:
@@ -89,7 +89,7 @@ def process_info_axis(obj, key):
 
     # single key
     if not isinstance(columns, collections.Iterable) \
-       or isinstance(columns, basestring):
+       or isinstance(columns, str):
         columns = KEY_TRANS.get(columns, columns)
         ind = info_axis.get_loc(columns)
         cols = info_axis[ind]

@@ -21,7 +21,7 @@ class TestTile(TestCase):
         data = pd.Series(arr)
         bins = [0, 5, 10]
         ret = tile.tile(data, bins, infinite=False)
-        ranges = ret.groups.keys()
+        ranges = list(ret.groups.keys())
         counts = ret.count()
         correct = {}
         correct[0] = 5
@@ -41,7 +41,7 @@ class TestTile(TestCase):
         data = pd.Series(arr)
         bins = [0, 5]
         ret = tile.tile(data, bins, infinite=False)
-        ranges = ret.groups.keys()
+        ranges = list(ret.groups.keys())
         counts = ret.count()
         for r in ranges:
             assert correct[r.l] == counts[r]
@@ -57,11 +57,11 @@ class TestTile(TestCase):
         data = pd.Series(arr)
         bins = [2, 4]
         ret = tile.tile(data, bins)
-        ranges = ret.groups.keys()
+        ranges = list(ret.groups.keys())
 
         # verify infs exist
         lower_bounds = [r.l for r in ranges]
-        for k,v in correct.items():
+        for k,v in list(correct.items()):
             assert k in lower_bounds
 
 if __name__ == '__main__':                                                                                          

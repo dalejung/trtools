@@ -23,7 +23,7 @@ class TestStyler(TestCase):
         Test level styler. 
         """
         df = pd.DataFrame({'value':np.random.randn(100)})
-        df['num_cat'] = np.random.choice(range(5), 100) * 100
+        df['num_cat'] = np.random.choice(list(range(5)), 100) * 100
         df['name'] = np.random.choice(['dale', 'bob', 'wes', 'frank'], 100)
 
         styles = level_styler(color=df.num_cat, linestyle=df.name)

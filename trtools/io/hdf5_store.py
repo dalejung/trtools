@@ -131,4 +131,4 @@ class OBTFile(object):
     def keys(self):
         if self.obt is None:
             return []
-        return self.obt.keys()
+        return list(self.obt.keys())

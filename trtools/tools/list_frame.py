@@ -5,6 +5,7 @@ from collections import OrderedDict
 from operator import attrgetter
 import pandas as pd
 import functools
+import collections
 
 def _getter(obj, attr):
     """ essentially attrgetter that returns None when attr does not exist """
@@ -17,7 +18,7 @@ def _getter(obj, attr):
 def _column_picker(attr, objects):
     """ Grab an attr for every Event in list """
     getter = attr
-    if not callable(getter):
+    if not isinstance(getter, collections.Callable):
         getter = functools.partial(_getter, attr=attr)
     data = list(map(getter, objects))
     return data
@@ -60,7 +61,7 @@ def listframe_to_frame(lst, attrs=None, repr_col=False):
     attrs = _process_attrs(attrs)
 
     sdict = OrderedDict()
-    for col, attr in attrs.items():
+    for col, attr in list(attrs.items()):
         data = _column_picker(attr, lst)
         sdict[col] = data
 

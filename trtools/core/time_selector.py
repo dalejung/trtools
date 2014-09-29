@@ -18,7 +18,7 @@ class TimeSelector(object):
         return self.func(self.obj, *args, **kwargs)
 
     def __eq__(self, other):
-        if not isinstance(other, collections.Sequence) or isinstance(other, basestring):
+        if not isinstance(other, collections.Sequence) or isinstance(other, str):
             other = (other,)
 
         return self(*other)

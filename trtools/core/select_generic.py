@@ -73,7 +73,7 @@ def process_cols(obj, key):
     # keep ordering
     columns = key[1]
     if not isinstance(columns, collections.Iterable) \
-       or isinstance(columns, basestring):
+       or isinstance(columns, str):
         columns = [columns]
 
     for col in columns:

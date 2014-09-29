@@ -1,4 +1,4 @@
-from __future__ import division
+
 import operator
 
 from pandas import cut, Series, DataFrame, Categorical

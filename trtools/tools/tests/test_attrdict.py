@@ -10,7 +10,7 @@ class TestKey(object):
         self.number = number
 
     def __eq__(self, other):
-        if isinstance(other, basestring):
+        if isinstance(other, str):
             return self.string == other
         return self.number == other
 

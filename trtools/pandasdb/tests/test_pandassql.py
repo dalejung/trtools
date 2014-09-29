@@ -14,7 +14,7 @@ class TestPandasDB(TestCase):
         pass
 
     def setUp(self):
-        df = pd.DataFrame({'dale':range(10), 'bob':range(10, 20)})
+        df = pd.DataFrame({'dale':list(range(10)), 'bob':list(range(10, 20))})
         df['names'] = ['dale', 'dane', 'donna', 'mike', 'miller'] * 2
         db = pandassql.PandasSQL(df)
         assert db.df is df
@@ -136,10 +136,10 @@ class TestPandasDB(TestCase):
 
 
     def test_query_join(self):
-        df = pd.DataFrame({'a':range(10), 'b':range(10,20)})
-        df2 = pd.DataFrame({'a':range(10), 'c':range(20,30), 'd':range(30,40)})
+        df = pd.DataFrame({'a':list(range(10)), 'b':list(range(10,20))})
+        df2 = pd.DataFrame({'a':list(range(10)), 'c':list(range(20,30)), 'd':list(range(30,40))})
         res = df.sql.query().join(df2.xs(['a', 'c'], axis=1), 'a').all()
-        exp = pd.DataFrame({'a':range(10), 'b':range(10,20), 'c': range(20,30)})
+        exp = pd.DataFrame({'a':list(range(10)), 'b':list(range(10,20)), 'c': list(range(20,30))})
         assert tm.assert_almost_equal(res.values, exp.values)
 
 class TestFilterGroup(TestCase):
@@ -219,7 +219,7 @@ class TestPandasSQL(TestCase):
         pass
 
     def test_series_sql(self):
-        s = pd.Series(range(10)).astype(float)
+        s = pd.Series(list(range(10))).astype(float)
         s[3] = np.nan
         assert pd.isnull(s[3])
         assert s.sql.isnull().index[0] == 3

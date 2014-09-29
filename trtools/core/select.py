@@ -31,7 +31,7 @@ def show(self, val):
         show all rows matching a value
         val can be a value or a func.
     """
-    if callable(val):
+    if isinstance(val, collections.Callable):
         func = np.vectorize(val)
         bools = func(self)
     else:

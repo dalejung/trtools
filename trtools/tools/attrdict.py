@@ -44,7 +44,7 @@ class attrdict(OrderedDict):
             return dict.__getitem__(self, name)
 
         # list.__contains__ uses eq() to check membership
-        keys = self.keys()
+        keys = list(self.keys())
         if name in keys:
             ind = keys.index(name)
             return self[keys[ind]]
@@ -52,7 +52,7 @@ class attrdict(OrderedDict):
 
     def __repr__(self):
         out = 'Keys:\n'
-        out += '\n'.join([str(k) for k in self.keys()])
+        out += '\n'.join([str(k) for k in list(self.keys())])
         return out
 
     def foreach(self, key=None, func=missing):
@@ -69,7 +69,7 @@ class attrdict(OrderedDict):
             func = lambda dct, key: dct[key]
 
         res = attrdict()
-        for k, v in self.iteritems():
+        for k, v in self.items():
             try:
                 res[k] = func(v, key)
             except:
@@ -85,8 +85,8 @@ def install_ipython_completers():  # pragma: no cover
 
     @complete_object.when_type(attrdict)
     def complete_attrdict(obj, prev_completions):
-        return prev_completions + [c for c in obj.keys() \
-                    if isinstance(c, basestring) and compat.isidentifier(c)]                                          
+        return prev_completions + [c for c in list(obj.keys()) \
+                    if isinstance(c, str) and compat.isidentifier(c)]                                          
 
 # Importing IPython brings in about 200 modules, so we want to avoid it unless
 # we're in IPython (when those modules are loaded anyway).

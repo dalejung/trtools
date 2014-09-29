@@ -1,6 +1,6 @@
 from unittest import TestCase
 import os.path
-from StringIO import StringIO
+from io import StringIO
 
 import trtools.io.caching_dict as cdict
 
@@ -58,7 +58,7 @@ class TestCachingDict(TestCase):
     def test_update(self):
         cd = TestDict('test')
         cd.clear()
-        assert len(cd.keys()) == 0
+        assert len(list(cd.keys())) == 0
         cd.update(bob='whee', tom='kat')
         assert cd['bob'] == 'whee'
         assert cd['tom'] == 'kat'
@@ -73,8 +73,8 @@ class TestCachingDict(TestCase):
         assert cd['bob'] == 'whee'
         assert cd['tom'] == 'kat'
         cd.clear()
-        assert len(cd.keys()) == 0
-        assert 'bob' not in cd.keys()
+        assert len(list(cd.keys())) == 0
+        assert 'bob' not in list(cd.keys())
 
     def test_not_in(self):
         """
@@ -83,7 +83,7 @@ class TestCachingDict(TestCase):
         """
         cd = TestDict('test')
         cd.clear()
-        assert len(cd.keys()) == 0
+        assert len(list(cd.keys())) == 0
         assert 'bob' not in cd
 
 

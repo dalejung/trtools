@@ -64,7 +64,7 @@ class DataProcessor(object):
 
     def process(self, func=None, *args, **kwargs):
         wrap_func = func
-        if isinstance(func, basestring): # easy support of calling methods on data
+        if isinstance(func, str): # easy support of calling methods on data
             wrap_func = lambda df: getattr(df, func)()
 
         batch = self.jobs

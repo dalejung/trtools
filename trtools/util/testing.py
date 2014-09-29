@@ -52,7 +52,7 @@ class Timer:
 
     @property
     def msg(self):
-        msg = u"Run {name}: CPU time: {interval}  Wall time: {wall_interval}"
+        msg = "Run {name}: CPU time: {interval}  Wall time: {wall_interval}"
         return msg.format(name=self.name, interval=_format_time(self.interval),
                          wall_interval=_format_time(self.wall_interval))
 
@@ -97,7 +97,7 @@ def assert_columnpanel_equal(left, right):
 
     assert len(left.frames) == len(right.frames)
 
-    for key, l_frame in left.frames.iteritems():
+    for key, l_frame in left.frames.items():
         r_frame = right.frames[key]
         assert_frame_equal(l_frame, r_frame)
 
@@ -121,7 +121,7 @@ def _format_time(timespan, precision=3):
             value = int(leftover / length)
             if value > 0:
                 leftover = leftover % length
-                time.append(u'%s%s' % (str(value), suffix))
+                time.append('%s%s' % (str(value), suffix))
             if leftover < 1:
                 break
         return " ".join(time)
@@ -131,11 +131,11 @@ def _format_time(timespan, precision=3):
     # certain terminals.
     # See bug: https://bugs.launchpad.net/ipython/+bug/348466
     # Try to prevent crashes by being more secure than it needs to
-    units = [u"s", u"ms",u'us',"ns"] # the save value
+    units = ["s", "ms",'us',"ns"] # the save value
     if hasattr(sys.stdout, 'encoding') and sys.stdout.encoding:
         try:
-            u'\xb5'.encode(sys.stdout.encoding)
-            units = [u"s", u"ms",u'\xb5s',"ns"]
+            '\xb5'.encode(sys.stdout.encoding)
+            units = ["s", "ms",'\xb5s',"ns"]
         except:
             pass
     scaling = [1, 1e3, 1e6, 1e9]
@@ -144,7 +144,7 @@ def _format_time(timespan, precision=3):
         order = min(-int(math.floor(math.log10(timespan)) // 3), 3)
     else:
         order = 3
-    ret =  u"%.*g %s" % (precision, timespan * scaling[order], units[order])
+    ret =  "%.*g %s" % (precision, timespan * scaling[order], units[order])
     return ret
 
 import unittest
@@ -171,7 +171,7 @@ def setup_battery(targets, battery):
     caller_globals = inspect.stack()[1][0].f_globals
     battery_name = battery.__name__
     # create a unittest.TestCase subclass for each target
-    for target, maker in targets.items():
+    for target, maker in list(targets.items()):
         cls_name = "Test" + battery_name + '_' + target
         cls = makeClass(cls_name, battery, maker)
         caller_globals[cls_name] = cls

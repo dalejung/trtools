@@ -20,7 +20,7 @@ def box_data(keys, data=None):
     else:
         rdict = OrderedDict(list(zip(keys, data)))
 
-    test = next(rdict.itervalues())
+    test = next(iter(rdict.values()))
     if np.isscalar(test):
         return Series(rdict)
 
@@ -31,7 +31,7 @@ def box_data(keys, data=None):
         return Panel(rdict)
 
     if isinstance(test, ColumnPanel):
-        data = OrderedDict([(k, v.to_panel()) for k, v  in rdict.iteritems()])
+        data = OrderedDict([(k, v.to_panel()) for k, v  in rdict.items()])
         return Panel4D(data)
 
     if isinstance(test, Panel):

@@ -56,7 +56,7 @@ def apply_result_dict(out, res, start, end):
         res can be both a dict or a DataFrame
         Returning a dict can speed up calculations quite a bit
     """
-    for k in out.keys():
+    for k in list(out.keys()):
         out[k][start:end] = res[k]
 
 def _func_dict_wrapper(func):
@@ -65,7 +65,7 @@ def _func_dict_wrapper(func):
     """
     def _wrapped(group, *args, **kwargs):
         res = {}
-        for col, f in func.items():
+        for col, f in list(func.items()):
             res[col] = f(group[col], *args, **kwargs)
 
         return res
@@ -113,7 +113,7 @@ def apply_put_frame(data, grouper, func, *args, **kwargs):
         start = bin
 
     if isinstance(out, dict):
-        return pd.DataFrame(out, index=data.index, columns=res.keys())
+        return pd.DataFrame(out, index=data.index, columns=list(res.keys()))
 
     if out.ndim > 1:
         return pd.DataFrame(out, index=data.index, columns=res.columns)

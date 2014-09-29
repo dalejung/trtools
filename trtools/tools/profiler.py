@@ -3,10 +3,11 @@ import gc
 import sys
 import os.path
 from collections import OrderedDict
-from trace import Trace
+from .trace import Trace
 
 from line_profiler import LineProfiler as _LineProfiler
 import pandas as pd
+import collections
 
 def is_property(code):
     """
@@ -61,7 +62,7 @@ class Profiler(object):
 
         if len(args) > 0:
             for func in args:
-                if callable(func):
+                if isinstance(func, collections.Callable):
                     self.add_function(func)
 
     def add_function(self, func):
@@ -179,8 +180,8 @@ class Follow(object):
     def pprint(self, depth=None):
         df = self.to_frame()
         mask = df.filename == ''
-        mask = mask | df.func_name.isin(['<lambda>', '<genexpr>'])
-        mask = mask | df.func_name.str.startswith('__')
+        mask = mask | df.__name__.isin(['<lambda>', '<genexpr>'])
+        mask = mask | df.__name__.str.startswith('__')
         if depth:
             mask = mask | (df.indent > depth)
 

@@ -4,6 +4,7 @@ import pandas.stats.moments as moments
 from functools import partial
 
 from trtools.monkey import attr_namespace
+import collections
 
 def wrap_rolling(func, obj):
     def wrapped(window, min_periods=None, freq=None):
@@ -30,7 +31,7 @@ class Rolling(object):
         # try obj method i.e. df.prod
         if hasattr(self.obj, key):
             attr = getattr(self.obj, key)
-            if callable(attr):
+            if isinstance(attr, collections.Callable):
                 func = lambda x: getattr(x, key)()
                 return wrap_rolling(func, self.obj)
 

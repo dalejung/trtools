@@ -50,7 +50,7 @@ class RFunction(object):
         return self.func.r_repr()
 
     def code(self):
-        print(self._code())
+        print((self._code()))
 
     def __repr__(self):
         env_name = ""
@@ -92,7 +92,7 @@ class DotWrapper(object):
         self._name = name
         self._pkg = pkg
         self._subgroup = self._pkg.subgroup(name)
-        self._funcs = self._subgroup.func_name.unique()
+        self._funcs = self._subgroup.__name__.unique()
 
         # init __doc__ if base func exists
         r_name = self._name
@@ -111,7 +111,7 @@ class DotWrapper(object):
             try:
                 setattr(self, bits[1], func)
             except:
-                print("{0} failed to bind".format(r_name))
+                print(("{0} failed to bind".format(r_name)))
 
     def __call__(self, *args, **kwargs):
         func = self.base_func
@@ -162,7 +162,7 @@ class RPackage(object):
         if translations is None:
             translations = {}
         self.pkg = importr(name, robject_translations=translations)
-        self._create_table(self.pkg._rpy2r.items())
+        self._create_table(list(self.pkg._rpy2r.items()))
         self._cache = {}
 
     def __getattr__(self, key):
@@ -220,11 +220,11 @@ def install_ipython_completers():  # pragma: no cover
     @complete_object.when_type(RPackage)
     def complete_rpackage(obj, prev_completions):
         return prev_completions + [c for c in obj._subgroups \
-                    if isinstance(c, basestring) and compat.isidentifier(c)]                                          
+                    if isinstance(c, str) and compat.isidentifier(c)]                                          
     @complete_object.when_type(DotWrapper)
     def complete_dot_wrapper(obj, prev_completions):
         return prev_completions + [c for c in obj._funcs \
-                    if isinstance(c, basestring) and compat.isidentifier(c)]                                          
+                    if isinstance(c, str) and compat.isidentifier(c)]                                          
 
 # Importing IPython brings in about 200 modules, so we want to avoid it unless
 # we're in IPython (when those modules are loaded anyway).

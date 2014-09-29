@@ -26,7 +26,7 @@ class TestComposition(TestCase):
         pass
 
     def test_user_series(self):
-        s = pd.Series(range(1, 10), index=range(11, 20))
+        s = pd.Series(list(range(1, 10)), index=list(range(11, 20)))
         us = UserSeries(s)
         tm.assert_series_equal(s, us)
 
@@ -57,23 +57,23 @@ class TestComposition(TestCase):
         tm.assert_series_equal(wh, bools.astype(int))
 
     def test_us_view(self):    
-        s = pd.Series(range(0, 10), index=range(10, 20))
+        s = pd.Series(list(range(0, 10)), index=list(range(10, 20)))
         us = s.view(UserSeries)
         tm.assert_series_equal(s, us)
 
-        arr = np.array(range(10))
+        arr = np.array(list(range(10)))
         arrs = pd.Series(arr)
         arrus = arr.view(UserSeries)
         tm.assert_series_equal(arrs, arrus)
 
     def test_datetime_us_view(self):    
-        data = range(0, 10)
+        data = list(range(0, 10))
         ind = pd.date_range(start="1/1/2000", freq="D", periods=len(data))
         s = pd.Series(data, index=ind)
         us = s.view(UserSeries)
         tm.assert_series_equal(s, us)
 
-        arr = np.array(range(10))
+        arr = np.array(list(range(10)))
         arrs = pd.Series(arr)
         arrus = arr.view(UserSeries)
         tm.assert_series_equal(arrs, arrus)
@@ -125,17 +125,17 @@ class TestComposition(TestCase):
             def bob(self):
                 return self._bob
 
-        class CommonSeries(UserSeries):
-            __metaclass__ = CommonBase
+        class CommonSeries(UserSeries, metaclass=CommonBase):
+            pass
 
-        class CommonFrame(UserFrame):
-            __metaclass__ = CommonBase
+        class CommonFrame(UserFrame, metaclass=CommonBase):
+            pass
 
         bob = CommonBase._bob
 
-        s = CommonSeries(range(10))
+        s = CommonSeries(list(range(10)))
         assert s.ix[3] == 3
-        tm.assert_almost_equal(s, range(10))
+        tm.assert_almost_equal(s, list(range(10)))
         assert s.bob is bob
         s._bob = 123
         assert s.bob == 123
@@ -165,7 +165,7 @@ class TestComposition(TestCase):
                 self.bob = bob
                 super(InitFrame, self).__init__(*args, **kwargs)
 
-        s = InitSeries(range(10), name='hello', bob=123)
+        s = InitSeries(list(range(10)), name='hello', bob=123)
         assert s.bob == 123
 
         df = tm.makeDataFrame()

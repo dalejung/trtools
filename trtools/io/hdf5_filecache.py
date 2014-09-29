@@ -42,7 +42,7 @@ class HDF5FileCache(FileCache):
         return SingleHDF.get(filename)
 
     def keys(self):
-        keys = super(HDF5FileCache, self).keys()
+        keys = list(super(HDF5FileCache, self).keys())
         return [filename[:-3] for filename in keys]
 
 class HDF5LeveledFileCache(HDF5FileCache):
@@ -119,7 +119,7 @@ class OBTFileCache(object):
     def keys(self):
         with self.obt_context as obt:
             try:
-                return obt.keys()
+                return list(obt.keys())
             except:
                 return []
 

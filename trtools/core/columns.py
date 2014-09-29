@@ -177,10 +177,10 @@ class ObjectIndexGetter(IndexGetter):
         """
         test = self._index[0]
         try:
-            names = test.keys()
+            names = list(test.keys())
             return names
         except:
-            names = test.__dict__.keys()
+            names = list(test.__dict__.keys())
             return names
 
 def _getter(obj, attr='columns'):
@@ -226,7 +226,7 @@ def install_ipython_completers():  # pragma: no cover
     @complete_object.when_type(MultiIndexGetter)
     def complete_column_panel_items(obj, prev_completions):
         return prev_completions + [c for c in obj.names \
-                    if isinstance(c, basestring) and compat.isidentifier(c)]                                          
+                    if isinstance(c, str) and compat.isidentifier(c)]                                          
 
 # Importing IPython brings in about 200 modules, so we want to avoid it unless
 # we're in IPython (when those modules are loaded anyway).

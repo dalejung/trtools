@@ -64,7 +64,7 @@ class OneBigTable(object):
         raise AttributeError()
 
     def __getitem__(self, key):
-        if isinstance(key, basestring):
+        if isinstance(key, str):
             return self._getitem_framekey(key)
         if isinstance(key, int):
             return self._getitem_framekey(key)

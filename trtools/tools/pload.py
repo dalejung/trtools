@@ -23,7 +23,7 @@ def pload(store, N=None, num_consumers=None):
     global _store
     _store = store
 
-    keys = store.keys()
+    keys = list(store.keys())
 
     if N is None:
         N = len(keys)

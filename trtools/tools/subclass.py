@@ -18,7 +18,7 @@ def wrap_methods(pandas_cls):
     ignore_list = ['__class__', '__metaclass__']
 
     # Wrap the magic_methods which won't be called via __getattribute__
-    magic_methods = [(name, meth) for name, meth in pandas_cls.__dict__.iteritems() \
+    magic_methods = [(name, meth) for name, meth in pandas_cls.__dict__.items() \
                      if name.startswith('_') and isinstance(meth, collections.Callable) \
                     and name not in ignore_list and not isinstance(meth, type)]
 
@@ -51,7 +51,7 @@ class MetaPandas(type):
             new_attrs.update(dct)
 
         # attach functions needed for subclassing to work
-        meta_funcs = [(attr, meth) for attr, meth in cls.__dict__.items()
+        meta_funcs = [(attr, meth) for attr, meth in list(cls.__dict__.items())
                       if not attr.startswith('__')]
         new_attrs.update(meta_funcs)
         return super(MetaPandas, cls).__new__(cls, name, bases, new_attrs)
@@ -60,7 +60,7 @@ class MetaPandas(type):
         """
         """
         attr = self.pget(name)
-        if callable(attr):
+        if isinstance(attr, collections.Callable):
             def _wrapped(*args, **kwargs):
                 return self._delegate(name, *args, **kwargs)
             return _wrapped
@@ -77,7 +77,7 @@ class MetaPandas(type):
         """
         attr = getattr(super(SubFrame, self), name)
         res = attr
-        if callable(attr):
+        if isinstance(attr, collections.Callable):
             res = attr(*args, **kwargs)
         # maybe need better way to tell when to wrap?
         # do not wrap subclasses of UserFrame/UserSeries
@@ -87,7 +87,7 @@ class MetaPandas(type):
             # transfer metadata
             d = self.__dict__
             new_dict = res.__dict__
-            for k in d.keys():
+            for k in list(d.keys()):
                 if k in new_dict:
                     continue
                 new_dict[k] = d[k]

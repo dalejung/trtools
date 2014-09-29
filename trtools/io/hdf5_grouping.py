@@ -135,7 +135,7 @@ class HDFPanelGroup(object):
         return ret
 
     def keys(self):
-        return self.group._v_children.keys()
+        return list(self.group._v_children.keys())
 
     def create_table(self, df, name=None, *args, **kwargs):
         filters = self.filters

@@ -12,7 +12,7 @@ class Tdb(Pdb):
         self.entered = False
 
     def add_trace(self, func):
-        code = func.func_code
+        code = func.__code__
         self.codemap[code] = 0
 
     def trace_dispatch(self, frame, event, arg):
@@ -82,7 +82,7 @@ class Trace(object):
     def __init__(self, *args):
         self.tdb = Tdb(def_colors)
 
-        funcs = filter(callable, args)
+        funcs = list(filter(callable, args))
         for func in funcs:
             self.add_function(func)
 

@@ -5,7 +5,8 @@ import pandas.util.testing as tm
 import numpy as np
 
 import trtools.core.topper as topper
-reload(topper)
+import imp
+imp.reload(topper)
 
 arr = np.random.randn(10000)
 s = pd.Series(arr)

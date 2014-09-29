@@ -4,7 +4,8 @@ import pandas as pd
 import numpy as np
 
 import trtools.core.wrangling as wrangling
-reload(wrangling)
+import imp
+imp.reload(wrangling)
 import trtools.util.testing as tm
 from trtools.tools.profiler import Profiler
 pairwise = wrangling.pairwise
@@ -25,9 +26,9 @@ class TestWrangling(TestCase):
         pass
 
     def test_pairwise(self):
-        df = pd.DataFrame(index=range(10))
+        df = pd.DataFrame(index=list(range(10)))
         for x in range(3):
-            df[x] = range(x, x+10)
+            df[x] = list(range(x, x+10))
 
         nandf = df.copy().astype(float)
         nandf.ix[9:,1] = np.nan
@@ -37,14 +38,14 @@ class TestWrangling(TestCase):
         pairs = pairwise(df, lambda x, y: x.sum() - y.sum())
         expected = pd.DataFrame([[0, -10, -20], 
                                  [10, 0, -10],
-                                 [20, 10, 0]], index=range(3), dtype=float)
+                                 [20, 10, 0]], index=list(range(3)), dtype=float)
         tm.assert_frame_equal(pairs, expected)
 
         # test with combinations
         pairs = pairwise(df, lambda x, y: x.sum() - y.sum(), order=False)
         expected = pd.DataFrame([[0, -10, -20], 
                                  [-10, 0, -10],
-                                 [-20, -10, 0]], index=range(3), dtype=float)
+                                 [-20, -10, 0]], index=list(range(3)), dtype=float)
         tm.assert_frame_equal(pairs, expected)
 
         # test with combinations and values
@@ -53,7 +54,7 @@ class TestWrangling(TestCase):
                          force_values=True)
         expected = pd.DataFrame([[0, np.nan, -20], 
                                  [np.nan, np.nan, np.nan],
-                                 [20, np.nan, 0]], index=range(3), dtype=float)
+                                 [20, np.nan, 0]], index=list(range(3)), dtype=float)
         tm.assert_frame_equal(pairs, expected)
 
         # test with np.nansum.
@@ -61,7 +62,7 @@ class TestWrangling(TestCase):
                          order=True, force_values=True)
         expected = pd.DataFrame([[0, 0, -20], 
                                  [0, 0, -20],
-                                 [20, 20, 0]], index=range(3), dtype=float)
+                                 [20, 20, 0]], index=list(range(3)), dtype=float)
         tm.assert_frame_equal(pairs, expected)
 
         # the np.nansum version should be same as Series.sum version

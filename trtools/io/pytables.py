@@ -49,9 +49,9 @@ def convert_frame(df):
         desc[str(k)] = col
 
     # create recarray
-    dtypes = [(str(k), v.dtype) for k, v in sdict.items()]
+    dtypes = [(str(k), v.dtype) for k, v in list(sdict.items())]
     recs = np.recarray(shape=len(df), dtype=dtypes)
-    for k, v in sdict.items():
+    for k, v in list(sdict.items()):
         recs[str(k)] = v
     return desc, recs, types
 
@@ -133,7 +133,7 @@ def _meta_file(obj, meta):
 
     try:
         meta = obj._v_attrs.pd_meta
-        if isinstance(meta, basestring):
+        if isinstance(meta, str):
             meta = pickle.loads(meta)
         return meta
     except:
@@ -216,7 +216,7 @@ def create_table(group, name, desc, types, filters=None, expectedrows=None, titl
                                   expectedrows=expectedrows, filters=filters)
 
     meta = {}
-    meta['columns'] = columns or desc.keys()
+    meta['columns'] = columns or list(desc.keys())
     meta['value_types'] = types
     meta['index_name'] = index_name
     meta['name'] = name
@@ -305,7 +305,7 @@ def get_table_index(table, index_name=None, types=None):
 
 def _data_names(data):
     if hasattr(data, 'keys'):
-        return data.keys()
+        return list(data.keys())
 
     if hasattr(data, 'dtype'):
         return data.dtype.names
@@ -350,10 +350,10 @@ def _convert_param(param, base_type=None):
     """
         A well not thought out function to convert params to the proper base type. 
     """
-    if base_type == 'datetime64' and isinstance(param, basestring):
+    if base_type == 'datetime64' and isinstance(param, str):
         return pd.Timestamp(param).value
 
-    if isinstance(param, basestring): # quote the string params
+    if isinstance(param, str): # quote the string params
         param = "'{0}'".format(param)
 
     if isinstance(param, pd.Timestamp): # Timestamp itself is never valid type
@@ -431,7 +431,7 @@ class HDF5Wrapper(object):
         return hdf5_obj_repr(self, self.obj)
 
     def keys(self):
-        return self.obj._v_children.keys()
+        return list(self.obj._v_children.keys())
 
     def meta(self, key=None, value=None):
         meta = _meta(self)
@@ -508,7 +508,7 @@ class HDF5Handle(HDF5Wrapper):
         return self.obj
 
     def keys(self):
-        return self.root._v_children.keys()
+        return list(self.root._v_children.keys())
 
     def reopen(self):
         self.obj = self.open(self.mode)
@@ -701,19 +701,19 @@ class HDF5Table(HDF5Wrapper):
     def add_index(self, col):
         column = self.col(col)
         if not column.is_indexed:
-            print("Creating Index on {0}".format(col))
+            print(("Creating Index on {0}".format(col)))
             num = column.createCSIndex()
-            print("Index created with {0} vals".format(num))
+            print(("Index created with {0} vals".format(num)))
         else:
-            print("Index already exists {0}. Reindex?".format(col))
+            print(("Index already exists {0}. Reindex?".format(col)))
 
     def reindex(self, col):
         column = self.col(col)
         if column.is_indexed:
-            print("Re-indexing on {0}".format(col))
+            print(("Re-indexing on {0}".format(col)))
             column.reIndex()
         else:
-            print("{0} is not indexed".format(col))
+            print(("{0} is not indexed".format(col)))
 
     def reindex_all(self):
         cols = self.table.colnames
@@ -785,7 +785,7 @@ class SimpleIndexer(object):
             rows = slice(rows.start, rows.end, rows.step)
 
         cols = key[1]
-        if isinstance(cols, basestring):
+        if isinstance(cols, str):
             cols = [cols]
 
         # grabbing the straight data. obj is an HDF5Table. obj.obj is table.Table
@@ -821,7 +821,7 @@ def install_ipython_completers():  # pragma: no cover
     @complete_object.when_type(CachingIndex)
     def complete_index(obj, prev_completions):
         return prev_completions + [c for c in dir(obj._index) \
-                    if isinstance(c, basestring) and compat.isidentifier(c)]                                          
+                    if isinstance(c, str) and compat.isidentifier(c)]                                          
 # Importing IPython brings in about 200 modules, so we want to avoid it unless
 # we're in IPython (when those modules are loaded anyway).
 import sys

@@ -38,10 +38,10 @@ class PanelGroupByMap(object):
 
     def apply(self, func, *args, **kwargs):
         result = OrderedDict()
-        for key, df in self.obj.iteritems():
+        for key, df in self.obj.items():
             grp = DataFrameGroupBy(df, grouper=self.grouper)
             f = func
-            if not callable(func):
+            if not isinstance(func, collections.Callable):
                 f = getattr(grp, func)
                 res = f(*args, **kwargs)
             else:
@@ -75,7 +75,7 @@ def foreach_panelgroupby(self, func, *args, **kwargs):
     indices = self.grouper.indices
 
     if isinstance(self.obj, Panel):
-        items = self.obj.iteritems()
+        items = iter(self.obj.items())
     else:
         items = [(None, self.obj)]
 
@@ -83,14 +83,14 @@ def foreach_panelgroupby(self, func, *args, **kwargs):
     for key, df in items:
         sub_results = PanelDict()
         results[key] = sub_results
-        for date, idx in indices.iteritems():
+        for date, idx in indices.items():
             sub_df = df.take(idx)
             res = func(df, sub_df)
             keys.append((key, date))
             values.append(res)
 
     if len(results) == 1:
-        return results.values()[0]
+        return list(results.values())[0]
     return results
 
 def filter_by_grouped(grouped, by, obj=None):
@@ -107,7 +107,7 @@ def filter_by_grouped(grouped, by, obj=None):
 
 def _reverse_flatten(mapping):
     rev_map = dict()
-    for k, vals in mapping.iteritems():
+    for k, vals in mapping.items():
         for v in vals:
             rev_map[v] = k
 
@@ -118,7 +118,7 @@ def _reverse_flatten(mapping):
 def filter_grouper_index(grouped, index, obj):
 
     old_groups = grouped.groups
-    groups = {k:v for k, v in old_groups.iteritems() if k in index}
+    groups = {k:v for k, v in old_groups.items() if k in index}
     rmap = _reverse_flatten(groups)
 
     return obj.groupby(rmap)
@@ -182,21 +182,21 @@ def _wrap_parts(parts):
     """
         parts should be a dict where the keys are the index
     """
-    test = next(parts.itervalues())
+    test = next(iter(parts.values()))
     if np.isscalar(test):
         return pd.Series(parts)
     if isinstance(test, pd.Series):
-        return pd.DataFrame(parts.values(), index=parts.keys())
+        return pd.DataFrame(list(parts.values()), index=list(parts.keys()))
     if isinstance(test, dict):
         # assumption is that dict is like a series
-        res = pd.DataFrame(parts.values(), index=parts.keys())
+        res = pd.DataFrame(list(parts.values()), index=list(parts.keys()))
         if isinstance(test, collections.OrderedDict):
-            res = res.reindex(columns=test.keys())
+            res = res.reindex(columns=list(test.keys()))
         return res
     if isinstance(test, pd.DataFrame):
         return pd.Panel(parts).transpose(2, 0, 1)
     if isinstance(test, ColumnPanel):
-        data = OrderedDict([(k, v.to_panel()) for k, v  in parts.iteritems()])
+        data = OrderedDict([(k, v.to_panel()) for k, v  in parts.items()])
         return Panel4D(data)
     if isinstance(test, Panel):
         return Panel4D(data)
@@ -232,7 +232,7 @@ def subset(self, key):
 
 if __name__ == '__main__':
     ind =  pd.date_range(start="1990-01-01", freq="H", periods=10000)
-    df = pd.DataFrame({'high': range(len(ind)), 'open': np.random.randn(len(ind))}, index=ind)
+    df = pd.DataFrame({'high': list(range(len(ind))), 'open': np.random.randn(len(ind))}, index=ind)
     grouped = df.downsample('D', closed="left")
     pos = grouped['open'].mean() > 0
     res = filter_by_grouped(grouped, pos)

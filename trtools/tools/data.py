@@ -6,7 +6,7 @@ import numpy as np
 def convert_item(obj):
     if not isinstance(obj, collections.Iterable):
         return obj
-    if isinstance(obj, basestring):
+    if isinstance(obj, str):
         return obj
 
     if isinstance(obj, (np.ndarray, pd.Series, pd.DataFrame, pd.Panel)):
@@ -28,7 +28,7 @@ class DataDict(object):
         self.update(items)
 
     def update(self, items):
-        for k,v in items.iteritems():
+        for k,v in items.items():
             v = convert_item(v)
             self._data[k] = v
 
@@ -38,4 +38,4 @@ class DataDict(object):
         raise AttributeError()
 
     def __repr__(self):
-        return "Keys :" + repr(self._data.keys())
+        return "Keys :" + repr(list(self._data.keys()))

@@ -14,7 +14,7 @@ class StoreResultHandler(object):
     def __init__(self, store, store_key):
         self.store = store
 
-        if isinstance(store_key, basestring):
+        if isinstance(store_key, str):
             store_key = operator.attrgetter(store_key)
         if store_key is None:
             store_key = lambda x: x
@@ -70,7 +70,7 @@ class DataPanel(object):
     def remaining_jobs(self):
         done = None
         if hasattr(self.store, 'keys'):
-            done = self.job_trans(self.store.keys()) # most stores will enforce int/str
+            done = self.job_trans(list(self.store.keys())) # most stores will enforce int/str
         if not done:
             return self.jobs
 

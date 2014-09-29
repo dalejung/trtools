@@ -6,8 +6,9 @@ import numpy as np
 
 import trtools.tools.composition as composition
 import trtools.core.dataset as dataset
+import imp
 
-reload(dataset)
+imp.reload(dataset)
 
 ind = pd.date_range(start="1/1/2000", freq="D", periods=100)
 df = pd.DataFrame({'test':np.arange(len(ind))}, index=ind)

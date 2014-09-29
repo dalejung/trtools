@@ -14,7 +14,7 @@ class CachingDict(object):
         self.load()
 
     def keys(self):
-        return self._dict.keys()
+        return list(self._dict.keys())
 
     def update(self, *args, **kwargs):
         self._dict.update(*args, **kwargs)
@@ -56,4 +56,4 @@ class CachingDict(object):
         return key in self._dict
 
     def __len__(self):
-        return len(self.keys())
+        return len(list(self.keys()))

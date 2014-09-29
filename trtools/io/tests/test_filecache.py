@@ -1,5 +1,5 @@
 from unittest import TestCase
-from StringIO import StringIO
+from io import StringIO
 
 from trtools.util.tempdir import TemporaryDirectory
 import trtools.io.filecache as fc
@@ -58,7 +58,7 @@ class TestMetaFileCache(TestCase):
 
             # this one should load keys from index file
             mfc2 = fc.MetaFileCache(td)
-            for a,b in zip( mfc2.keys(), mfc.keys()):
+            for a,b in zip( list(mfc2.keys()), list(mfc.keys())):
                 assert a.key == b.key
 
 if __name__ == '__main__':                                                                                          

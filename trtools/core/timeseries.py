@@ -337,7 +337,7 @@ class Downsample(object):
         return wrap
 
     def _completers(self):
-        return [k.replace('-', '_') for k in _offset_map.keys() if k]
+        return [k.replace('-', '_') for k in list(_offset_map.keys()) if k]
 
 
 @patch_prop([DataFrame, Series], 'downsample')
@@ -432,7 +432,7 @@ def install_ipython_completers():  # pragma: no cover
     @complete_object.when_type(Downsample)
     def complete_column_panel(self, prev_completions):
         return [c for c in self._completers() \
-                    if isinstance(c, basestring) and compat.isidentifier(c)]
+                    if isinstance(c, str) and compat.isidentifier(c)]
 # Importing IPython brings in about 200 modules, so we want to avoid it unless
 # we're in IPython (when those modules are loaded anyway).
 import sys
