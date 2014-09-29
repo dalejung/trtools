@@ -261,19 +261,19 @@ class OBTGroup(HDFPanelGroup):
     def add_index(self, col):
         column = self.col(col)
         if not column.is_indexed:
-            print("Creating Index on {0}".format(col))
+            print(("Creating Index on {0}".format(col)))
             num = column.createCSIndex()
-            print("Index created with {0} vals".format(num))
+            print(("Index created with {0} vals".format(num)))
         else:
-            print("Index already exists {0}. Reindex?".format(col))
+            print(("Index already exists {0}. Reindex?".format(col)))
 
     def reindex(self, col):
         column = self.col(col)
         if column.is_indexed:
-            print("Re-indexing on {0}".format(col))
+            print(("Re-indexing on {0}".format(col)))
             column.reIndex()
         else:
-            print("{0} is not indexed".format(col))
+            print(("{0} is not indexed".format(col)))
 
     def reindex_all(self):
         cols = self.table.colnames

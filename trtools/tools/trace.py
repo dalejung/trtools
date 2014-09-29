@@ -32,7 +32,7 @@ class Tdb(Pdb):
             return self.trace_dispatch
         if event == 'c_return':
             return self.trace_dispatch
-        print('bdb.Bdb.dispatch: unknown debugging event:', repr(event))
+        print(('bdb.Bdb.dispatch: unknown debugging event:', repr(event)))
         return self.trace_dispatch
 
 

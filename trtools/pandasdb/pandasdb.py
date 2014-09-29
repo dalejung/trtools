@@ -34,7 +34,7 @@ class PandasTable(object):
         if isinstance(data, pd.DataFrame):
             df = data
         else:
-            print 'loading from cache'
+            print('loading from cache')
             df = tio.load(data)
         self._df = df
 

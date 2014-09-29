@@ -31,14 +31,14 @@ def farm(tasks, num_consumers=None, verbose=False, result_handler=missing, proce
     print(result_handler)
 
     # Start consumers
-    print('Starting farming tasks at:{time}'.format(time=datetime.datetime.now()))
-    print('Creating %d consumers' % num_consumers)
+    print(('Starting farming tasks at:{time}'.format(time=datetime.datetime.now())))
+    print(('Creating %d consumers' % num_consumers))
     consumers = [ DataProcess(task_queue, result_queue, verbose=verbose,
                               process_vars=process_vars)
                   for i in xrange(num_consumers) ]
 
     num_jobs = len(tasks)
-    print('Creating Task Queue %d items' % num_jobs)
+    print(('Creating Task Queue %d items' % num_jobs))
     # fill queue
 
     if len(tasks) > MAX_SIZE:
@@ -69,7 +69,7 @@ def farm(tasks, num_consumers=None, verbose=False, result_handler=missing, proce
                 result_handler(r)
             jobs_processed += 1
             if jobs_processed % bins == 0:
-                print("{0} jobs processed".format(jobs_processed))
+                print(("{0} jobs processed".format(jobs_processed)))
 
     return result_handler
 
@@ -113,7 +113,7 @@ class DataProcess(mp.Process):
         while self._process_queue():
             self.jobs_complete += 1
             pass
-        print('%s: Exiting' % self.name)
+        print(('%s: Exiting' % self.name))
         self.result_queue.put(None)
         return
 
@@ -124,7 +124,7 @@ class DataProcess(mp.Process):
             # Poison pill means we should exit
             return False
         if self.verbose:
-            print(str(self)+'Processing '+str(task)+' Jobs Complete: '+str(self.jobs_complete))
+            print((str(self)+'Processing '+str(task)+' Jobs Complete: '+str(self.jobs_complete)))
 
         data = []
         for t in task:

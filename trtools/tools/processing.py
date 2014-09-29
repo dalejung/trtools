@@ -17,7 +17,7 @@ class DataPanelTask(parallel.Task):
             result = self.run_job()
         except Exception as e:
             result = (self.job, None)
-            print("Error: job: {0} {1}".format(self.job, str(e)))
+            print(("Error: job: {0} {1}".format(self.job, str(e))))
         return result
 
     def run_job(self):

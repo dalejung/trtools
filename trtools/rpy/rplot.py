@@ -72,7 +72,7 @@ def process_plots(temp_dir):
         plot_image(image)
 
     if images:
-        print 'RPlot processed {count} images'.format(count=len(images))
+        print('RPlot processed {count} images'.format(count=len(images)))
     plt.show()
     rmtree(temp_dir)
 

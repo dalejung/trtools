@@ -50,7 +50,7 @@ class RFunction(object):
         return self.func.r_repr()
 
     def code(self):
-        print self._code()
+        print(self._code())
 
     def __repr__(self):
         env_name = ""
@@ -111,7 +111,7 @@ class DotWrapper(object):
             try:
                 setattr(self, bits[1], func)
             except:
-                print "{0} failed to bind".format(r_name)
+                print("{0} failed to bind".format(r_name))
 
     def __call__(self, *args, **kwargs):
         func = self.base_func

@@ -20,7 +20,7 @@ class cacher(object):
     def check_dirs(self):
         dir, _ = os.path.split(self.filepath)
         if not os.path.exists(dir):
-            print("Making dirs: %s" % dir)
+            print(("Making dirs: %s" % dir))
             os.makedirs(dir)
 
     def __call__(self, func):
@@ -60,7 +60,7 @@ class cacher(object):
 
     def load(self):
         try:
-            print('Loading %s' % self.filepath)
+            print(('Loading %s' % self.filepath))
             with open(self.filepath) as f:
                 self.cache = pickle.load(f)
         except IOError:

@@ -36,7 +36,7 @@ def rrepr(obj):
     return out 
 
 def printr(obj):
-    print rrepr(obj)
+    print(rrepr(obj))
 
 class RObjectWrapper(object):
     """
