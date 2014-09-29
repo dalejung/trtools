@@ -48,7 +48,7 @@ class Timer:
         self.wall_interval = self.wall_end - self.wall_start
 
         if self.verbose:
-            print self.msg
+            print(self.msg)
 
     @property
     def msg(self):

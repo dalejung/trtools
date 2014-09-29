@@ -1,8 +1,9 @@
 import collections
 import functools
-import cPickle as pickle
 import os.path
 import os
+
+from trtools.compat import pickle
 
 class cacher(object):
     '''Decorator. Caches a function's return value each time it is called.
@@ -19,7 +20,7 @@ class cacher(object):
     def check_dirs(self):
         dir, _ = os.path.split(self.filepath)
         if not os.path.exists(dir):
-            print "Making dirs: %s" % dir
+            print("Making dirs: %s" % dir)
             os.makedirs(dir)
 
     def __call__(self, func):
@@ -30,7 +31,7 @@ class cacher(object):
                 self.first_run = True
 
             if not isinstance(args, collections.Hashable):
-                print 'not cacheable'
+                print('not cacheable')
                 # uncacheable. a list, for instance.
                 # better to not cache than blow up.
                 return func(*args)
@@ -41,7 +42,7 @@ class cacher(object):
                 key = hash(args)
 
             if key in self.cache:
-                print 'return from cache'
+                print('return from cache')
                 return self.cache[key]
             else:
                 value = func(*args)
@@ -59,11 +60,11 @@ class cacher(object):
 
     def load(self):
         try:
-            print 'Loading %s' % self.filepath
+            print('Loading %s' % self.filepath)
             with open(self.filepath) as f:
                 self.cache = pickle.load(f)
         except IOError:
-            print 'Cache file does not exist'
+            print('Cache file does not exist')
 
     def __repr__(self):
         '''Return the function's docstring.'''

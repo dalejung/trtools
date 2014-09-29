@@ -1,5 +1,6 @@
-import cPickle as pickle
 from contextlib import closing
+
+from trtools.compat import pickle
 
 class CachingDict(object):
     """

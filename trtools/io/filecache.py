@@ -1,11 +1,10 @@
 import os
 import types
 import glob
-import cPickle as pickle
-from itertools import izip
 
 import pandas as pd
 
+from trtools.compat import izip, pickle
 from trtools.io.common import _filename
 import trtools.tools.datapanel as datapanel
 
@@ -92,10 +91,10 @@ class MetaFileCache(FileCache):
         Parameters:
             leveled : bool / int
                 Determines the folder hierarchy. False will create a flat hierarchy. Otherwise this value
-                determines the depth. We are assuming the key is iterable which will determine the 
+                determines the depth. We are assuming the key is iterable which will determine the
                 level values.
 
-        Example: 
+        Example:
             a key of ('HI', 1, 3) and leveled = 2 would create a file
             /cache_dir/HI/1/HI_1_3
             Assuming that HI_1_3 is the filename
@@ -140,7 +139,7 @@ class MetaFileCache(FileCache):
     def add_key(self, key, filename=None):
         if filename is None:
             filename = self.get_filename(key)
-        # meh storing relative path. Feels like i'm doing a lot of 
+        # meh storing relative path. Feels like i'm doing a lot of
         # extra work here
         relpath = os.path.relpath(filename, self.cache_dir)
         self._keys[key] = relpath
@@ -186,7 +185,7 @@ def leveled_filename(fc, name, length=1):
 class LeveledFileCache(FileCache):
     def __init__(self, cache_dir, length=1, *args, **kwargs):
         self.length = length
-        super(LeveledFileCache, self).__init__(cache_dir, *args, **kwargs) 
+        super(LeveledFileCache, self).__init__(cache_dir, *args, **kwargs)
 
     def get_filename(self, name):
         return leveled_filename(self, name, self.length)

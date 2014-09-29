@@ -201,4 +201,4 @@ class Follow(object):
         output = df.apply(format, axis=1, raw=True)
 
         for s in output.values:
-            print s
+            print(s)

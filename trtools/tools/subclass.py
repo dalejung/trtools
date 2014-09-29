@@ -51,7 +51,7 @@ class MetaPandas(type):
             new_attrs.update(dct)
 
         # attach functions needed for subclassing to work
-        meta_funcs = [(attr, meth) for attr, meth in cls.__dict__.items() 
+        meta_funcs = [(attr, meth) for attr, meth in cls.__dict__.items()
                       if not attr.startswith('__')]
         new_attrs.update(meta_funcs)
         return super(MetaPandas, cls).__new__(cls, name, bases, new_attrs)
@@ -78,8 +78,8 @@ class MetaPandas(type):
         attr = getattr(super(SubFrame, self), name)
         res = attr
         if callable(attr):
-            res = attr(*args, **kwargs) 
-        # maybe need better way to tell when to wrap?    
+            res = attr(*args, **kwargs)
+        # maybe need better way to tell when to wrap?
         # do not wrap subclasses of UserFrame/UserSeries
         if isinstance(res, type(self).__pandas_cls__) and \
            not isinstance(res, (UserFrame)):
@@ -93,30 +93,3 @@ class MetaPandas(type):
                 new_dict[k] = d[k]
         return res
 
-
-class SubFrame(pd.DataFrame):
-    __metaclass__ = MetaPandas
-    __pandas_cls__ = pd.DataFrame
-
-    def sub_frame(self):
-        print 'sub'
-
-class SubSeries(pd.Series):
-    __metaclass__ = MetaPandas
-    __pandas_cls__ = pd.Series
-
-    def __new__(cls, *args, **kwargs):
-        instance = pd.Series.__new__(cls, *args, **kwargs)
-        return instance.view(cls)
-
-class UserFrame(SubFrame):
-    def user_frame(self):
-        pass
-
-    def sub_frame(self):
-        print 'user'
-
-
-data = np.random.randn(100)
-uf = UserFrame(data.reshape(10, 10))
-#s = SubSeries(range(10))

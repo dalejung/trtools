@@ -2,7 +2,7 @@ import multiprocessing as mp
 import math
 import datetime
 
-default_consumers = mp.cpu_count() * 2 
+default_consumers = mp.cpu_count() * 2
 
 def chunker(seq, size):
         return (seq[pos:pos + size] for pos in xrange(0, len(seq), size))
@@ -28,17 +28,17 @@ def farm(tasks, num_consumers=None, verbose=False, result_handler=missing, proce
     task_queue = mp.Queue()
     result_queue = mp.Queue()
 
-    print result_handler
+    print(result_handler)
 
     # Start consumers
-    print 'Starting farming tasks at:{time}'.format(time=datetime.datetime.now())
-    print 'Creating %d consumers' % num_consumers
-    consumers = [ DataProcess(task_queue, result_queue, verbose=verbose, 
+    print('Starting farming tasks at:{time}'.format(time=datetime.datetime.now()))
+    print('Creating %d consumers' % num_consumers)
+    consumers = [ DataProcess(task_queue, result_queue, verbose=verbose,
                               process_vars=process_vars)
                   for i in xrange(num_consumers) ]
 
     num_jobs = len(tasks)
-    print 'Creating Task Queue %d items' % num_jobs
+    print('Creating Task Queue %d items' % num_jobs)
     # fill queue
 
     if len(tasks) > MAX_SIZE:
@@ -49,7 +49,7 @@ def farm(tasks, num_consumers=None, verbose=False, result_handler=missing, proce
     for task in tasks:
         task_queue.put(task, False)
 
-    print 'starting process'
+    print('starting process')
     start_process(task_queue, consumers)
 
     # Start printing results
@@ -62,14 +62,14 @@ def farm(tasks, num_consumers=None, verbose=False, result_handler=missing, proce
             num_consumers -= 1
             continue
         # We send jobs in batches.
-        # call result_handler independently to hide implementation from 
+        # call result_handler independently to hide implementation from
         # client
         for r in result:
             if result_handler is not None:
-                result_handler(r)       
+                result_handler(r)
             jobs_processed += 1
             if jobs_processed % bins == 0:
-                print "{0} jobs processed".format(jobs_processed)
+                print("{0} jobs processed".format(jobs_processed))
 
     return result_handler
 
@@ -107,13 +107,13 @@ class DataProcess(mp.Process):
         self.verbose = verbose
         if process_vars:
             for k, v in process_vars.items():
-                setattr(self, k, v) 
+                setattr(self, k, v)
 
     def run(self):
         while self._process_queue():
             self.jobs_complete += 1
             pass
-        print '%s: Exiting' % self.name
+        print('%s: Exiting' % self.name)
         self.result_queue.put(None)
         return
 
@@ -124,7 +124,7 @@ class DataProcess(mp.Process):
             # Poison pill means we should exit
             return False
         if self.verbose:
-            print str(self)+'Processing '+str(task)+' Jobs Complete: '+str(self.jobs_complete)
+            print(str(self)+'Processing '+str(task)+' Jobs Complete: '+str(self.jobs_complete))
 
         data = []
         for t in task:

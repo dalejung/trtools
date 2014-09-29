@@ -1,4 +1,4 @@
-import trtools.tools.parallel as parallel 
+import trtools.tools.parallel as parallel
 
 from trtools.common import missing
 
@@ -17,7 +17,7 @@ class DataPanelTask(parallel.Task):
             result = self.run_job()
         except Exception as e:
             result = (self.job, None)
-            print "Error: job: {0} {1}".format(self.job, str(e))
+            print("Error: job: {0} {1}".format(self.job, str(e)))
         return result
 
     def run_job(self):
@@ -66,7 +66,7 @@ class DataProcessor(object):
         wrap_func = func
         if isinstance(func, basestring): # easy support of calling methods on data
             wrap_func = lambda df: getattr(df, func)()
-            
+
         batch = self.jobs
         return self._process(batch, wrap_func, *args, **kwargs)
 
@@ -99,7 +99,7 @@ class ParallelDataProcessor(DataProcessor):
             # split up here so we don't have to job, data = result
             result_wrap = lambda result: result_handler(result[0], result[1])
 
-        parallel.farm(tasks, num_consumers=num_consumers, verbose=verbose, 
+        parallel.farm(tasks, num_consumers=num_consumers, verbose=verbose,
                             result_handler=result_wrap, process_vars=process_vars)
         return result_handler
 
