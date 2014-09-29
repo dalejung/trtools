@@ -1,7 +1,5 @@
 import warnings
 from collections import OrderedDict
-from itertools import izip
-import cPickle as pickle
 from datetime import time
 
 import tables as tb
@@ -10,6 +8,7 @@ import pandas.lib as lib
 import numpy as np
 import pandas.io.pytables as pdtables
 
+from trtools.compat import izip, pickle
 from trtools.io.common import _filename
 from trtools.io.table_indexing import create_slices
 

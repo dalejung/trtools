@@ -19,7 +19,7 @@ def _column_picker(attr, objects):
     getter = attr
     if not callable(getter):
         getter = functools.partial(_getter, attr=attr)
-    data = map(getter, objects)
+    data = list(map(getter, objects))
     return data
 
 def _process_attrs(attrs):

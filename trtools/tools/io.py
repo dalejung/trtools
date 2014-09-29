@@ -1,4 +1,4 @@
-import cPickle as pickle
+from trtools.compat import pickle
 
 def save(obj, path_or_buffer):
     if isinstance(path_or_buffer, basestring):

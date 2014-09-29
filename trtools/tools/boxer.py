@@ -18,7 +18,7 @@ def box_data(keys, data=None):
     if isinstance(keys, dict):
         rdict = keys
     else:
-        rdict = OrderedDict(zip(keys, data))
+        rdict = OrderedDict(list(zip(keys, data)))
 
     test = next(rdict.itervalues())
     if np.isscalar(test):

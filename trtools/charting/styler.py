@@ -13,7 +13,7 @@ def styler():
 
     # cycle through
     while True:
-        yield dict(zip(('linestyle', 'color'), styles.next()))
+        yield dict(list(zip(('linestyle', 'color'), styles.next())))
 
 def marker_styler():
     """
@@ -23,7 +23,7 @@ def marker_styler():
 
     # cycle through
     while True:
-        yield dict(zip(('linestyle', 'marker', 'color'), styles.next()))
+        yield dict(list(zip(('linestyle', 'marker', 'color'), styles.next())))
 
 class StyleCategory(object):
     def __init__(self, name, values):
@@ -56,4 +56,4 @@ def level_styler(linestyle=None, color=None, marker=None):
         styles[k] = style_values
 
     keys = styles.keys()
-    return [dict(zip(keys, st)) for st in itertools.izip(*styles.values())]
+    return [dict(list(zip(keys, st))) for st in itertools.izip(*styles.values())]

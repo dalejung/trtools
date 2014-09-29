@@ -58,7 +58,7 @@ class TestMultiIndexGetter(TestCase):
 
 def dict_cols():
     df = pd.DataFrame(np.random.randn(N, N), index=ind)
-    cols = [dict(zip(('limit', 'stop', 'target'), vals)) for vals in sets]
+    cols = [dict(list(zip(('limit', 'stop', 'target'), vals))) for vals in sets]
     df.columns = cols
     ogetter = ObjectIndexGetter(df, attr='columns')
     return df, ogetter
@@ -69,7 +69,7 @@ def object_cols():
             for k, v in dct.items():
                 setattr(self, k, v)
 
-    dicts = [dict(zip(('limit', 'stop', 'target'), vals)) for vals in sets]
+    dicts = [dict(list(zip(('limit', 'stop', 'target'), vals))) for vals in sets]
     cols = [Object(d)  for d in dicts]
 
     df = pd.DataFrame(np.random.randn(N, N), index=ind)

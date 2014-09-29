@@ -1,2 +1,2 @@
-from pandasdb import *
-from pandassql import *
+from .pandasdb import *
+from .pandassql import *

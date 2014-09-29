@@ -13,11 +13,12 @@
 """
 import itertools
 import os.path
-import cPickle as pickle
 import functools
 
 import pandas as pd
-from hdf5_store import HDFFile, OBTFile
+
+from .hdf5_store import HDFFile, OBTFile
+from trtools.compat import izip, pickle
 
 def bundle_filepath(path):
     """
