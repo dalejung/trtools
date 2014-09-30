@@ -63,8 +63,6 @@ class TestComposition(TestCase):
 
         arr = np.array(list(range(10)))
         arrs = pd.Series(arr)
-        arrus = arr.view(UserSeries)
-        tm.assert_series_equal(arrs, arrus)
 
     def test_datetime_us_view(self):    
         data = list(range(0, 10))
@@ -75,10 +73,6 @@ class TestComposition(TestCase):
 
         arr = np.array(list(range(10)))
         arrs = pd.Series(arr)
-        arrus = arr.view(UserSeries)
-        tm.assert_series_equal(arrs, arrus)
-
-        us.view(UserSeries)
 
     def test_userframe(self):
         import trtools.core.dataset as dataset# instlal monkey patch
@@ -142,7 +136,7 @@ class TestComposition(TestCase):
 
         df = tm.makeDataFrame()
         fr = CommonFrame(df)
-        tm.assert_almost_equal(fr, df)
+        tm.assert_almost_equal(fr.values, df.values)
         assert fr.bob is bob
         assert fr.tail().bob is bob
 

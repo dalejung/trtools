@@ -65,7 +65,6 @@ def _tile_inds(s, bins, labels=False, retbins=True, infinite=True):
         #if (np.diff(bins) < 0).any():
         #    raise ValueError('bins must increase monotonically.')
         ind, label = inf_bins_to_cuts(s, bins)
-    
 
     # build out ranges
     ranges = []
@@ -81,7 +80,11 @@ def _tile_inds(s, bins, labels=False, retbins=True, infinite=True):
 
     #ind = ind.astype(int)
     ind[s.isnull().values] = -1
-    return Categorical(ind, ranges)
+    # fastpath=True to skip the hashmap indexing. 
+    # The code generator will check identity, which won't match because
+    # ind is an int position vector and ranges is a list of objects.
+    # if fastpath is off, then it'll look like none of the values match
+    return Categorical(ind, ranges, fastpath=True)
 
 def tile(s, bins, labels=False, retbins=True, infinite=True):
     new_index = _tile_inds(s, bins, labels=labels, retbins=retbins, infinite=infinite)
@@ -126,3 +129,9 @@ def tile_df(self, bins, col):
     ind = _tile_inds(series, bins)
     return self.groupby(ind)
 
+
+import pandas as pd
+arr = np.arange(10)
+data = pd.Series(arr)
+bins = [2, 4]
+ret = tile(data, bins)

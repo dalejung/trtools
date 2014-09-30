@@ -14,6 +14,10 @@ class TestKey(object):
             return self.string == other
         return self.number == other
 
+    # http://stackoverflow.com/questions/1608842/types-that-define-eq-are-unhashable-in-python-3-x
+    def __hash__(self):
+        return id(self)
+
 class TestAPI(TestCase):
 
     def __init__(self, *args, **kwargs):
