@@ -1,6 +1,7 @@
 from unittest import TestCase
 import os.path
-from io import StringIO
+
+from trtools.compat import BytesIO
 
 import trtools.io.caching_dict as cdict
 
@@ -8,7 +9,7 @@ def curpath():
     pth, _ = os.path.split(os.path.abspath(__file__))
     return pth
 
-class FakeFile(StringIO):
+class FakeFile(BytesIO):
     """
         Pretty Flimsy fake file. 
         assumes all writes are non-append
@@ -20,8 +21,8 @@ class FakeFile(StringIO):
 
     def write(self, data):
         FakeFile._data = data
-        StringIO.flush(self)
-        StringIO.write(self, data)
+        BytesIO.flush(self)
+        BytesIO.write(self, data)
 
 class TestDict(cdict.CachingDict):
     fakefile = FakeFile()

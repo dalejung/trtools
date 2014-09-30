@@ -72,8 +72,6 @@ class TestPyTables(TestCase):
                 # if properly throwing erros, we should never reach here
                 tm.assert_frame_equal(temp, df, "dataframe returned from HDF is different")
 
-
-
 if __name__ == '__main__':                                                                                          
     import nose                                                                      
     nose.runmodule(argv=[__file__,'-vvs','-x','--pdb', '--pdb-failure'],exit=False)   

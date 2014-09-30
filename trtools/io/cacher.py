@@ -55,7 +55,7 @@ class cacher(object):
         return wrapper
 
     def save(self):
-        with open(self.filepath, 'w') as f:
+        with open(self.filepath, 'wb') as f:
             pickle.dump(self.cache, f)
 
     def load(self):

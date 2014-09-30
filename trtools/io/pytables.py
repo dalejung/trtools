@@ -76,13 +76,15 @@ def _convert_obj(obj):
         converted = values.view('i8')
         return converted, inferred_type, tb.Int64Atom()
     if inferred_type == 'string':
-        converted = np.array(list(values), dtype=np.str_)
+        # TODO, am I doing this right?
+        converted = np.array(list(values), dtype=np.bytes_)
         itemsize = converted.dtype.itemsize
         # for OBT, can't assume value will be right for future
         # frame keys
         if itemsize < MIN_ITEMSIZE:
             itemsize = MIN_ITEMSIZE
             converted = converted.astype("S{0}".format(itemsize))
+
         return converted, inferred_type, tb.StringAtom(itemsize)
     elif inferred_type == 'unicode':
         # table's don't seem to support objects
@@ -354,7 +356,7 @@ def _convert_param(param, base_type=None):
         return pd.Timestamp(param).value
 
     if isinstance(param, str): # quote the string params
-        param = "'{0}'".format(param)
+        param = "{0}".format(param.encode('UTF8'))
 
     if isinstance(param, pd.Timestamp): # Timestamp itself is never valid type
         param = param.value

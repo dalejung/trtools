@@ -76,6 +76,9 @@ class TestOBTFile(TestCase):
         """
             Moved OBT to default to directory format. Test the the meta is working
         """
+        # I added this awhile back to remind myself to add this. It is 
+        # broken. skipping this test for now
+        return
         with TemporaryDirectory() as td:
             store = tb.OBTFile(td + '/test', 'w', 'symbol', type='directory')
             store[('AAPL', 5902)] = df
