@@ -203,6 +203,8 @@ def _index_name_frame(df):
 def unconvert_obj(values, type):
     if type == 'datetime64':
         return values.astype("M8[ns]")
+    if type == 'string':
+        return values.astype(np.unicode_)
 
     return values
 

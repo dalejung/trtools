@@ -31,6 +31,12 @@ class PanelDict(OrderedDict):
     def __repr__(self):
         return repr(Series(list(self.keys())))
 
+    def iteritems(self):
+        # We used to use panel.items, but had to change since items is now
+        # the items axis. also, py3 doesn't have iteritems anymore, so
+        # __getattr__ logic won't match
+        return iter(self.items())
+
     def __getattr__(self, key):
         try:
             return super(PanelDict, self).__getattr__(key)
@@ -40,6 +46,9 @@ class PanelDict(OrderedDict):
             # removing this results in recursion error
             if key == '_OrderedDict__root':
                 raise
+
+        if key.startswith('__'):
+            raise AttributeError("PanelDict does not propogate magic methods")
 
         test = next(iter(self.values()))
         func = getattr(test, key, None)
@@ -56,12 +65,13 @@ def apply_cp(self, func, *args, **kwargs):
         based on return
     """
     data = PanelDict() 
-    for key, df in self.items():
+    for key, df in self.iteritems():
         data[key] = func(df, *args, **kwargs)
 
     if len(data) == 0:
         return 
 
+    assert not hasattr(data, '__array__')
     data = _box_items(data)
     return data
 
@@ -98,7 +108,7 @@ class ColumnPanelMapper(object):
         return self[key]
 
     def __getitem__(self, key):
-        _, test = next(iter(self.obj.items()))
+        _, test = next(iter(self.obj.iteritems()))
         func = getattr(test, key, None)
         if func is None:
             raise AttributeError("{0} not a method".format(key))
@@ -313,7 +323,7 @@ class ColumnPanel(object):
         if self._frames is None:
             self._frames = OrderedDict()
             if self._panel is not None:
-                for name, df in self._panel.items():
+                for name, df in self._panel.iteritems():
                     self._frames[name] = df
                     self._panel = None
         return self._frames
@@ -586,7 +596,6 @@ class ColumnPanel(object):
             df = store.obt.ix[:]
             panel = df.to_panel()
             panel = panel.swapaxes('minor', 'items')
-            # convert csinums to stock objects
             return ColumnPanel(panel)
         finally:
             store.close()

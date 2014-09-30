@@ -27,7 +27,7 @@ class TestBinning(TestCase):
                            'close': np.random.randn(len(ind))}, index=ind)
         grouper = df.downsample('D').grouper
 
-        t1 = df.downsample('D').transform(zscore)
+        t1 = df.downsample('D').apply(zscore)
         t2 = binning.apply_put_frame(df, grouper, zscore)
         tm.assert_frame_equal(t1, t2)
 
@@ -35,6 +35,7 @@ class TestBinning(TestCase):
         topen = binning.apply_put(df, grouper, {'open':zscore})
         assert len(topen.columns) == 1
         tm.assert_series_equal(t2['open'], topen['open'])
+
 
 if __name__ == '__main__':                                                                                          
     import nose                                                                      

@@ -4,15 +4,15 @@ import numpy as np
 import pandas as pd
 from pandas.util.testing import *
 
-from trtools.compat import StringIO
+from trtools.compat import StringIO, BytesIO
 from trtools.core.api import ColumnPanel
 
-class TestStringIO(StringIO):
+class TestStringIO(BytesIO):
     def close(self):
         pass
 
     def free(self):
-        StringIO.close(self)
+        BytesIO.close(self)
 
 class Timer:
     """

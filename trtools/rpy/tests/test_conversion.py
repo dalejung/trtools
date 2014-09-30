@@ -59,7 +59,7 @@ class TestConversion(TestCase):
 
         # test converting back 'UTC'
         dt = conv.convert_posixct_to_index(ri)
-        tm.assert_almost_equal(dt, ind,)
+        tm.assert_almost_equal(dt.values, ind.values)
 
         # test 'US/Eastern'
         # At one point this failed due to DatetimeIndex being 
@@ -69,7 +69,7 @@ class TestConversion(TestCase):
         dt = conv.convert_posixct_to_index(ri)
         assert dt.tz.zone == 'US/Eastern'
         assert ind.tz is None
-        tm.assert_almost_equal(dt, ind)
+        tm.assert_almost_equal(dt.values, ind.values)
 
         ind = ind.tz_localize('UTC')
         est_ind = ind.tz_convert('US/Eastern')
