@@ -92,7 +92,7 @@ class DotWrapper(object):
         self._name = name
         self._pkg = pkg
         self._subgroup = self._pkg.subgroup(name)
-        self._funcs = self._subgroup.__name__.unique()
+        self._funcs = self._subgroup.func_name.unique()
 
         # init __doc__ if base func exists
         r_name = self._name

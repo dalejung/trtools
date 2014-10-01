@@ -11,9 +11,6 @@ import trtools.rpy.rplot as rplot
 
 rplot.patch_call()
 
-robjects.conversion.ri2py = robjects.default_ri2py
-
-
 def pd_py2ri(o):
     """ 
     """

@@ -180,8 +180,8 @@ class Follow(object):
     def pprint(self, depth=None):
         df = self.to_frame()
         mask = df.filename == ''
-        mask = mask | df.__name__.isin(['<lambda>', '<genexpr>'])
-        mask = mask | df.__name__.str.startswith('__')
+        mask = mask | df.func_name.isin(['<lambda>', '<genexpr>'])
+        mask = mask | df.func_name.str.startswith('__')
         if depth:
             mask = mask | (df.indent > depth)
 

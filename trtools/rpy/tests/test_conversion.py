@@ -50,7 +50,7 @@ class TestConversion(TestCase):
         assert ri.do_slot('tzone')[0] == 'UTC'
 
         # convert back to datetime
-        conv_dates = pd.Series(ri).astype(np.dtype('M8[s]'))
+        conv_dates = pd.Series(np.array(ri)).astype(np.dtype('M8[s]'))
         tm.assert_almost_equal(conv_dates, ind)
 
     def test_convert_posixct_to_index(self):
