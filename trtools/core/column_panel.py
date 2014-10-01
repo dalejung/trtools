@@ -432,7 +432,10 @@ class ColumnPanel(object):
             del self._cache[key]
 
     def __getattr__(self, key):
-        return self[key]
+        try:
+            return self[key]
+        except:
+            raise AttributeError()
 
     def __getitem__(self, key):
         if isinstance(key, tuple):
