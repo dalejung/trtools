@@ -3,6 +3,7 @@ import pandas.rpy.common as rcom
 
 import rpy2.robjects as robjects
 from rpy2.robjects.vectors import SexpVector, ListVector, StrSexpVector
+import rpy2.robjects.numpy2ri as numpy2ri
 
 import trtools.rpy.conversion as rconv 
 import trtools.rpy.tools as rtools
@@ -31,7 +32,10 @@ def pd_py2ri(o):
         res = rconv.convert_timestamp(o)
         
     if res is None:
-        res = robjects.default_py2ri(o)
+        try:
+            res = numpy2ri.py2ri(o)
+        except:
+            res = robjects.default_converter.py2ri(o)
 
     return res
 
