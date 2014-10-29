@@ -14,7 +14,7 @@ def intdate_parse(dates):
     days = dates % 100 - 1
     months = (dates % 10000) // 100 - 1
     dt = years.astype('M8[M]') + months
-    dt = dt.astype('M8[D]') + days
+    dt = dt.values.astype('M8[D]') + days
     return dt
 
 def add_times(dt, times, shift=None):
@@ -31,7 +31,7 @@ def add_times(dt, times, shift=None):
     total_minutes = hours * 60 + times % 100
     if shift:
         total_minutes += shift
-    dt = dt.astype('M8[m]') + total_minutes.values
+    dt = dt.values.astype('M8[m]') + total_minutes.values
     dt = pd.DatetimeIndex(dt)
     return dt
 

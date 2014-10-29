@@ -52,8 +52,10 @@ class DataPanel(object):
             self.store.delete_all()
 
         jobs = self.remaining_jobs()
-        if num > 0:
-            jobs = jobs[:num]
+
+        if num is None:
+            num = len(jobs)
+        jobs = jobs[:num]
 
         processor = self.get_processor(jobs, parallel=parallel)
         processor.process(func, *args, **kwargs)
