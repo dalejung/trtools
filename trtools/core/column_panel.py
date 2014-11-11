@@ -432,6 +432,11 @@ class ColumnPanel(object):
             del self._cache[key]
 
     def __getattr__(self, key):
+        # without this, notebook will aggregate all the frames
+        # html reprs. really slow.
+        if key in ('_repr_html_'):
+            raise AttributeError()
+
         try:
             return self[key]
         except:
