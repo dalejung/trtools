@@ -34,13 +34,14 @@ class FileCache(object):
         self.cache_dir_check()
 
         filename = self.get_filename(name)
-        pd.save(obj, filename)
+        pd.to_pickle(obj, filename)
         return filename
 
     def get(self, name):
         filename = self.get_filename(name)
-        obj = pd.load(filename)
-        obj.name = name
+        obj = pd.read_pickle(filename)
+        if isinstance(obj, pd.core.generic.NDFrame):
+            obj.name = name
         return obj
 
     def __getitem__(self, key):
