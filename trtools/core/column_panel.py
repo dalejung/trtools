@@ -309,6 +309,7 @@ class ColumnPanel(object):
             self._init_dataframe(obj, name)
 
         self._cache = {}
+        self._dirty = False
 
     _frames = None
     _panel = None
@@ -430,6 +431,8 @@ class ColumnPanel(object):
 
         if key in self._cache:
             del self._cache[key]
+
+        self._dirty = True
 
     def __getattr__(self, key):
         # without this, notebook will aggregate all the frames
@@ -597,6 +600,8 @@ class ColumnPanel(object):
         else:
             store.close()
 
+        self._dirty = False
+
     def bundle_load(self, path):
         filepath = trio.bundle_filepath(path)
         store = trio.OBTFile(filepath)
@@ -607,6 +612,7 @@ class ColumnPanel(object):
             return ColumnPanel(panel)
         finally:
             store.close()
+        self._dirty = False
 
 # monkey
 @monkey.patch(Panel)
