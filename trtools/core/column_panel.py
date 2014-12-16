@@ -296,10 +296,16 @@ def na_promote(df):
     return df
 
 class ColumnPanel(object):
-    def __init__(self, obj=None, name=None):
+    def __init__(self, obj=None, name=None, frame_wrapper=None):
+        """
+        frame_wrapper : 
+            Used to rewrap frame data into whatever subclass we need. Should
+            be able to reconstruct just from key.
+        """
         self._columns = []
         self.im = ColumnPanelItems(self)
         self.df_map = ColumnPanelMapper(self)
+        self.frame_wrapper = frame_wrapper
 
         if isinstance(obj, dict):
             self._init_dict(obj)
@@ -325,6 +331,8 @@ class ColumnPanel(object):
             self._frames = OrderedDict()
             if self._panel is not None:
                 for name, df in self._panel.iteritems():
+                    if self.frame_wrapper:
+                        df = self.frame_wrapper(df, name)
                     self._frames[name] = df
                     self._panel = None
         return self._frames
