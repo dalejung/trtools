@@ -451,7 +451,7 @@ class ColumnPanel(object):
         try:
             return self[key]
         except:
-            raise AttributeError()
+            raise AttributeError("{key} not attr of ColumnPanel".format(key=key))
 
     def __getitem__(self, key):
         if isinstance(key, tuple):
